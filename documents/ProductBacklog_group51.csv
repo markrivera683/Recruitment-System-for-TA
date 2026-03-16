@@ -1,77 +1,77 @@
-﻿Story ID,Story Name,Description,Priority,Iteration (Sprint) number,Acceptance Criteria,Estimation,Notes,Date started (or planned),Date finished (or planned)
+Story ID,Story Name,Description,Priority,Iteration (Sprint) number,Acceptance Criteria,Estimation,Notes,Date started (or planned),Date finished (or planned)
 US-01,Create applicant profile,"As a TA applicant
 I want to create my applicant profile
 So that I can provide my personal  information and experience for TA recruitment.",Must,1,"1. User can register with name, email and student ID
 2. User can imput skills and academic background
-3. Profile information is stroed successfully in the system",3,,2026-03-22,2026-04-04
+3. Profile information is stroed successfully in the system",3,,2026/3/22,2026/4/4
 US-02,Edit TA Profile,"As a TA applicant
 I want to edit my profile information
 So that I can keep my information up to date. ",Should,2,"1. User can modify personal information
 2. Updated information can be saved 
-3. Changes are reflected when profile is viewed again",2,,2026-04-05,2026-04-12
+3. Changes are reflected when profile is viewed again",2,,2026/4/5,2026/4/12
 US-03,View Profile,"As a TA applicant
 I want to view my profile
 so that I can check that my information is correct.",Should,2,"1. TA sees all profile fields
 2. Information matches saved data
-3. MO can also view profile",2,,2026-04-05,2026-04-12
+3. MO can also view profile",2,,2026/4/5,2026/4/12
 US-04,Delete Profile,"As a TA applicant
 I want to delete my profile
 So that I can remove my data from the system if needed.",Could,3,"1. User can delete profile
 2. System asks for confirmation
-3. Deleted profile no longer visible to MO",1,,2026-04-13,2026-04-26
+3. Deleted profile no longer visible to MO",1,,2026/4/13,2026/4/26
 US-05,Upload CV,"As a TA applicant
 I want to upload my CV
 So that Module Organisers can review my qualifications when selecting applicants.",Must,1,"1. User can upload a CV file
 2. System stores the CV file path or file name
-3. Uploaded CV can be viewed later",3,,2026-03-22,2026-04-04
+3. Uploaded CV can be viewed later",3,,2026/3/22,2026/4/4
 US-06,Replace CV,"As a TA applicant
 I want to replace my CV
 So that I can provide the most up-to-date version of my qualifications and experience.",Should,2,"1. User can upload a new CV file to replace the existing one.
 2. The system removes or archives the previous CV.
 3. The system stores the new CV successfully.
-4. Uploaded CV can be viewed later",2,,2026-04-05,2026-04-12
+4. Uploaded CV can be viewed later",2,,2026/4/5,2026/4/12
 US-07,View CV,"As a TA applicant
 I want to view my uploaded CV
 So that I can check that the correct CV has been uploaded.",Should,2,"1. TA can see a list of uploaded CVs
 2. TA can open a CV file
 3. MO can also view CV
-4. Error message appears if loading fails",2,,2026-04-05,2026-04-12
+4. Error message appears if loading fails",2,,2026/4/5,2026/4/12
 US-08,Delete CV,"As a TA applicant
 I want to delete my CV
 So that I can remove outdated or incorrect files.",Could,3,"1. User can delete a CV file
 2. System asks for confirmation
-3. Deleted CV no longer visible to MO",1,,2026-04-13,2026-04-26
+3. Deleted CV no longer visible to MO",1,,2026/4/13,2026/4/26
 US-09,Validate Profile Information,"As a system
 I want to validate profile inputs
 so that incomplete or incorrect information is avoided",Should,2,"1. Required fields cannot be empty
 2. Email format must be valid
-3. Error messages are displayed when validation fails",2,,2026-04-05,2026-04-12
+3. Error messages are displayed when validation fails",2,,2026/4/5,2026/4/12
 US-10,Browse available jobs,"As a TA applicant
 I want to browse available TA jobs
 So that I can find suitable opportunities.",Must,1,"1. Job list is displayed
 2. Each job shows module name and requirements
-3. Users can view job details",2,,2026-03-22,2026-04-04
-US-11,Search and filter jobs,"As a TA applicant I want to search and filter available TA jobs So that I can quickly find jobs that match my skills, module preference, or schedule.",Must,2,"1. User can enter keywords to search jobs 2. User can filter by module, type of activity, or required skills 3. Filtered/search results are displayed instantly",4,"1. On text/CSV/JSON data files only, no database required. 2. Display results instantly; show 'No matching jobs found' if no matches. 3.Supports multi-condition filtering: module, activity type, and skills. 4.Can integrate with AI skill matching later, but not required for this iteration.",2026-04-05,2026-04-12
+3. Users can view job details",2,,2026/3/22,2026/4/4
+US-11,Search and filter jobs,"As a TA applicant I want to search and filter available TA jobs So that I can quickly find jobs that match my skills, module preference, or schedule.",Must,2,"1. User can enter keywords to search jobs 2. User can filter by module, type of activity, or required skills 3. Filtered/search results are displayed instantly",4,"1. On text/CSV/JSON data files only, no database required. 2. Display results instantly; show 'No matching jobs found' if no matches. 3.Supports multi-condition filtering: module, activity type, and skills. 4.Can integrate with AI skill matching later, but not required for this iteration.",2026/4/5,2026/4/12
 US-12,View job details,"As a TA applicant
 I want to view detailed information about a job
 So that I can understand the requirements before applying.",Must,1,"1. User can click a job from the job list
 2. System displays job details including module name, description, and requirements
-3. User can return to the job list page",2,"Job details include module name, description, activity type, and required skills.",2026-03-22,2026-04-04
+3. User can return to the job list page",2,"Job details include module name, description, activity type, and required skills.",2026/3/22,2026/4/4
 US-13,Sort job listings,"As a TA applicant
 I want to sort job listings
 So that I can quickly find the most relevant opportunities.",Should,2,"1. User can sort jobs by module name
 2. User can sort jobs by posting date
-3. Job list updates after sorting",3,Sorting is implemented based on job data stored in text/CSV/JSON files.,2026-04-05,2026-04-12
+3. Job list updates after sorting",3,Sorting is implemented based on job data stored in text/CSV/JSON files.,2026/4/5,2026/4/12
 US-14,Apply for job,"As a TA applicant
 I want to apply for a job
 So that I can be considered for the position.",Must,1,"1. Applicant can submit application
 2. Application record is stored
-3. Confirmation message is displayed",5,,2026-03-20,2026/3/27
+3. Confirmation message is displayed",5,,2026/3/20,2026/3/27
 US-15,Check application status,"As a TA applicant
 I want to check my application status
 So that I know whether I am selected.",Should,2,"1. Applicant can see application status
 2. Status includes pending, accepted, rejected
-3. Status updates when MO makes decision",3,,2026-03-28,2026-04-05
+3. Status updates when MO makes decision",3,,2026/3/28,2026/4/5
 US-16,Post job,"As an MO (Module Organiser), I want to post a new TA (Teaching Assistant) vacancy so that students can apply for the position",Must,1,"MO can enter module name.
 
 MO can enter job title (e.g., TA, Tutor).
@@ -107,74 +107,59 @@ MO can reject applicants if not selected.
 
 MO can update the application status to ""Selected"" or ""Rejected"".
 
-MO can notify the selected applicant via email or in the system (if email integration is available).",5,,2026-03-28,2026-04-05
+MO can notify the selected applicant via email or in the system (if email integration is available).",5,,2026/3/28,2026/4/5
 US-18,View TA workload,"As an administrator
 I want to check TA workload
 So that no TA is overloaded.",Should,2,"1. Admin can view TA assignments
 2. System shows number of assigned jobs
-3. Warning displayed if workload exceeds limit",3,,2026-03-28,2026-04-05
+3. Warning displayed if workload exceeds limit",3,,2026/3/22,2026/4/4
 US-19,Balance TA workload,"As an administrator
 I want the system to recommend TAs with lower workload
 So that tasks can be distributed more fairly.",Should,2,"1. System calculates workload of each TA
 2. TAs with lower workload are highlighted
-3. Recommendations appear when assigning jobs",5,,2026-03-28,2026-04-05
+3. Recommendations appear when assigning jobs",5,,2026/4/5,2026/4/12
 US-20,Manage users,"As an administrator
 I want to manage user accounts
 So that I can maintain system security and integrity.",Must,2,"1. Admin can view list of users
 2. Admin can deactivate or delete user accounts
-3. Admin can view user roles",3,,2026-03-28,2026-04-05
+3. Admin can view user roles",3,,2026/4/5,2026/4/12
 US-21,Manage job postings,"As an administrator
 I want to manage job postings
 So that inappropriate or outdated jobs can be removed.",Should,2,"1. Admin can view all job postings
 2. Admin can edit job information
-3. Admin can delete job postings",3,,2026-03-28,2026-04-05
+3. Admin can delete job postings",3,,2026/4/5,2026/4/12
 US-22,Export recruitment data,"As an administrator
 I want to export recruitment data
 So that I can analyze recruitment results externally.",Could,3,"1. Admin can export applicant data
 2. Admin can export job application records
-3. Data can be exported as CSV or Excel file",4,,2026-03-28,2026-04-05
-US-23,View system logs,"As an administrator
-I want to view system activity logs
-So that I can monitor important actions and ensure system security.",Could,3,"1. Admin can view logs of important actions
-2. Logs include user ID, action type, and timestamp
-3. Admin can filter logs by date or user",3,,2026-03-28,2026-04-05
-US-24,Skill matching,"As an MO, I want the system to suggest potential applicants based on their skills so that I can quickly identify suitable candidates for the position.As an MO, I want the system to suggest potential applicants based on their skills so that I can quickly identify suitable candidates for the position.",Could,3,"The system compares job requirements (e.g., skills, experience) with applicant profiles.
+3. Data can be exported as CSV or Excel file",4,,2026/4/13,2026/4/26
+US-23,Skill matching,"As an MO, I want the system to suggest potential applicants based on their skills so that I can quickly identify suitable candidates for the position.As an MO, I want the system to suggest potential applicants based on their skills so that I can quickly identify suitable candidates for the position.",Could,3,"The system compares job requirements (e.g., skills, experience) with applicant profiles.
 
 A matching score or label (e.g., High, Medium, Low) is displayed next to each applicant.
 
 MO can override the system's suggestion and make a final decision manually.
 
-MO can click on the matching result to view more detailed reasoning behind the match.",5,,2026-04-06,2026-04-15
-US-25,Identify missing skills,"As a TA applicant
+MO can click on the matching result to view more detailed reasoning behind the match.",5,,2026/4/13,2026/4/26
+US-24,Identify missing skills,"As a TA applicant
 I want the system to identify missing skills
 So that I can improve my qualifications.",Could,3,"1. System compares CV with job requirements
 2. Missing skills are highlighted
-3. Suggestions are displayed",8,,2026-04-06,2026-04-15
-US-26,TA Registration,"As a Teaching Assistant applicant, I want to register an account with basic information so that I can create and access my applicant profile.",Must,1,"1.Required fields enforced2.Email format valid & unique 3.Password meets policy 4.On success, account created and user can proceed to login (or is logged in).",3,Supporting story to enable applicant profile creation in TA recruitment system.,2026-03-20,2026-03-27
-US-27,TA Login,"As a Teaching Assistant applicant, I want to log in securely so that I can access my profile, CV upload, and job applications.",Must,1,1) Correct credentials authenticate and redirect to applicant area; 2) Incorrect credentials show clear error; 3) Session established for subsequent requests.,3,User management core authentication.,2026-03-20,2026-03-27
-US-28,TA Logout,"As a Teaching Assistant applicant, I want to log out so that my account remains secure on shared devices.",Must,1,1) Logout ends session/token; 2) Redirect to login/landing; 3) Back button does not restore authenticated access.,2,Security baseline.,2026-03-20,2026-03-27
-US-29,Create Applicant Profile,"As a Teaching Assistant applicant, I want to create an applicant profile so that I can use the recruitment system to apply for TA opportunities.",Must,1,1) Only authenticated users can create a profile; 2) Required profile fields validated; 3) Profile saved and retrievable after re-login.,3,Explicit requirement in handout: TA can create an applicant profile.,2026-03-20,2026-03-27
-US-30,Access Control for Applicant Features,"As a Teaching Assistant applicant, I want only logged-in users to access profile and application features so that my personal data is protected.",Must,1,"1) Unauthenticated access to protected pages redirects to login; 2) After login, return to intended page; 3) Auth checks apply to all protected endpoints.",3,Security requirement for user management.,2026-03-20,2026-03-27
-US-31,View Applicant Profile,"As a Teaching Assistant applicant, I want to view my saved profile so that I can confirm what recruiters will see.",Should,2,1) Only authenticated owner can view; 2) Displays latest saved values; 3) Handles missing/incomplete fields gracefully.,2,Supports confidence and transparency.,2026-03-28,2026-04-05
-US-32,Request Password Reset,"As a Teaching Assistant applicant, I want to request a password reset so that I can regain access if I forget my password.",Should,2,1) Request via registered email; 2) Response does not reveal whether account exists; 3) Reset token/link generated and expires.,3,Account recovery.,2026-03-28,2026-04-05
-US-33,Complete Password Reset,"As a Teaching Assistant applicant, I want to set a new password using a reset link so that I can log in again.",Should,2,1) Valid token allows setting new password; 2) Password meets policy; 3) Token single-use; 4) User can log in with new password.,3,Account recovery completion.,2026-03-28,2026-04-05
-US-34,Edit Applicant Profile,"As a Teaching Assistant applicant, I want to edit my profile so that my application details stay accurate.",Should,2,1) Only profile owner can edit; 2) Changes validated and saved; 3) Updated data appears on view page.,2,Completes create/view lifecycle.,2026-03-28,2026-04-05
-US-35,AI Job Recommendation,"As a TA applicant
+3. Suggestions are displayed",8,,2026/4/13,2026/4/26
+US-25,TA Registration,"As a Teaching Assistant applicant, I want to register an account with basic information so that I can create and access my applicant profile.",Must,1,"1.Required fields enforced2.Email format valid & unique 3.Password meets policy 4.On success, account created and user can proceed to login (or is logged in).",3,Supporting story to enable applicant profile creation in TA recruitment system.,2026/3/20,2026/3/27
+US-26,TA Login,"As a Teaching Assistant applicant, I want to log in securely so that I can access my profile, CV upload, and job applications.",Must,1,1) Correct credentials authenticate and redirect to applicant area; 2) Incorrect credentials show clear error; 3) Session established for subsequent requests.,3,User management core authentication.,2026/3/20,2026/3/27
+US-27,TA Logout,"As a Teaching Assistant applicant, I want to log out so that my account remains secure on shared devices.",Must,1,1) Logout ends session/token; 2) Redirect to login/landing; 3) Back button does not restore authenticated access.,2,Security baseline.,2026/3/20,2026/3/27
+US-28,Create Applicant Profile,"As a Teaching Assistant applicant, I want to create an applicant profile so that I can use the recruitment system to apply for TA opportunities.",Must,1,1) Only authenticated users can create a profile; 2) Required profile fields validated; 3) Profile saved and retrievable after re-login.,3,Explicit requirement in handout: TA can create an applicant profile.,2026/3/20,2026/3/27
+US-29,Access Control for Applicant Features,"As a Teaching Assistant applicant, I want only logged-in users to access profile and application features so that my personal data is protected.",Must,1,"1) Unauthenticated access to protected pages redirects to login; 2) After login, return to intended page; 3) Auth checks apply to all protected endpoints.",3,Security requirement for user management.,2026/3/20,2026/3/27
+US-30,View Applicant Profile,"As a Teaching Assistant applicant, I want to view my saved profile so that I can confirm what recruiters will see.",Should,2,1) Only authenticated owner can view; 2) Displays latest saved values; 3) Handles missing/incomplete fields gracefully.,2,Supports confidence and transparency.,2026/3/28,2026/4/5
+US-31,Request Password Reset,"As a Teaching Assistant applicant, I want to request a password reset so that I can regain access if I forget my password.",Should,2,1) Request via registered email; 2) Response does not reveal whether account exists; 3) Reset token/link generated and expires.,3,Account recovery.,2026/3/28,2026/4/5
+US-32,Complete Password Reset,"As a Teaching Assistant applicant, I want to set a new password using a reset link so that I can log in again.",Should,2,1) Valid token allows setting new password; 2) Password meets policy; 3) Token single-use; 4) User can log in with new password.,3,Account recovery completion.,2026/3/28,2026/4/5
+US-33,Edit Applicant Profile,"As a Teaching Assistant applicant, I want to edit my profile so that my application details stay accurate.",Should,2,1) Only profile owner can edit; 2) Changes validated and saved; 3) Updated data appears on view page.,2,Completes create/view lifecycle.,2026/3/28,2026/4/5
+US-34,AI Job Recommendation,"As a TA applicant
 I want the system to recommend suitable TA jobs
 So that I can quickly find positions that match my skills.",Could,3,"1. System analyses applicant profile and CV
 2. System recommends relevant TA jobs
-3. Recommended jobs are displayed on the dashboard",5,AI recommendation feature,2026-04-06,2026-04-15
-US-36,CV Parsing,"As a TA applicant
-I want the system to extract skills from my uploaded CV
-So that my applicant profile can be automatically populated.",Could,3,"1. System analyses uploaded CV text
-2. Skills and education are extracted
-3. Extracted information is stored in applicant profile and can be edited by the user",5,AI CV analysis,2026-04-06,2026-04-15
-US-37,AI applicant ranking,"As a module organiser
-I want the system to rank applicants automatically
-So that I can quickly identify the most suitable candidates.",Could,3,"1. System analyses CV and job requirements
-2. Applicants receive a ranking score
-3. MO can view ranked applicant list",5,AI ranking,2026-04-06,2026-04-15
-US-38,View Applicant List,"As an MO, I want to view a list of applicants who have applied for the TA vacancy so that I can review and compare their qualifications",Must,1,"MO can view a list of all applicants for each vacancy.
+3. Recommended jobs are displayed on the dashboard",5,AI recommendation feature,2026/4/13,2026/4/26
+US-35,View Applicant List,"As an MO, I want to view a list of applicants who have applied for the TA vacancy so that I can review and compare their qualifications",Must,1,"MO can view a list of all applicants for each vacancy.
 
 Each applicant's name and profile summary (e.g., qualifications, skills) are displayed.
 
@@ -190,20 +175,9 @@ MO can see application status (e.g., Pending, Shortlisted, Rejected).
 
 MO can filter applicants by criteria like skills or status.
 
-MO can click on an applicant's name to view the full profile.",5,,2026-03-20,2026-03-27
-US-39,Applications Manage,"As a TA applicant
+MO can click on an applicant's name to view the full profile.",5,,2026/3/20,2026/3/27
+US-36,Applications Manage,"As a TA applicant
 I want to view a list of positions I have applied for and adjust their priority order
-So that I can inform the MO which positions I prefer to be assigned to first.",Should,3,"1. View List: User can view a list of all submitted TA applications
+So that I can inform the MO which positions I prefer to be assigned to first.",Should,20,"1. View List: User can view a list of all submitted TA applications
 2. Status Display: Each entry must show the position name and current status
-3. Reorder: User can change the preference order of applications",3,Essential for the algorithm to resolve multiple offers,2026-04-06,2026-04-15
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
-,,,,,,,,,
+3. Reorder: User can change the preference order of applications",3,Essential for the algorithm to resolve multiple offers,2026/4/6,2026/4/15
