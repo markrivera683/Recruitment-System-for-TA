@@ -10,4 +10,12 @@
 
 ## Application System
 
+<<<<<<< HEAD
 ![](image/Prototype_group51/215619.png)![](image/Prototype_group51/215635.png)![](image/Prototype_group51/220024.png)
+=======
+![](image/Prototype_group51/215619.png)![](image/Prototype_group51/215635.png)![](image/Prototype_group51/220024.png)
+
+## Admin Dashboard
+
+![admin dashboard](image/Prototype_group51/admin_dashboard.png)![user mgmt](image/Prototype_group51/user_mgmt.png)![job mgmt](image/Prototype_group51/job_mgmt.png)![export](image/Prototype_group51/export.png)
+>>>>>>> Qixin_Li
