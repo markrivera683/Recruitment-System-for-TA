@@ -8,6 +8,6 @@ Group Project of EBU6304 for IOT
 | christine288  | Qixin_Li        | 231225373 |  Li Qixin(李其馨)        |
 | Hzwnt         | Tianjing_Zhuang | 231225351 | Zhuang Tianjing(庄天婧)  |
 | g726unknown   | Yifeng_Zhang    | 231226174 | Zhang Yifeng(张毅峰)     |
-|               |                 |           |                         |
+| negan525      |  WeiJiaXiao     | 231226233 | Xiao WeiJia(肖炜佳)      |
 |               |                 |           |                         |
 
