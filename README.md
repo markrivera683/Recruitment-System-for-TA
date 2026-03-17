@@ -1,7 +1,4 @@
 # Recruitment-System-for-TA
-<<<<<<< Updated upstream
-Group Project of EBU6304 for IOT 
-=======
 
 Group Project of EBU6304 for IOT
 
@@ -13,4 +10,4 @@ Group Project of EBU6304 for IOT
 |               |                 |           |                         |
 |               |                 |           |                         |
 |               |                 |           |                         |
->>>>>>> Stashed changes
+
