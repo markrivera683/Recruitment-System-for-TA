@@ -4,7 +4,10 @@ import com.bupt.ta.model.User;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,27 +19,57 @@ public class AuthService {
         this.store = new FileStore(dataDir);
     }
 
+    // ---------- helpers: Map <-> User
+
+    private static User mapToUser(Map<String, String> m) {
+        User u = new User();
+        u.id           = m.getOrDefault("id", "");
+        u.name         = m.getOrDefault("name", "");
+        u.studentId    = m.getOrDefault("studentId", "");
+        u.email        = m.getOrDefault("email", "");
+        u.passwordHash = m.getOrDefault("passwordHash", "");
+        u.role         = m.getOrDefault("role", "TA");
+        return u;
+    }
+
+    private static Map<String, String> userToMap(User u) {
+        Map<String, String> m = new LinkedHashMap<>();
+        m.put("id",           u.id           != null ? u.id           : "");
+        m.put("name",         u.name         != null ? u.name         : "");
+        m.put("studentId",    u.studentId    != null ? u.studentId    : "");
+        m.put("email",        u.email        != null ? u.email        : "");
+        m.put("passwordHash", u.passwordHash != null ? u.passwordHash : "");
+        m.put("role",         u.role         != null ? u.role         : "TA");
+        return m;
+    }
+
+    // ---------- API
+
     public Optional<User> findByEmail(String email) throws IOException {
-        List<User> users = store.readList(USERS_JSON, FileStore.listType(User.class));
-        return users.stream().filter(u -> u.email != null && u.email.equalsIgnoreCase(email)).findFirst();
+        List<Map<String, String>> rows = store.readMaps(USERS_JSON);
+        return rows.stream()
+                   .filter(m -> email != null && email.equalsIgnoreCase(m.get("email")))
+                   .map(AuthService::mapToUser)
+                   .findFirst();
     }
 
     public User register(String name, String studentId, String email, String password) throws IOException {
-        List<User> users = store.readList(USERS_JSON, FileStore.listType(User.class));
-        boolean exists = users.stream().anyMatch(u -> u.email != null && u.email.equalsIgnoreCase(email));
+        List<Map<String, String>> rows = store.readMaps(USERS_JSON);
+        boolean exists = rows.stream()
+                             .anyMatch(m -> email != null && email.equalsIgnoreCase(m.get("email")));
         if (exists) throw new IllegalArgumentException("Email already registered");
 
-        // For coursework prototype, keep as-is; in report, state it should be hashed.
         String id = UUID.randomUUID().toString();
         User u = new User(id, name, studentId, email, password);
-        users.add(u);
-        store.writeList(USERS_JSON, users);
+        rows.add(userToMap(u));
+        store.writeMaps(USERS_JSON, rows);
         return u;
     }
 
     public Optional<User> login(String email, String password) throws IOException {
         Optional<User> u = findByEmail(email);
-        if (u.isEmpty()) return Optional.empty();
-        return password != null && password.equals(u.get().passwordHash) ? u : Optional.empty();
+        if (!u.isPresent()) return Optional.empty();
+        return (password != null && password.equals(u.get().passwordHash))
+               ? u : Optional.empty();
     }
 }

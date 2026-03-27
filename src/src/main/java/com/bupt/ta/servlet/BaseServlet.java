@@ -7,14 +7,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 public abstract class BaseServlet extends HttpServlet {
+
     protected User currentUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);
         if (session == null) return null;
         Object u = session.getAttribute("user");
         return (u instanceof User) ? (User) u : null;
-    }
-
-    protected boolean requireLogin(HttpServletRequest req) {
-        return currentUser(req) != null;
     }
 }

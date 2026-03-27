@@ -1,19 +1,33 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+             http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bupt</groupId>
   <artifactId>ta-recruitment-system</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
 
+  <!--
+    NOTE: This project is designed for MANUAL compilation (no Maven required).
+    See compile.bat for the manual build instructions.
+    This pom.xml is kept only as a reference / for IDEs that need it.
+    Primary tech stack:
+      - Java 11
+      - Java Servlet 4.0 / JSP 2.3
+      - Apache Tomcat 9.x
+      - Plain JSON file storage (no database, no ORM)
+      - No Spring Boot, no Gson, no external JSON library
+  -->
+
   <properties>
-    <maven.compiler.source>17</maven.compiler.source>
-    <maven.compiler.target>17</maven.compiler.target>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
   <dependencies>
-    <!-- Servlet API (Tomcat 9 / javax.*) -->
+    <!-- Servlet 4.0 API — provided by Tomcat 9 at runtime -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
@@ -21,18 +35,11 @@
       <scope>provided</scope>
     </dependency>
 
-    <!-- JSP JSTL -->
+    <!-- JSP / JSTL 1.2 -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>jstl</artifactId>
       <version>1.2</version>
-    </dependency>
-
-    <!-- JSON helper (simple + common in coursework) -->
-    <dependency>
-      <groupId>com.google.code.gson</groupId>
-      <artifactId>gson</artifactId>
-      <version>2.11.0</version>
     </dependency>
   </dependencies>
 

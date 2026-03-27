@@ -8,7 +8,8 @@ import java.io.IOException;
 @WebServlet(urlPatterns = {"/logout"})
 public class LogoutServlet extends BaseServlet {
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws IOException {
         if (req.getSession(false) != null) {
             req.getSession(false).invalidate();
         }
