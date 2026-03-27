@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @WebServlet(urlPatterns = {"/register"})
 public class RegisterServlet extends BaseServlet {
@@ -16,24 +17,28 @@ public class RegisterServlet extends BaseServlet {
 
     @Override
     public void init() {
-        Path dataDir = Path.of(getServletContext().getRealPath("/WEB-INF/data"));
+        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         auth = new AuthService(dataDir);
     }
 
     @Override
-    protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
         req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
     }
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException, ServletException {
-        String name = req.getParameter("name");
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        String name     = req.getParameter("name");
         String studentId = req.getParameter("studentId");
-        String email = req.getParameter("email");
+        String email    = req.getParameter("email");
         String password = req.getParameter("password");
-        String confirm = req.getParameter("confirm");
+        String confirm  = req.getParameter("confirm");
 
-        if (name == null || name.isBlank() || email == null || email.isBlank() || password == null || password.isBlank()) {
+        if (name == null || name.trim().isEmpty()
+                || email == null || email.trim().isEmpty()
+                || password == null || password.trim().isEmpty()) {
             req.setAttribute("error", "Please fill in required fields");
             req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
             return;
@@ -43,7 +48,6 @@ public class RegisterServlet extends BaseServlet {
             req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
             return;
         }
-
         try {
             User u = auth.register(name, studentId, email, password);
             req.getSession(true).setAttribute("user", u);
