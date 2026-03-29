@@ -3,7 +3,7 @@
 <%@ page import="com.bupt.ta.model.EducationEntry" %>
 <%@ page import="java.util.List" %>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
   <title>Profile - TA Recruitment</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
@@ -103,8 +103,13 @@
       <% if (p.cvFileName != null && !p.cvFileName.isEmpty()) { %>
         <p class="info">Current file: <a href="${pageContext.request.contextPath}/cv" target="_blank" rel="noopener"><%= p.cvFileName %></a> (open or download)</p>
       <% } %>
-      <label>Upload (PDF / Word, max ~10 MB)</label>
-      <input type="file" name="cv" accept=".pdf,.doc,.docx,application/pdf" />
+      <div class="block-label">Upload your CV</div>
+      <p class="hint">PDF or Word (.pdf, .doc, .docx), up to about 10 MB.</p>
+      <div class="file-upload-row">
+        <input type="file" name="cv" id="profile-cv" class="file-input-hidden" accept=".pdf,.doc,.docx,application/pdf" />
+        <label for="profile-cv" class="btn-secondary btn-inline file-choose-btn">Choose file</label>
+        <span class="file-chosen-name" id="profile-cv-name">No file chosen</span>
+      </div>
     </div>
 
     <button type="submit">Save profile</button>
@@ -120,6 +125,15 @@
     var row = first.cloneNode(true);
     row.querySelectorAll('input').forEach(function (el) { el.value = ''; });
     document.getElementById('edu-rows').appendChild(row);
+  });
+})();
+(function () {
+  var input = document.getElementById('profile-cv');
+  var nameEl = document.getElementById('profile-cv-name');
+  if (!input || !nameEl) return;
+  input.addEventListener('change', function () {
+    var f = input.files && input.files[0];
+    nameEl.textContent = f ? f.name : 'No file chosen';
   });
 })();
 </script>

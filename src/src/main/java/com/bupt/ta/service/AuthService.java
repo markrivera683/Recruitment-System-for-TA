@@ -108,6 +108,8 @@ public class AuthService {
         }
         if (!found) throw new IllegalStateException("User record not found");
         store.writeMaps(USERS_JSON, rows);
+    }
+
     /** All registered users (for admin views). */
     public List<User> listAllUsers() throws IOException {
         return store.readMaps(USERS_JSON).stream()
