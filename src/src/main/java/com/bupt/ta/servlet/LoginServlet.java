@@ -1,5 +1,6 @@
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.AuthService;
 
@@ -39,7 +40,11 @@ public class LoginServlet extends BaseServlet {
             req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
             return;
         }
-        req.getSession(true).setAttribute("user", u.get());
-        resp.sendRedirect(req.getContextPath() + "/profile");
+        User loggedIn = u.get();
+        req.getSession(true).setAttribute("user", loggedIn);
+        String next = Roles.ADMIN.equals(loggedIn.role)
+                ? "/admin"
+                : "/profile";
+        resp.sendRedirect(req.getContextPath() + next);
     }
 }

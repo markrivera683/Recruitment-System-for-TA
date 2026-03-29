@@ -1,4 +1,4 @@
-﻿# Recruitment System for TA
+# Recruitment System for TA
 
 This repository contains the group project for **EBU6304 Software Engineering**.
 The project aims to develop a **Teaching Assistant Recruitment System** for BUPT International School to improve the efficiency of the TA recruitment process.
@@ -42,6 +42,7 @@ Recruitment-System-for-TA/
 │   ├── src/main/
 │   │   ├── java/com/bupt/ta/
 │   │   │   ├── model/             # Data models
+│   │   │   │   ├── Roles.java
 │   │   │   │   ├── User.java
 │   │   │   │   └── ApplicantProfile.java
 │   │   │   ├── service/           # Business logic & file persistence
@@ -50,6 +51,7 @@ Recruitment-System-for-TA/
 │   │   │   │   └── ProfileService.java  # Profile CRUD
 │   │   │   └── servlet/           # HTTP request handlers
 │   │   │       ├── BaseServlet.java
+│   │   │       ├── AdminServlet.java
 │   │   │       ├── LoginServlet.java
 │   │   │       ├── RegisterServlet.java
 │   │   │       ├── LogoutServlet.java
@@ -57,13 +59,16 @@ Recruitment-System-for-TA/
 │   │   │       ├── ForgotPasswordServlet.java
 │   │   │       └── ResetPasswordServlet.java
 │   │   └── webapp/
-│   │       ├── static/css/app.css # Stylesheet
+│   │       ├── static/css/app.css
+│   │       ├── static/css/admin-dashboard.css # Admin UI
 │   │       └── WEB-INF/
 │   │           ├── web.xml        # Servlet 4.0 deployment descriptor
 │   │           ├── data/          # Runtime data files (JSON)
 │   │           │   ├── users.json
 │   │           │   └── profiles.json
 │   │           └── jsp/           # JSP view templates
+│   │               ├── admin/
+│   │               │   └── dashboard.jsp
 │   │               ├── login.jsp
 │   │               ├── register.jsp
 │   │               ├── profile.jsp
@@ -101,13 +106,15 @@ $S  = "D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115\lib\servlet-api.jar"
 $SRC = "src\main\java"
 $OUT = "out\WEB-INF\classes"
 New-Item -Force -ItemType Directory $OUT | Out-Null
-& "$J\javac.exe" -source 11 -target 11 -encoding UTF-8 -cp $S -d $OUT `
+& "$J\javac.exe" --release 11 -encoding UTF-8 -cp $S -d $OUT `
+  $SRC\com\bupt\ta\model\Roles.java `
   $SRC\com\bupt\ta\model\User.java `
   $SRC\com\bupt\ta\model\ApplicantProfile.java `
   $SRC\com\bupt\ta\service\FileStore.java `
   $SRC\com\bupt\ta\service\AuthService.java `
   $SRC\com\bupt\ta\service\ProfileService.java `
   $SRC\com\bupt\ta\servlet\BaseServlet.java `
+  $SRC\com\bupt\ta\servlet\AdminServlet.java `
   $SRC\com\bupt\ta\servlet\LoginServlet.java `
   $SRC\com\bupt\ta\servlet\RegisterServlet.java `
   $SRC\com\bupt\ta\servlet\LogoutServlet.java `
@@ -158,6 +165,9 @@ http://localhost:8080/ta-recruitment/login
 | `/profile` | GET / POST | View and save applicant profile |
 | `/forgot-password` | GET / POST | Forgot password (demo placeholder) |
 | `/reset-password` | GET / POST | Reset password (demo placeholder) |
+| `/admin` | GET | Administrator dashboard (requires `role` = `ADMIN`) |
+
+The repository includes a **development seed** administrator in `src/src/main/webapp/WEB-INF/data/users.json`: email **`admin@bupt.local`**, password **`admin123`**. Change or remove this account in production; new registrations get `role` = `TA`.
 
 ---
 

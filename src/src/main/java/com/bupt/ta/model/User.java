@@ -6,7 +6,7 @@ public class User {
     public String studentId;
     public String email;
     public String passwordHash;
-    public String role = "TA";
+    public String role = Roles.TA;
 
     public User() {}
 
