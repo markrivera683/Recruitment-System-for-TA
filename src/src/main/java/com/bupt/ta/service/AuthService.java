@@ -72,4 +72,40 @@ public class AuthService {
         return (password != null && password.equals(u.get().passwordHash))
                ? u : Optional.empty();
     }
+
+    /**
+     * Updates name / student id / email for an existing user. Email must stay unique.
+     */
+    public void updateUserBasics(User user, String newName, String newStudentId, String newEmail)
+            throws IOException {
+        if (user == null || user.id == null || user.id.isEmpty()) {
+            throw new IllegalArgumentException("Invalid user");
+        }
+        String email = newEmail != null ? newEmail.trim() : "";
+        if (email.isEmpty()) throw new IllegalArgumentException("Email is required");
+
+        if (user.email == null || !user.email.equalsIgnoreCase(email)) {
+            Optional<User> other = findByEmail(email);
+            if (other.isPresent() && !user.id.equals(other.get().id)) {
+                throw new IllegalArgumentException("This email is already registered to another account.");
+            }
+        }
+
+        user.name = newName != null ? newName.trim() : "";
+        user.studentId = newStudentId != null ? newStudentId.trim() : "";
+        user.email = email;
+
+        List<Map<String, String>> rows = store.readMaps(USERS_JSON);
+        boolean found = false;
+        for (int i = 0; i < rows.size(); i++) {
+            Map<String, String> m = rows.get(i);
+            if (user.id.equals(m.get("id"))) {
+                rows.set(i, userToMap(user));
+                found = true;
+                break;
+            }
+        }
+        if (!found) throw new IllegalStateException("User record not found");
+        store.writeMaps(USERS_JSON, rows);
+    }
 }
