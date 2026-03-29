@@ -4,7 +4,7 @@ setlocal
 REM Manual build - run from the src\ folder
 REM Requires: Java 11+  (javac on PATH),  Tomcat 9
 
-set TOMCAT_HOME=D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115
+set TOMCAT_HOME=D:\tomcat\apache-tomcat-9.0.116
 set SERVLET_JAR=%TOMCAT_HOME%\lib\servlet-api.jar
 set SRC=src\main\java
 set WEB=src\main\webapp
@@ -16,6 +16,7 @@ if exist out rmdir /s /q out
 mkdir "%OUT%"
 
 echo [2/4] Compiling...
+javac -source 11 -target 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" "%SRC%\com\bupt\ta\model\User.java" "%SRC%\com\bupt\ta\model\EducationEntry.java" "%SRC%\com\bupt\ta\model\ApplicantProfile.java" "%SRC%\com\bupt\ta\service\FileStore.java" "%SRC%\com\bupt\ta\service\AuthService.java" "%SRC%\com\bupt\ta\service\ProfileService.java" "%SRC%\com\bupt\ta\servlet\BaseServlet.java" "%SRC%\com\bupt\ta\servlet\LoginServlet.java" "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" "%SRC%\com\bupt\ta\servlet\ProfileServlet.java" "%SRC%\com\bupt\ta\servlet\CvDownloadServlet.java" "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" "%SRC%\com\bupt\ta\servlet\ResetPasswordServlet.java"
 javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" "%SRC%\com\bupt\ta\model\Roles.java" "%SRC%\com\bupt\ta\model\User.java" "%SRC%\com\bupt\ta\model\ApplicantProfile.java" "%SRC%\com\bupt\ta\service\FileStore.java" "%SRC%\com\bupt\ta\service\AuthService.java" "%SRC%\com\bupt\ta\service\ProfileService.java" "%SRC%\com\bupt\ta\servlet\BaseServlet.java" "%SRC%\com\bupt\ta\servlet\AdminServlet.java" "%SRC%\com\bupt\ta\servlet\LoginServlet.java" "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" "%SRC%\com\bupt\ta\servlet\ProfileServlet.java" "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" "%SRC%\com\bupt\ta\servlet\ResetPasswordServlet.java"
 
 if %ERRORLEVEL% neq 0 ( echo [ERROR] Compilation failed. ^& exit /b 1 )

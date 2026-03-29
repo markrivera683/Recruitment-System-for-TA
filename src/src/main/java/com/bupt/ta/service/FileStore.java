@@ -49,6 +49,13 @@ public class FileStore {
     // ------------------------------------------------------- JSON serialiser
 
     private static String toJsonArray(List<Map<String, String>> items) {
+        return toJsonArrayOfObjects(items);
+    }
+
+    /**
+     * Serialises a JSON array of objects with string values (used for nested profile payloads).
+     */
+    public static String toJsonArrayOfObjects(List<Map<String, String>> items) {
         StringBuilder sb = new StringBuilder();
         sb.append('[');
         for (int i = 0; i < items.size(); i++) {
