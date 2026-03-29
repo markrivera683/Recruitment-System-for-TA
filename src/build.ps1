@@ -18,9 +18,11 @@ if (Test-Path $OUT) { Remove-Item -Recurse -Force $OUT }
 New-Item -ItemType Directory -Force -Path $OUTBIN | Out-Null
 
 Write-Host "[2/4] Compiling..."
+# Must match compile.bat: single pass, all sources (Roles, EducationEntry, CvDownloadServlet, …)
 $sources = @(
     "$SRC\com\bupt\ta\model\Roles.java",
     "$SRC\com\bupt\ta\model\User.java",
+    "$SRC\com\bupt\ta\model\EducationEntry.java",
     "$SRC\com\bupt\ta\model\ApplicantProfile.java",
     "$SRC\com\bupt\ta\service\FileStore.java",
     "$SRC\com\bupt\ta\service\AuthService.java",
@@ -31,6 +33,7 @@ $sources = @(
     "$SRC\com\bupt\ta\servlet\RegisterServlet.java",
     "$SRC\com\bupt\ta\servlet\LogoutServlet.java",
     "$SRC\com\bupt\ta\servlet\ProfileServlet.java",
+    "$SRC\com\bupt\ta\servlet\CvDownloadServlet.java",
     "$SRC\com\bupt\ta\servlet\ForgotPasswordServlet.java",
     "$SRC\com\bupt\ta\servlet\ResetPasswordServlet.java"
 )
