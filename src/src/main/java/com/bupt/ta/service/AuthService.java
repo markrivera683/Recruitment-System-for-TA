@@ -1,15 +1,16 @@
 package com.bupt.ta.service;
 
+import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class AuthService {
     private static final String USERS_JSON = "users.json";
@@ -28,7 +29,7 @@ public class AuthService {
         u.studentId    = m.getOrDefault("studentId", "");
         u.email        = m.getOrDefault("email", "");
         u.passwordHash = m.getOrDefault("passwordHash", "");
-        u.role         = m.getOrDefault("role", "TA");
+        u.role         = m.getOrDefault("role", Roles.TA);
         return u;
     }
 
@@ -39,7 +40,7 @@ public class AuthService {
         m.put("studentId",    u.studentId    != null ? u.studentId    : "");
         m.put("email",        u.email        != null ? u.email        : "");
         m.put("passwordHash", u.passwordHash != null ? u.passwordHash : "");
-        m.put("role",         u.role         != null ? u.role         : "TA");
+        m.put("role",         u.role         != null ? u.role         : Roles.TA);
         return m;
     }
 
@@ -107,5 +108,10 @@ public class AuthService {
         }
         if (!found) throw new IllegalStateException("User record not found");
         store.writeMaps(USERS_JSON, rows);
+    /** All registered users (for admin views). */
+    public List<User> listAllUsers() throws IOException {
+        return store.readMaps(USERS_JSON).stream()
+                    .map(AuthService::mapToUser)
+                    .collect(Collectors.toList());
     }
 }

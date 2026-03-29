@@ -17,6 +17,7 @@ mkdir "%OUT%"
 
 echo [2/4] Compiling...
 javac -source 11 -target 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" "%SRC%\com\bupt\ta\model\User.java" "%SRC%\com\bupt\ta\model\EducationEntry.java" "%SRC%\com\bupt\ta\model\ApplicantProfile.java" "%SRC%\com\bupt\ta\service\FileStore.java" "%SRC%\com\bupt\ta\service\AuthService.java" "%SRC%\com\bupt\ta\service\ProfileService.java" "%SRC%\com\bupt\ta\servlet\BaseServlet.java" "%SRC%\com\bupt\ta\servlet\LoginServlet.java" "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" "%SRC%\com\bupt\ta\servlet\ProfileServlet.java" "%SRC%\com\bupt\ta\servlet\CvDownloadServlet.java" "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" "%SRC%\com\bupt\ta\servlet\ResetPasswordServlet.java"
+javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" "%SRC%\com\bupt\ta\model\Roles.java" "%SRC%\com\bupt\ta\model\User.java" "%SRC%\com\bupt\ta\model\ApplicantProfile.java" "%SRC%\com\bupt\ta\service\FileStore.java" "%SRC%\com\bupt\ta\service\AuthService.java" "%SRC%\com\bupt\ta\service\ProfileService.java" "%SRC%\com\bupt\ta\servlet\BaseServlet.java" "%SRC%\com\bupt\ta\servlet\AdminServlet.java" "%SRC%\com\bupt\ta\servlet\LoginServlet.java" "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" "%SRC%\com\bupt\ta\servlet\ProfileServlet.java" "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" "%SRC%\com\bupt\ta\servlet\ResetPasswordServlet.java"
 
 if %ERRORLEVEL% neq 0 ( echo [ERROR] Compilation failed. ^& exit /b 1 )
 

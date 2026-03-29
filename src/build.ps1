@@ -1,4 +1,4 @@
-﻿# Build script for TA Recruitment System
+# Build script for TA Recruitment System
 # Run from the src\ folder:  .\build.ps1
 
 $JAVAC       = "D:\Apps\OpenJDKs\OpenJDK21.0.2\bin\javac.exe"
@@ -19,12 +19,14 @@ New-Item -ItemType Directory -Force -Path $OUTBIN | Out-Null
 
 Write-Host "[2/4] Compiling..."
 $sources = @(
+    "$SRC\com\bupt\ta\model\Roles.java",
     "$SRC\com\bupt\ta\model\User.java",
     "$SRC\com\bupt\ta\model\ApplicantProfile.java",
     "$SRC\com\bupt\ta\service\FileStore.java",
     "$SRC\com\bupt\ta\service\AuthService.java",
     "$SRC\com\bupt\ta\service\ProfileService.java",
     "$SRC\com\bupt\ta\servlet\BaseServlet.java",
+    "$SRC\com\bupt\ta\servlet\AdminServlet.java",
     "$SRC\com\bupt\ta\servlet\LoginServlet.java",
     "$SRC\com\bupt\ta\servlet\RegisterServlet.java",
     "$SRC\com\bupt\ta\servlet\LogoutServlet.java",
@@ -32,7 +34,7 @@ $sources = @(
     "$SRC\com\bupt\ta\servlet\ForgotPasswordServlet.java",
     "$SRC\com\bupt\ta\servlet\ResetPasswordServlet.java"
 )
-& $JAVAC -source 11 -target 11 -encoding UTF-8 -cp $SERVLET_JAR -d $OUTBIN @sources
+& $JAVAC --release 11 -encoding UTF-8 -cp $SERVLET_JAR -d $OUTBIN @sources
 if ($LASTEXITCODE -ne 0) { Write-Host "[ERROR] Compilation failed."; exit 1 }
 
 Write-Host "[3/4] Assembling WAR..."
