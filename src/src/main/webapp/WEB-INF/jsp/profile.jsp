@@ -25,8 +25,19 @@
   }
   String def = "";
 %>
+<<<<<<< Updated upstream
 <div class="page--top">
   <div class="container">
+=======
+<div class="card card-wide">
+  <div class="top">
+    <h1>Create / edit profile</h1>
+    <div style="display:flex;gap:10px;align-items:center;">
+      <a class="btn-secondary" href="${pageContext.request.contextPath}/job">Browse jobs</a>
+      <a class="btn-secondary" href="${pageContext.request.contextPath}/logout">Log out</a>
+    </div>
+  </div>
+>>>>>>> Stashed changes
 
     <!-- Header -->
     <div class="page-header page-header--sm">
