@@ -9,7 +9,7 @@ The project aims to develop a **Teaching Assistant Recruitment System** for BUPT
 
 The current TA recruitment process mainly relies on email and Excel files, which may lead to fragmented information, repeated manual work, and difficulty in tracking applications. This project proposes a lightweight recruitment system that allows:
 
-- **TA Applicants** to register, create profiles, upload CVs, browse job postings, and submit applications online
+- **TA Applicants** to register, create profiles, upload CVs, browse job postings, submit applications, and track application status online
 - **Module Organisers** to post TA jobs and review incoming applications
 - **Administrators** to monitor overall recruitment information and workload
 
@@ -46,17 +46,20 @@ Recruitment-System-for-TA/
 │   │   │   │   ├── User.java
 │   │   │   │   ├── EducationEntry.java   # One row of education background
 │   │   │   │   └── ApplicantProfile.java # Applicant profile + CV metadata
+│   │   │   │   └── Application.java      # TA job application record
 │   │   │   ├── service/           # Business logic & file persistence
 │   │   │   │   ├── FileStore.java       # Hand-rolled JSON read/write
 │   │   │   │   ├── AuthService.java     # Register / Login / updateUserBasics
 │   │   │   │   └── ProfileService.java  # Profile CRUD (incl. education JSON)
+│   │   │   └── ApplicationService.java # Application CRUD + status update
 │   │   │   └── servlet/           # HTTP request handlers
 │   │   │       ├── BaseServlet.java
 │   │   │       ├── AdminServlet.java
 │   │   │       ├── LoginServlet.java
 │   │   │       ├── RegisterServlet.java
 │   │   │       ├── LogoutServlet.java
-│   │   │       ├── ProfileServlet.java    # Multipart: profile + CV upload
+│   │   │       ├── ProfileServlet.java        # Multipart: profile + CV upload
+│   │       ├── ApplicationServlet.java    # Application status + filter
 │   │   │       ├── CvDownloadServlet.java # Serve uploaded CV (logged-in user)
 │   │   │       ├── ForgotPasswordServlet.java
 │   │   │       └── ResetPasswordServlet.java
@@ -68,17 +71,19 @@ Recruitment-System-for-TA/
 │   │           ├── data/          # Runtime data files (JSON + uploaded CVs)
 │   │           │   ├── users.json
 │   │           │   ├── profiles.json
+│   │           │   ├── applications.json
 │   │           │   └── cv/{userId}/...    # Created at runtime when users upload CVs
 │   │           └── jsp/           # JSP view templates
 │   │               ├── admin/
 │   │               │   └── dashboard.jsp
 │   │               ├── login.jsp
 │   │               ├── register.jsp
-│   │               ├── profile.jsp        # English UI: profile + CV upload
+│   │               ├── profile.jsp              # Profile + CV upload
+│   │               ├── application-status.jsp   # My Applications page
 │   │               ├── forgot-password.jsp
 │   │               └── reset-password.jsp
-│   ├── compile.bat                # Recommended Windows build (one javac pass, all .java)
-│   ├── build.ps1                  # PowerShell build (edit JDK/Tomcat paths)
+│   ├── run.ps1                    # One-command: compile + package + deploy + start Tomcat
+│   ├── compile.bat                # Legacy Windows build script
 │   └── pom.xml                    # Maven reference (optional, IDE use only)
 └── README.md
 ```
@@ -191,6 +196,7 @@ On save, **`AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/cv` | GET | Download / open uploaded CV (logged-in user only) |
 | `/forgot-password` | GET / POST | Forgot password (demo placeholder) |
 | `/reset-password` | GET / POST | Reset password (demo placeholder) |
+| `/applications` | GET | View and filter own application statuses |
 | `/admin` | GET | Administrator dashboard (requires `role` = `ADMIN`) |
 
 The repository includes a **development seed** administrator in `src/src/main/webapp/WEB-INF/data/users.json`: email **`admin@bupt.local`**, password **`admin123`**. Change or remove this account in production; new registrations get `role` = `TA`.
@@ -205,6 +211,7 @@ All data is stored as JSON arrays in plain text files under `WEB-INF/data/`:
 |---|---|
 | `users.json` | Registered user accounts (`id`, `name`, `studentId`, `email`, `passwordHash`, `role`) |
 | `profiles.json` | Applicant profiles per `userId`: personal fields (`fullName`, `gender`, `degree`, `major`, `studentId`, `idCard`, `phone`, `email`), `educationJson` (array of education objects), `courses` (multiline text), `freeTime`, `skills`, `cvFileName`. Legacy keys (`degreeProgramme`, `yearOfStudy`, `availability`, `selfIntro`) may still exist for older rows. |
+| `applications.json` | Application records per user: `id`, `userId`, `moduleName`, `moduleCode`, `role`, `applicationDate`, `status` (Pending/Accepted/Rejected), `feedback` |
 | `cv/{userId}/…` | Uploaded CV files (created at runtime; not checked into Git) |
 
 There is **no database**. The `FileStore` class reads and writes these files directly using a hand-rolled JSON parser (no external library). `FileStore.toJsonArrayOfObjects` serialises nested education data inside `educationJson`.

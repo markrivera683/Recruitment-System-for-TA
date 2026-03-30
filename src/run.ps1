@@ -48,7 +48,10 @@ $sources = @(
     "$SRC\com\bupt\ta\servlet\LogoutServlet.java",
     "$SRC\com\bupt\ta\servlet\ProfileServlet.java",
     "$SRC\com\bupt\ta\servlet\ForgotPasswordServlet.java",
-    "$SRC\com\bupt\ta\servlet\ResetPasswordServlet.java"
+    "$SRC\com\bupt\ta\servlet\ResetPasswordServlet.java",
+    "$SRC\com\bupt\ta\model\Application.java",
+    "$SRC\com\bupt\ta\service\ApplicationService.java",
+    "$SRC\com\bupt\ta\servlet\ApplicationServlet.java"
 )
 & $JAVAC -source 11 -target 11 -encoding UTF-8 -cp $SERVLET_JAR -d $OUTBIN @sources
 if ($LASTEXITCODE -ne 0) { Write-Host '[ERROR] Compilation failed.'; exit 1 }
