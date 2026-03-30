@@ -188,6 +188,7 @@ There is **no database**. The `FileStore` class reads and writes these files dir
 
 **Note:**
 Commits under the name "Chen Qinchun" correspond to the GitHub account **@S01ZZ**, due to local Git configuration (e.g., GitHub Desktop). All such contributions are made by the same contributor.
+
 ---
 
 ## Agile Development
