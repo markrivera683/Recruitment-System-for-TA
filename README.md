@@ -1,4 +1,4 @@
-# Recruitment System for TA
+﻿# Recruitment System for TA
 
 This repository contains the group project for **EBU6304 Software Engineering**.
 The project aims to develop a **Teaching Assistant Recruitment System** for BUPT International School to improve the efficiency of the TA recruitment process.
@@ -9,7 +9,7 @@ The project aims to develop a **Teaching Assistant Recruitment System** for BUPT
 
 The current TA recruitment process mainly relies on email and Excel files, which may lead to fragmented information, repeated manual work, and difficulty in tracking applications. This project proposes a lightweight recruitment system that allows:
 
-- **TA Applicants** to register, create profiles, upload CVs, browse job postings, and submit applications online
+- **TA Applicants** to register, create profiles, upload CVs, browse job postings, submit applications, and track application status online
 - **Module Organisers** to post TA jobs and review incoming applications
 - **Administrators** to monitor overall recruitment information and workload
 
@@ -25,7 +25,7 @@ The system is developed following **Agile software development methods**.
 | Web Framework | Java Servlet 4.0 / JSP 2.3 |
 | Server | Apache Tomcat 9.x |
 | Data Storage | Plain JSON files (`.json`) — no database |
-| Build | Manual compilation (`compile.bat` / `build.ps1`: `javac` + `jar`) |
+| Build | Manual compilation (`run.ps1`: one-command compile + deploy + start) |
 | Dependencies | `javax.servlet-api 4.0.1` (provided by Tomcat), `jstl 1.2` |
 
 ---
@@ -46,17 +46,20 @@ Recruitment-System-for-TA/
 │   │   │   │   ├── User.java
 │   │   │   │   ├── EducationEntry.java   # One row of education background
 │   │   │   │   └── ApplicantProfile.java # Applicant profile + CV metadata
+│   │   │   │   └── Application.java      # TA job application record
 │   │   │   ├── service/           # Business logic & file persistence
 │   │   │   │   ├── FileStore.java       # Hand-rolled JSON read/write
 │   │   │   │   ├── AuthService.java     # Register / Login / updateUserBasics
 │   │   │   │   └── ProfileService.java  # Profile CRUD (incl. education JSON)
+│   │   │   └── ApplicationService.java # Application CRUD + status update
 │   │   │   └── servlet/           # HTTP request handlers
 │   │   │       ├── BaseServlet.java
 │   │   │       ├── AdminServlet.java
 │   │   │       ├── LoginServlet.java
 │   │   │       ├── RegisterServlet.java
 │   │   │       ├── LogoutServlet.java
-│   │   │       ├── ProfileServlet.java    # Multipart: profile + CV upload
+│   │   │       ├── ProfileServlet.java        # Multipart: profile + CV upload
+│   │       ├── ApplicationServlet.java    # Application status + filter
 │   │   │       ├── CvDownloadServlet.java # Serve uploaded CV (logged-in user)
 │   │   │       ├── ForgotPasswordServlet.java
 │   │   │       └── ResetPasswordServlet.java
@@ -68,17 +71,19 @@ Recruitment-System-for-TA/
 │   │           ├── data/          # Runtime data files (JSON + uploaded CVs)
 │   │           │   ├── users.json
 │   │           │   ├── profiles.json
+│   │           │   ├── applications.json
 │   │           │   └── cv/{userId}/...    # Created at runtime when users upload CVs
 │   │           └── jsp/           # JSP view templates
 │   │               ├── admin/
 │   │               │   └── dashboard.jsp
 │   │               ├── login.jsp
 │   │               ├── register.jsp
-│   │               ├── profile.jsp        # English UI: profile + CV upload
+│   │               ├── profile.jsp              # Profile + CV upload
+│   │               ├── application-status.jsp   # My Applications page
 │   │               ├── forgot-password.jsp
 │   │               └── reset-password.jsp
-│   ├── compile.bat                # Recommended Windows build (one javac pass, all .java)
-│   ├── build.ps1                  # PowerShell build (edit JDK/Tomcat paths)
+│   ├── run.ps1                    # One-command: compile + package + deploy + start Tomcat
+│   ├── compile.bat                # Legacy Windows build script
 │   └── pom.xml                    # Maven reference (optional, IDE use only)
 └── README.md
 ```
@@ -96,36 +101,74 @@ Before building or running the project, ensure the following are installed:
 
 ---
 
-## Build Instructions (Manual Compilation)
+## Build & Run Instructions
 
-All commands below are run from the **`src\`** directory. You need **JDK 11+** (`javac`, `jar` on `PATH`) and **Apache Tomcat 9.x** (for `lib\servlet-api.jar` at compile time and for deployment).
+The recommended way is **one command**: `run.ps1` compiles all sources, packages the WAR, deploys to Tomcat, starts the server, and opens the browser automatically.
 
-### Option A — `compile.bat` (recommended on Windows)
+### Prerequisites
 
-1. Edit **`src\compile.bat`** and set `TOMCAT_HOME` to your Tomcat install folder (must contain `lib\servlet-api.jar`).
-2. From a terminal:
+| Tool | Version | Notes |
+|---|---|---|
+| JDK | 11 or above | `javac` and `jar` must be accessible |
+| Apache Tomcat | 9.x | Provides `servlet-api.jar` and the runtime |
 
-```bat
-cd src
-compile.bat
-```
-
-The script **cleans**, runs **one** `javac --release 11` pass over **all** `.java` files (including `Roles`, `EducationEntry`, `ProfileServlet`, `CvDownloadServlet`, etc.), copies `webapp` into `out\`, seeds empty JSON if needed, and produces **`ta-recruitment.war`** in `src\`.
-
-3. Copy `ta-recruitment.war` to `%TOMCAT_HOME%\webapps\` (remove an older exploded `webapps\ta-recruitment` folder if Tomcat already deployed a previous version).
-4. Start Tomcat (`bin\startup.bat`) and open **http://localhost:8080/ta-recruitment/login**.
-
-> **Important:** Do not split compilation across multiple `javac` runs with different file lists — the project will fail to compile or the WAR will miss classes. Keep a single pass listing every source file (as in `compile.bat`).
-
-### Option B — `build.ps1`
-
-Edit the JDK and Tomcat paths at the top of **`src\build.ps1`**, then from `src\`:
+Edit the two path variables at the top of **`src\run.ps1`** to match your machine:
 
 ```powershell
-.\build.ps1
+$JDK_HOME = 'D:\Apps\OpenJDKs\OpenJDK21.0.2'          # your JDK path
+$TOMCAT   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115' # your Tomcat path
 ```
 
-It performs the same steps as `compile.bat` (including `EducationEntry.java` and `CvDownloadServlet.java`).
+### Run (one command)
+
+Open PowerShell and run:
+
+```powershell
+& 'C:\path\to\Recruitment-System-for-TA\src\run.ps1'
+```
+
+Or from inside the `src\` folder:
+
+```powershell
+.\run.ps1
+```
+
+The script will:
+1. **Clean** the previous build output
+2. **Compile** all 14 Java source files with `javac -source 11`
+3. **Package** `webapp/` + compiled classes into `ta-recruitment.war`
+4. **Deploy** the WAR to `%TOMCAT%\webapps\`
+5. **Start** Tomcat (`startup.bat` with `CATALINA_HOME` set automatically)
+6. **Open** `http://localhost:8080/ta-recruitment/login` in the default browser
+
+### Stop Tomcat
+
+```powershell
+Stop-Process -Name java -Force
+```
+
+### Source files compiled
+
+All files in a single `javac` pass (order matters for dependencies):
+
+```
+model/Roles.java
+model/EducationEntry.java
+model/User.java
+model/ApplicantProfile.java
+service/FileStore.java
+service/AuthService.java
+service/ProfileService.java
+servlet/BaseServlet.java
+servlet/LoginServlet.java
+servlet/RegisterServlet.java
+servlet/LogoutServlet.java
+servlet/ProfileServlet.java
+servlet/ForgotPasswordServlet.java
+servlet/ResetPasswordServlet.java
+```
+
+> **Note:** The warning `bootstrap classpath not set with -source 11` appears when compiling with JDK 17+ targeting Java 11. It is harmless and does not affect the build.
 
 ---
 
@@ -153,6 +196,7 @@ On save, **`AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/cv` | GET | Download / open uploaded CV (logged-in user only) |
 | `/forgot-password` | GET / POST | Forgot password (demo placeholder) |
 | `/reset-password` | GET / POST | Reset password (demo placeholder) |
+| `/applications` | GET | View and filter own application statuses |
 | `/admin` | GET | Administrator dashboard (requires `role` = `ADMIN`) |
 
 The repository includes a **development seed** administrator in `src/src/main/webapp/WEB-INF/data/users.json`: email **`admin@bupt.local`**, password **`admin123`**. Change or remove this account in production; new registrations get `role` = `TA`.
@@ -167,6 +211,7 @@ All data is stored as JSON arrays in plain text files under `WEB-INF/data/`:
 |---|---|
 | `users.json` | Registered user accounts (`id`, `name`, `studentId`, `email`, `passwordHash`, `role`) |
 | `profiles.json` | Applicant profiles per `userId`: personal fields (`fullName`, `gender`, `degree`, `major`, `studentId`, `idCard`, `phone`, `email`), `educationJson` (array of education objects), `courses` (multiline text), `freeTime`, `skills`, `cvFileName`. Legacy keys (`degreeProgramme`, `yearOfStudy`, `availability`, `selfIntro`) may still exist for older rows. |
+| `applications.json` | Application records per user: `id`, `userId`, `moduleName`, `moduleCode`, `role`, `applicationDate`, `status` (Pending/Accepted/Rejected), `feedback` |
 | `cv/{userId}/…` | Uploaded CV files (created at runtime; not checked into Git) |
 
 There is **no database**. The `FileStore` class reads and writes these files directly using a hand-rolled JSON parser (no external library). `FileStore.toJsonArrayOfObjects` serialises nested education data inside `educationJson`.

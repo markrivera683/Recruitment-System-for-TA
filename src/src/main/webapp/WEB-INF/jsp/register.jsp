@@ -1,37 +1,70 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <title>Register - TA Recruitment</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — TA Recruitment</title>
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
-<div class="card">
-  <h1>TA Recruitment</h1>
-  <h2>Register</h2>
-  <% String error = (String) request.getAttribute("error"); if (error != null) { %>
-  <div class="alert"><%= error %></div>
-  <% } %>
-  <form method="post" action="${pageContext.request.contextPath}/register">
-    <label>Name</label>
-    <input name="name" required />
+<div class="page">
+  <div class="container">
 
-    <label>Student ID</label>
-    <input name="studentId" />
+    <!-- Header -->
+    <div class="page-header">
+      <div class="logo-wrap">
+        <div class="logo">
+          <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+        </div>
+      </div>
+      <h1 class="page-title">Register as TA</h1>
+      <p class="page-subtitle">Create your applicant account</p>
+    </div>
 
-    <label>Email</label>
-    <input name="email" type="email" required />
+    <!-- Card -->
+    <div class="card">
+      <% String error = (String) request.getAttribute("error"); if (error != null) { %>
+        <div class="alert alert-error"><%= error %></div>
+      <% } %>
 
-    <label>Password</label>
-    <input name="password" type="password" required />
+      <form class="form" method="post" action="${pageContext.request.contextPath}/register">
+        <div class="field">
+          <label for="name">Full Name</label>
+          <input id="name" name="name" type="text" placeholder="John Doe" required />
+        </div>
 
-    <label>Confirm Password</label>
-    <input name="confirm" type="password" required />
+        <div class="field">
+          <label for="studentId">Student ID</label>
+          <input id="studentId" name="studentId" type="text" placeholder="123456789" />
+        </div>
 
-    <button type="submit">Create account</button>
-  </form>
-  <div class="row">
-    <a href="${pageContext.request.contextPath}/login">Back to login</a>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" name="email" type="email" placeholder="student@university.edu" required />
+        </div>
+
+        <div class="field">
+          <label for="password">Password</label>
+          <input id="password" name="password" type="password" placeholder="Enter your password" required />
+        </div>
+
+        <div class="field">
+          <label for="confirm">Confirm Password</label>
+          <input id="confirm" name="confirm" type="password" placeholder="Confirm your password" required />
+        </div>
+
+        <button type="submit" class="btn btn-primary">Register</button>
+      </form>
+
+      <div class="card-footer">
+        <a class="back-link" href="${pageContext.request.contextPath}/login">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to login
+        </a>
+      </div>
+    </div>
+
   </div>
 </div>
 </body>
