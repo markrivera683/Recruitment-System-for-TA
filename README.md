@@ -185,7 +185,9 @@ There is **no database**. The `FileStore` class reads and writes these files dir
 | S01ZZ | Qinchun_Chen | 231225410 | Chen Qinchun (陈沁纯) |
 | g726unknown | Yifeng_Zhang | 231226174 | Zhang Yifeng (张毅峰) |
 | negan525 | WeiJia_Xiao | 231226233 | Xiao Weijia (肖炜佳) |
-
+**Note:**
+Due to local Git configuration, some commits may appear under contributors' real names.  
+For example, commits under "Chen Qinchun" correspond to GitHub account **@S01ZZ**.
 ---
 
 ## Agile Development
