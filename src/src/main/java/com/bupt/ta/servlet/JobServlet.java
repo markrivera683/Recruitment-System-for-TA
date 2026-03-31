@@ -10,14 +10,13 @@ import com.bupt.ta.service.JobService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 
 @WebServlet("/job")
-public class JobServlet extends HttpServlet {
+public class JobServlet extends BaseServlet {
 
     private JobService jobService;
 
@@ -30,6 +29,11 @@ public class JobServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        if (currentUser(req) == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
 
         String id = req.getParameter("id");
 

@@ -25,19 +25,8 @@
   }
   String def = "";
 %>
-<<<<<<< Updated upstream
 <div class="page--top">
   <div class="container">
-=======
-<div class="card card-wide">
-  <div class="top">
-    <h1>Create / edit profile</h1>
-    <div style="display:flex;gap:10px;align-items:center;">
-      <a class="btn-secondary" href="${pageContext.request.contextPath}/job">Browse jobs</a>
-      <a class="btn-secondary" href="${pageContext.request.contextPath}/logout">Log out</a>
-    </div>
-  </div>
->>>>>>> Stashed changes
 
     <!-- Header -->
     <div class="page-header page-header--sm">
@@ -56,10 +45,26 @@
       <!-- Top bar: title + logout -->
       <div class="top-bar">
         <span style="font-size:.9375rem;font-weight:600;color:#0f172a;">My Profile</span>
-        <a class="btn-ghost" href="${pageContext.request.contextPath}/logout">
-          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-          Logout
-        </a>
+        <div style="display:flex;gap:.5rem;align-items:center;">
+          <a class="btn-ghost" href="${pageContext.request.contextPath}/job" style="white-space:nowrap;">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 18V5a2 2 0 0 1 2-2h10"/>
+              <path d="M9 18a2 2 0 0 0 2 2h10"/>
+              <path d="M3 11h6"/>
+              <path d="M3 15h6"/>
+              <path d="M3 7h6"/>
+            </svg>
+            Job List
+          </a>
+          <a class="btn-ghost" href="${pageContext.request.contextPath}/logout" style="white-space:nowrap;">
+            <svg viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Logout
+          </a>
+        </div>
       </div>
 
       <% String error = (String) request.getAttribute("error"); if (error != null) { %>
