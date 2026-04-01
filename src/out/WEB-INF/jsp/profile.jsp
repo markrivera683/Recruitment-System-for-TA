@@ -16,6 +16,8 @@
 <%
   ApplicantProfile p = (ApplicantProfile) request.getAttribute("profile");
   User u = (User) request.getAttribute("user");
+  Boolean editableObj = (Boolean) request.getAttribute("editable");
+  boolean editable = editableObj == null || editableObj;
   if (p == null) p = new ApplicantProfile();
   @SuppressWarnings("unchecked")
   List<EducationEntry> eduList = (List<EducationEntry>) request.getAttribute("educationList");
@@ -46,6 +48,11 @@
       <div class="top-bar">
         <span style="font-size:.9375rem;font-weight:600;color:#0f172a;">My Profile</span>
         <div style="display:flex;gap:.5rem;align-items:center;">
+          <% if (!editable) { %>
+          <a class="btn-ghost" href="${pageContext.request.contextPath}/profile?edit=1" style="white-space:nowrap;">
+            Edit
+          </a>
+          <% } %>
           <a class="btn-ghost" href="${pageContext.request.contextPath}/job" style="white-space:nowrap;">
             <svg viewBox="0 0 24 24">
               <path d="M9 18V5a2 2 0 0 1 2-2h10"/>
@@ -70,10 +77,14 @@
       <% String error = (String) request.getAttribute("error"); if (error != null) { %>
         <div class="alert alert-error"><%= error %></div>
       <% } %>
+      <% if (!editable) { %>
+        <div class="alert" style="margin-bottom:.875rem;">Profile is in view mode. Click <strong>Edit</strong> to update your information.</div>
+      <% } %>
 
       <form class="form" method="post"
             action="${pageContext.request.contextPath}/profile"
-            enctype="multipart/form-data">
+            enctype="multipart/form-data"
+            data-editable="<%= editable ? "1" : "0" %>">
 
         <!-- Personal Information -->
         <p class="section-title">Personal Information</p>
@@ -159,7 +170,7 @@
             <% } %>
           </tbody>
         </table>
-        <button type="button" onclick="addEduRow()"
+        <button id="add-edu-btn" type="button" onclick="addEduRow()"
                 style="margin-top:.5rem;background:none;border:1px dashed #cbd5e1;border-radius:.5rem;
                        width:100%;padding:.5rem;font-size:.8125rem;color:#64748b;cursor:pointer;
                        font-family:inherit;transition:border-color .15s,color .15s;"
@@ -223,7 +234,9 @@
           <p style="font-size:.75rem;color:#94a3b8;margin-top:.25rem;">PDF, DOC or DOCX &mdash; max 10 MB</p>
         </div>
 
+        <% if (editable) { %>
         <button type="submit" class="btn btn-primary" style="margin-top:.5rem;">Save Profile</button>
+        <% } %>
       </form>
     </div>
 
@@ -251,6 +264,32 @@ function removeEduRow(btn) {
     btn.closest('tr').remove();
   }
 }
+
+(function () {
+  var form = document.querySelector('form[data-editable]');
+  if (!form || form.getAttribute('data-editable') === '1') return;
+  form.querySelectorAll('input, textarea, select, button').forEach(function (el) {
+    var isAllowedButton = el.id === 'add-edu-btn';
+    if (isAllowedButton) {
+      el.style.display = 'none';
+      return;
+    }
+    if (el.type === 'button') {
+      el.style.display = 'none';
+      return;
+    }
+    if (el.type === 'file') {
+      el.disabled = true;
+      var upload = document.getElementById('upload-label');
+      if (upload) {
+        upload.style.opacity = '.6';
+        upload.style.cursor = 'not-allowed';
+      }
+      return;
+    }
+    el.setAttribute('disabled', 'disabled');
+  });
+})();
 </script>
 </body>
 </html>
