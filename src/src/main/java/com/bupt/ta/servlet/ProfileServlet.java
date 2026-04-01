@@ -46,10 +46,13 @@ public class ProfileServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        ApplicantProfile p = profiles.getByUserId(u.id).orElse(new ApplicantProfile(u.id));
+        Optional<ApplicantProfile> existing = profiles.getByUserId(u.id);
+        ApplicantProfile p = existing.orElse(new ApplicantProfile(u.id));
+        boolean editable = !existing.isPresent() || "1".equals(req.getParameter("edit"));
         mergeDefaultsFromUser(u, p);
         req.setAttribute("profile", p);
         req.setAttribute("user", u);
+        req.setAttribute("editable", editable);
         List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
         if (edus.isEmpty()) {
             edus = new ArrayList<>();
@@ -134,6 +137,7 @@ public class ProfileServlet extends BaseServlet {
             req.setAttribute("error", ex.getMessage());
             req.setAttribute("profile", p);
             req.setAttribute("user", u);
+            req.setAttribute("editable", true);
             List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
             if (edus.isEmpty()) {
                 edus = new ArrayList<>();
