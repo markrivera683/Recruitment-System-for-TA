@@ -4,28 +4,54 @@
 # ============================================================
 #  CONFIGURE THESE TWO PATHS FOR YOUR MACHINE
 # ============================================================
-$JDK_HOME = 'D:\Apps\OpenJDKs\OpenJDK21.0.2'
-$TOMCAT   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115'
+$DefaultJdkHome = 'D:\Apps\OpenJDKs\OpenJDK11.0.29'
+$DefaultTomcat   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115'
+
+$JDK_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { $DefaultJdkHome }
+$TOMCAT   = if ($env:CATALINA_HOME) { $env:CATALINA_HOME } else { $DefaultTomcat }
 # ============================================================
 
-$JAVAC       = "$JDK_HOME\bin\javac.exe"
-$JAR         = "$JDK_HOME\bin\jar.exe"
+function Get-Executable($name, $defaultPath) {
+    if (Test-Path $defaultPath) { return $defaultPath }
+    $cmd = Get-Command $name -ErrorAction SilentlyContinue
+    if ($cmd) { return $cmd.Source }
+    return $null
+}
+
+$JAVAC       = Get-Executable 'javac.exe' "$JDK_HOME\bin\javac.exe"
+$JAR         = Get-Executable 'jar.exe' "$JDK_HOME\bin\jar.exe"
 $SERVLET_JAR = "$TOMCAT\lib\servlet-api.jar"
 
-$env:JAVA_HOME     = $JDK_HOME
-$env:CATALINA_HOME = $TOMCAT
+if ($JAVAC) { $env:JAVA_HOME = Split-Path -Parent (Split-Path -Parent $JAVAC) }
+if ($TOMCAT) { $env:CATALINA_HOME = $TOMCAT }
+
+Write-Host "Resolved JAVA_HOME=$env:JAVA_HOME"
+Write-Host "Resolved CATALINA_HOME=$env:CATALINA_HOME"
 
 # --- Validate paths ---
 foreach ($p in @($JAVAC, $JAR, $SERVLET_JAR, "$TOMCAT\bin\startup.bat")) {
     if (-not (Test-Path $p)) { Write-Host "[ERROR] Not found: $p"; exit 1 }
 }
 
-$BASE   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$SRC    = "$BASE\src\main\java"
-$WEB    = "$BASE\src\main\webapp"
-$OUT    = "$BASE\out"
-$OUTBIN = "$OUT\WEB-INF\classes"
-$WAR    = "$BASE\ta-recruitment.war"
+$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
+$POSSIBLE_BASES = @(
+    $SCRIPT_DIR,
+    (Split-Path $SCRIPT_DIR -Parent)
+)
+$BASE = $POSSIBLE_BASES | Where-Object {
+    (Test-Path (Join-Path $_ 'src\main\java')) -and (Test-Path (Join-Path $_ 'src\main\webapp'))
+} | Select-Object -First 1
+
+if (-not $BASE) {
+    Write-Host "[WARN] Could not locate expected repository root. Using script directory as base: $SCRIPT_DIR"
+    $BASE = $SCRIPT_DIR
+}
+
+$SRC    = Join-Path $BASE 'src\main\java'
+$WEB    = Join-Path $BASE 'src\main\webapp'
+$OUT    = Join-Path $BASE 'out'
+$OUTBIN = Join-Path $OUT 'WEB-INF\classes'
+$WAR    = Join-Path $BASE 'ta-recruitment.war'
 
 # --- 1. Clean ---
 Write-Host '[1/4] Cleaning...'
@@ -34,25 +60,11 @@ New-Item -ItemType Directory -Force -Path $OUTBIN | Out-Null
 
 # --- 2. Compile ---
 Write-Host '[2/4] Compiling...'
-$sources = @(
-    "$SRC\com\bupt\ta\model\Roles.java",
-    "$SRC\com\bupt\ta\model\EducationEntry.java",
-    "$SRC\com\bupt\ta\model\User.java",
-    "$SRC\com\bupt\ta\model\ApplicantProfile.java",
-    "$SRC\com\bupt\ta\service\FileStore.java",
-    "$SRC\com\bupt\ta\service\AuthService.java",
-    "$SRC\com\bupt\ta\service\ProfileService.java",
-    "$SRC\com\bupt\ta\servlet\BaseServlet.java",
-    "$SRC\com\bupt\ta\servlet\LoginServlet.java",
-    "$SRC\com\bupt\ta\servlet\RegisterServlet.java",
-    "$SRC\com\bupt\ta\servlet\LogoutServlet.java",
-    "$SRC\com\bupt\ta\servlet\ProfileServlet.java",
-    "$SRC\com\bupt\ta\servlet\ForgotPasswordServlet.java",
-    "$SRC\com\bupt\ta\servlet\ResetPasswordServlet.java",
-    "$SRC\com\bupt\ta\model\Application.java",
-    "$SRC\com\bupt\ta\service\ApplicationService.java",
-    "$SRC\com\bupt\ta\servlet\ApplicationServlet.java"
-)
+$sources = Get-ChildItem -Path $SRC -Recurse -Filter *.java | Sort-Object FullName | Select-Object -ExpandProperty FullName
+if (-not $sources) {
+    Write-Host "[ERROR] No Java source files found in $SRC"
+    exit 1
+}
 & $JAVAC -source 11 -target 11 -encoding UTF-8 -cp $SERVLET_JAR -d $OUTBIN @sources
 if ($LASTEXITCODE -ne 0) { Write-Host '[ERROR] Compilation failed.'; exit 1 }
 Write-Host "Compiled $($sources.Count) files OK"
