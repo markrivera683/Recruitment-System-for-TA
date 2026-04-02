@@ -1,11 +1,19 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="com.bupt.ta.model.Roles" %>
 <%@ page import="com.bupt.ta.model.User" %>
+<%@ page import="com.bupt.ta.model.Application" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.util.LinkedHashMap" %>
+<%@ page import="java.util.ArrayList" %>
+<%@ page import="java.util.Collections" %>
 <%
   @SuppressWarnings("unchecked")
   List<User> users = (List<User>) request.getAttribute("users");
   if (users == null) users = java.util.Collections.emptyList();
+  @SuppressWarnings("unchecked")
+  List<Application> applications = (List<Application>) request.getAttribute("applications");
+  if (applications == null) applications = java.util.Collections.emptyList();
 
   User admin = (User) session.getAttribute("user");
   String adminName = admin != null && admin.name != null && !admin.name.isEmpty() ? admin.name : "Admin";
@@ -22,6 +30,34 @@
   int totalTa = 0;
   for (User u : users) {
     if (Roles.TA.equals(u.role)) totalTa++;
+  }
+  int totalApplications = applications.size();
+  Map<String, Integer> statusMap = new LinkedHashMap<>();
+  statusMap.put("Pending", 0);
+  statusMap.put("Accepted", 0);
+  statusMap.put("Rejected", 0);
+  Map<String, Integer> moduleMap = new LinkedHashMap<>();
+  Map<String, Integer> monthMap = new LinkedHashMap<>();
+  for (Application a : applications) {
+    String status = a.status == null || a.status.trim().isEmpty() ? "Pending" : a.status.trim();
+    statusMap.put(status, statusMap.getOrDefault(status, 0) + 1);
+    String moduleName = a.moduleName == null || a.moduleName.trim().isEmpty() ? "Unknown Module" : a.moduleName.trim();
+    moduleMap.put(moduleName, moduleMap.getOrDefault(moduleName, 0) + 1);
+    String month = "Unknown";
+    if (a.applicationDate != null && a.applicationDate.length() >= 7) {
+      month = a.applicationDate.substring(0, 7);
+    }
+    monthMap.put(month, monthMap.getOrDefault(month, 0) + 1);
+  }
+  int totalJobs = moduleMap.size();
+  List<Map.Entry<String, Integer>> topModules = new ArrayList<>(moduleMap.entrySet());
+  Collections.sort(topModules, (a, b) -> Integer.compare(b.getValue(), a.getValue()));
+  if (topModules.size() > 5) topModules = topModules.subList(0, 5);
+  List<Map.Entry<String, Integer>> monthTrend = new ArrayList<>(monthMap.entrySet());
+  Collections.sort(monthTrend, (a, b) -> a.getKey().compareTo(b.getKey()));
+  int maxMonthCount = 1;
+  for (Map.Entry<String, Integer> e : monthTrend) {
+    if (e.getValue() > maxMonthCount) maxMonthCount = e.getValue();
   }
   String ctx = request.getContextPath();
 %>
@@ -69,34 +105,102 @@
           <h2 class="card-title">Total Jobs</h2>
           <div class="icon-wrap bg-green" aria-hidden="true">&#128188;</div>
         </div>
-        <div class="card-content"><div class="stat-value">0</div></div>
+        <div class="card-content"><div class="stat-value"><%= totalJobs %></div></div>
       </article>
       <article class="card">
         <div class="card-header">
           <h2 class="card-title">Total Applications</h2>
           <div class="icon-wrap bg-purple" aria-hidden="true">&#128221;</div>
         </div>
-        <div class="card-content"><div class="stat-value">0</div></div>
+        <div class="card-content"><div class="stat-value"><%= totalApplications %></div></div>
       </article>
+    </section>
+
+    <section class="card">
+      <div class="card-header"><h2 class="card-title">Application Status Analysis</h2></div>
+      <div class="card-content">
+        <p class="tooltip-small" style="margin-top:0">Real-time distribution from submitted applications.</p>
+        <div class="status-grid">
+          <div class="status-item">
+            <p class="tooltip-small status-label">Pending</p>
+            <p class="status-value"><%= statusMap.getOrDefault("Pending", 0) %></p>
+          </div>
+          <div class="status-item">
+            <p class="tooltip-small status-label">Accepted</p>
+            <p class="status-value text-green"><%= statusMap.getOrDefault("Accepted", 0) %></p>
+          </div>
+          <div class="status-item">
+            <p class="tooltip-small status-label">Rejected</p>
+            <p class="status-value text-red"><%= statusMap.getOrDefault("Rejected", 0) %></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-2">
+      <section class="card">
+        <div class="card-header"><h2 class="card-title">Top Modules by Applications</h2></div>
+        <div class="card-content">
+          <% if (topModules.isEmpty()) { %>
+            <p class="tooltip-small">No application data available.</p>
+          <% } else { %>
+          <table class="table">
+            <thead>
+              <tr><th>Module</th><th>Applications</th></tr>
+            </thead>
+            <tbody>
+              <% for (Map.Entry<String, Integer> item : topModules) { %>
+              <tr>
+                <td><%= item.getKey() %></td>
+                <td><span class="badge badge-open"><%= item.getValue() %></span></td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+          <% } %>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-header"><h2 class="card-title">Monthly Application Trend</h2></div>
+        <div class="card-content">
+          <% if (monthTrend.isEmpty()) { %>
+            <p class="tooltip-small">No trend data available.</p>
+          <% } else { %>
+          <div class="bar-list">
+            <% for (Map.Entry<String, Integer> m : monthTrend) {
+                 int width = (int) Math.round((m.getValue() * 100.0) / maxMonthCount);
+            %>
+            <div class="bar-row">
+              <div class="bar-meta"><span><%= m.getKey() %></span><span><%= m.getValue() %></span></div>
+              <div class="bar-track"><div class="bar-fill" style="width:<%= width %>%"></div></div>
+            </div>
+            <% } %>
+          </div>
+          <% } %>
+        </div>
+      </section>
     </section>
 
     <section class="card">
       <div class="card-header"><h2 class="card-title">TA Workload Overview</h2></div>
       <div class="card-content">
-        <p class="tooltip-small" style="margin-top:0">Sample preview (no backend data yet).</p>
         <table class="table">
           <thead>
-            <tr><th>TA Name</th><th>Assigned Jobs</th><th>Status</th></tr>
+            <tr><th>TA Name</th><th>Email</th><th>Role</th></tr>
           </thead>
           <tbody>
-            <tr><td>Alice Johnson</td><td>5</td><td><span class="badge badge-closed">Overloaded</span></td></tr>
-            <tr><td>Bob Smith</td><td>3</td><td><span class="badge badge-open">Normal</span></td></tr>
-            <tr><td>Carol Williams</td><td>1</td><td><span class="badge badge-active">Low Workload</span></td></tr>
-            <tr><td>David Brown</td><td>4</td><td><span class="badge badge-open">Normal</span></td></tr>
-            <tr><td>Emma Davis</td><td>6</td><td><span class="badge badge-closed">Overloaded</span></td></tr>
-            <tr><td>Frank Miller</td><td>2</td><td><span class="badge badge-active">Low Workload</span></td></tr>
-            <tr><td>Grace Wilson</td><td>3</td><td><span class="badge badge-open">Normal</span></td></tr>
-            <tr><td>Henry Moore</td><td>1</td><td><span class="badge badge-active">Low Workload</span></td></tr>
+            <% if (users.isEmpty()) { %>
+            <tr><td colspan="3" class="tooltip-small">No user data available.</td></tr>
+            <% } else { %>
+            <% for (User u : users) { %>
+            <tr>
+              <td><%= u.name == null ? "-" : u.name %></td>
+              <td><%= u.email == null ? "-" : u.email %></td>
+              <td><span class="badge badge-active"><%= u.role == null ? "-" : u.role %></span></td>
+            </tr>
+            <% } %>
+            <% } %>
           </tbody>
         </table>
       </div>
