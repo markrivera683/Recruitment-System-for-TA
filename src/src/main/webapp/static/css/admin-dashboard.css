@@ -165,6 +165,9 @@ body {
   gap: 0.25rem;
 }
 .button:hover { background:#f8fafc; }
+.button-primary:hover { background:#1d4ed8; color:#fff; }
+.button-success:hover { background:#15803d; color:#fff; }
+.button-danger:hover { background:#dc2626; color:#fff; }
 .button:disabled { opacity: 0.5; cursor: not-allowed; }
 .button-danger { border-color: #ef4444; color:#b91c1c; }
 .button-outline { background:#fff; }

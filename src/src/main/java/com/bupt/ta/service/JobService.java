@@ -2,10 +2,12 @@ package com.bupt.ta.service;
 
 import com.bupt.ta.model.Job;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,8 +39,10 @@ public class JobService {
                 Job job = new Job();
                 job.setId(extractString(obj, "id"));
                 job.setModuleName(extractString(obj, "moduleName"));
+                job.setActivityType(extractString(obj, "activityType"));
                 job.setDescription(extractString(obj, "description"));
                 job.setRequiredSkills(extractStringArray(obj, "requiredSkills"));
+                job.setPostDate(extractString(obj, "postDate"));
 
                 jobs.add(job);
             }
@@ -48,6 +52,78 @@ public class JobService {
         }
 
         return jobs;
+    }
+
+    /** Remove one job by id and persist {@code jobs.json}. */
+    public void deleteJobById(String id) throws IOException {
+        if (id == null || id.isEmpty()) {
+            return;
+        }
+        List<Job> jobs = getAllJobs();
+        boolean changed = false;
+        for (Iterator<Job> it = jobs.iterator(); it.hasNext(); ) {
+            Job j = it.next();
+            if (id.equals(j.getId())) {
+                it.remove();
+                changed = true;
+                break;
+            }
+        }
+        if (changed) {
+            writeJobs(jobs);
+        }
+    }
+
+    private void writeJobs(List<Job> jobs) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("[\n");
+        for (int i = 0; i < jobs.size(); i++) {
+            if (i > 0) {
+                sb.append(",\n");
+            }
+            sb.append(jobToJson(jobs.get(i)));
+        }
+        sb.append("\n]");
+        Files.write(Paths.get(jobsJsonPath), sb.toString().getBytes(StandardCharsets.UTF_8));
+    }
+
+    private static String jobToJson(Job job) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("  {\n");
+        sb.append("    \"id\": \"").append(esc(job.getId())).append("\",\n");
+        sb.append("    \"moduleName\": \"").append(esc(job.getModuleName())).append("\",\n");
+        sb.append("    \"activityType\": \"").append(esc(job.getActivityType())).append("\",\n");
+        sb.append("    \"requiredSkills\": ");
+        sb.append(skillsToJson(job.getRequiredSkills()));
+        sb.append(",\n");
+        sb.append("    \"description\": \"").append(esc(job.getDescription())).append("\",\n");
+        sb.append("    \"postDate\": \"").append(esc(job.getPostDate())).append("\"\n");
+        sb.append("  }");
+        return sb.toString();
+    }
+
+    private static String skillsToJson(List<String> skills) {
+        StringBuilder sb = new StringBuilder("[");
+        if (skills != null) {
+            for (int i = 0; i < skills.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append("\"").append(esc(skills.get(i))).append("\"");
+            }
+        }
+        sb.append("]");
+        return sb.toString();
+    }
+
+    private static String esc(String s) {
+        if (s == null) {
+            return "";
+        }
+        return s.replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 
     public Job getJobById(String id) {

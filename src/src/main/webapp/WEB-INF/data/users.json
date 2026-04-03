@@ -5,6 +5,7 @@
     "studentId": "ADMIN001",
     "email": "admin@bupt.local",
     "passwordHash": "admin123",
-    "role": "ADMIN"
+    "role": "ADMIN",
+    "active": "true"
   }
 ]

@@ -22,13 +22,19 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\model\User.java" ^
   "%SRC%\com\bupt\ta\model\EducationEntry.java" ^
   "%SRC%\com\bupt\ta\model\ApplicantProfile.java" ^
+  "%SRC%\com\bupt\ta\model\Application.java" ^
   "%SRC%\com\bupt\ta\model\Job.java" ^
   "%SRC%\com\bupt\ta\service\FileStore.java" ^
   "%SRC%\com\bupt\ta\service\AuthService.java" ^
   "%SRC%\com\bupt\ta\service\ProfileService.java" ^
+  "%SRC%\com\bupt\ta\service\ApplicationService.java" ^
   "%SRC%\com\bupt\ta\service\JobService.java" ^
   "%SRC%\com\bupt\ta\servlet\BaseServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AdminServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AdminUserServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AdminJobServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AdminExportServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\ApplicationServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\LoginServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" ^
@@ -45,6 +51,7 @@ xcopy /s /e /y "%WEB%\*" "out\"
 if not exist "out\WEB-INF\data" mkdir "out\WEB-INF\data"
 if not exist "out\WEB-INF\data\users.json" echo [] > "out\WEB-INF\data\users.json"
 if not exist "out\WEB-INF\data\profiles.json" echo [] > "out\WEB-INF\data\profiles.json"
+if not exist "out\WEB-INF\data\applications.json" echo [] > "out\WEB-INF\data\applications.json"
 
 echo [4/4] Packaging WAR...
 cd out
