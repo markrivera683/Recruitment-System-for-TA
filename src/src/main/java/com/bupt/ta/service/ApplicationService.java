@@ -76,4 +76,12 @@ public class ApplicationService {
         }
         store.writeMaps(FILE, rows);
     }
+
+    /** Remove all applications submitted by this user (e.g. admin account deletion). */
+    public void deleteByUserId(String userId) throws IOException {
+        if (userId == null || userId.isEmpty()) return;
+        List<Map<String, String>> rows = store.readMaps(FILE);
+        rows.removeIf(m -> userId.equals(m.get("userId")));
+        store.writeMaps(FILE, rows);
+    }
 }

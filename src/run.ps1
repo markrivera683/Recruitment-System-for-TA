@@ -1,4 +1,4 @@
-﻿# build-and-run.ps1 - Compile, package, deploy and start Tomcat
+# build-and-run.ps1 - Compile, package, deploy and start Tomcat
 # Usage: cd src; .\build-and-run.ps1
 
 # ============================================================
@@ -76,6 +76,7 @@ $dataDir = "$OUT\WEB-INF\data"
 if (-not (Test-Path $dataDir)) { New-Item -ItemType Directory -Force -Path $dataDir | Out-Null }
 if (-not (Test-Path "$dataDir\users.json"))    { Set-Content "$dataDir\users.json"    '[]' }
 if (-not (Test-Path "$dataDir\profiles.json")) { Set-Content "$dataDir\profiles.json" '[]' }
+if (-not (Test-Path "$dataDir\applications.json")) { Set-Content "$dataDir\applications.json" '[]' }
 Push-Location $OUT
 & $JAR -cvf $WAR . | Out-Null
 Pop-Location

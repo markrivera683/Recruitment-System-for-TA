@@ -7,6 +7,8 @@ public class User {
     public String email;
     public String passwordHash;
     public String role = Roles.TA;
+    /** When false, user cannot sign in (set by admin). */
+    public boolean active = true;
 
     public User() {}
 

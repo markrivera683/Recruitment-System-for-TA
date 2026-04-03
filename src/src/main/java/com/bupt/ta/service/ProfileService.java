@@ -130,4 +130,12 @@ public class ProfileService {
         store.writeMaps(PROFILES_JSON, rows);
         return profile;
     }
+
+    /** Remove profile row for user (e.g. admin account deletion). */
+    public void deleteByUserId(String userId) throws IOException {
+        if (userId == null || userId.isEmpty()) return;
+        List<Map<String, String>> rows = store.readMaps(PROFILES_JSON);
+        rows.removeIf(m -> userId.equals(m.get("userId")));
+        store.writeMaps(PROFILES_JSON, rows);
+    }
 }
