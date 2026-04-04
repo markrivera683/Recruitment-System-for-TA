@@ -40,6 +40,11 @@
     .b-Pending{background:#fffbeb;color:#b45309;border-color:#fde68a}
     .b-Accepted{background:#f0fdf4;color:#166534;border-color:#bbf7d0}
     .b-Rejected{background:#fef2f2;color:#991b1b;border-color:#fecaca}
+    .b-Withdrawn{background:#f8fafc;color:#64748b;border-color:#cbd5e1}
+    .acc-Withdrawn{background:#94a3b8}
+    .withdraw-btn{margin-top:.625rem;padding-top:.625rem;border-top:1px solid #f1f5f9;display:flex;gap:.5rem;align-items:center}
+    .btn-withdraw{background:none;border:1px solid #cbd5e1;border-radius:.5rem;padding:.25rem .75rem;font-size:.75rem;font-weight:600;color:#64748b;cursor:pointer;font-family:inherit}
+    .btn-withdraw:hover{background:#f1f5f9;color:#0f172a}
     .app-name{font-size:.9375rem;font-weight:600;color:#0f172a;margin-bottom:.25rem}
     .app-meta{display:flex;align-items:center;gap:.375rem;font-size:.75rem;color:#64748b;margin-bottom:.25rem}
     .app-meta svg{width:13px;height:13px;flex-shrink:0;fill:none;stroke:#94a3b8;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -87,7 +92,7 @@
 
     <!-- Filter tabs -->
     <div class="filter-bar">
-      <% String[] filters = {"All","Pending","Accepted","Rejected"};
+      <% String[] filters = {"All","Pending","Accepted","Rejected","Withdrawn"};
          for (String f : filters) { %>
         <a href="<%= ctx %>/applications?filter=<%= f %>"
            class="filter-btn <%= f.equals(filter) ? "active" : "" %>"><%= f %></a>
@@ -126,7 +131,17 @@
           <% if (a.feedback != null && !a.feedback.isEmpty()) { %>
           <div class="fb-toggle">
             <button type="button" onclick="toggleFb(this)">&#9660; View feedback</button>
-            <div class="fb-box fb-<%= st %>"><%= a.feedback %></div>
+            <div class="fb-box fb-<%= st %>"><%= a.feedback.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;") %></div>
+          </div>
+          <% } %>
+          <% if ("Pending".equals(st)) { %>
+          <div class="withdraw-btn">
+            <form method="post" action="<%= ctx %>/applications"
+                  onsubmit="return confirm('Withdraw this application?');">
+              <input type="hidden" name="action" value="withdraw" />
+              <input type="hidden" name="appId"  value="<%= a.id != null ? a.id : "" %>" />
+              <button type="submit" class="btn-withdraw">Withdraw</button>
+            </form>
           </div>
           <% } %>
         </div>

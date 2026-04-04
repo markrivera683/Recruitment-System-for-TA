@@ -2,6 +2,7 @@
 <%@ page import="com.bupt.ta.model.Roles" %>
 <%@ page import="com.bupt.ta.model.User" %>
 <%@ page import="com.bupt.ta.model.Application" %>
+<%@ page import="com.bupt.ta.model.Job" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.LinkedHashMap" %>
@@ -14,6 +15,9 @@
   @SuppressWarnings("unchecked")
   List<Application> applications = (List<Application>) request.getAttribute("applications");
   if (applications == null) applications = java.util.Collections.emptyList();
+  @SuppressWarnings("unchecked")
+  List<Job> jobList = (List<Job>) request.getAttribute("jobs");
+  if (jobList == null) jobList = java.util.Collections.emptyList();
 
   User admin = (User) session.getAttribute("user");
   String adminName = admin != null && admin.name != null && !admin.name.isEmpty() ? admin.name : "Admin";
@@ -49,7 +53,6 @@
     }
     monthMap.put(month, monthMap.getOrDefault(month, 0) + 1);
   }
-  int totalJobs = moduleMap.size();
   List<Map.Entry<String, Integer>> topModules = new ArrayList<>(moduleMap.entrySet());
   Collections.sort(topModules, (a, b) -> Integer.compare(b.getValue(), a.getValue()));
   if (topModules.size() > 5) topModules = topModules.subList(0, 5);
@@ -91,6 +94,15 @@
     </div>
   </header>
 
+  <%
+    String adminMessage = (String) request.getAttribute("adminMessage");
+  %>
+  <% if (adminMessage != null && !adminMessage.trim().isEmpty()) { %>
+  <div class="container" style="padding-bottom:0">
+    <p style="background:#fef3c7;color:#92400e;padding:10px 12px;border-radius:8px;border:1px solid #fcd34d;margin:0 0 1rem;font-size:0.875rem;"><%= adminMessage.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") %></p>
+  </div>
+  <% } %>
+
   <main class="container">
     <section class="grid-3">
       <article class="card">
@@ -105,7 +117,7 @@
           <h2 class="card-title">Total Jobs</h2>
           <div class="icon-wrap bg-green" aria-hidden="true">&#128188;</div>
         </div>
-        <div class="card-content"><div class="stat-value"><%= totalJobs %></div></div>
+        <div class="card-content"><div class="stat-value"><%= jobList.size() %></div></div>
       </article>
       <article class="card">
         <div class="card-header">
@@ -228,10 +240,24 @@
               <tr>
                 <td><%= u.name == null ? "" : u.name %></td>
                 <td><%= r %></td>
-                <td><span class="badge badge-active">Active</span></td>
                 <td>
-                  <button type="button" class="button" onclick="alert('Deactivate user: <%= u.id %>')">Deactivate</button>
-                  <button type="button" class="button button-danger" onclick="alert('Delete user: <%= u.id %>')">Delete</button>
+                  <% if (u.active) { %>
+                    <span class="badge badge-active">Active</span>
+                  <% } else { %>
+                    <span class="badge badge-inactive">Inactive</span>
+                  <% } %>
+                </td>
+                <td>
+                  <form method="post" action="<%= ctx %>/admin/users" style="display:inline" onsubmit="return confirm('Deactivate this user? They will not be able to log in.');">
+                    <input type="hidden" name="action" value="deactivate" />
+                    <input type="hidden" name="userId" value="<%= u.id %>" />
+                    <button type="submit" class="button" <%= u.active ? "" : "disabled" %>>Deactivate</button>
+                  </form>
+                  <form method="post" action="<%= ctx %>/admin/users" style="display:inline" onsubmit="return confirm('Permanently delete this user and their applications, profile, and CV files?');">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="userId" value="<%= u.id %>" />
+                    <button type="submit" class="button button-danger">Delete</button>
+                  </form>
                 </td>
               </tr>
               <% } %>
@@ -241,38 +267,41 @@
         </div>
 
         <div id="jobs" class="tab-content">
-          <p class="tooltip-small">Sample jobs (prototype).</p>
+          <p class="tooltip-small">Jobs from <code>WEB-INF/data/jobs.json</code> (same list as applicant job browser).</p>
+          <% if (jobList.isEmpty()) { %>
+            <p class="tooltip-small">No jobs defined.</p>
+          <% } else { %>
           <table class="table">
-            <thead><tr><th>Job Title</th><th>Course</th><th>Status</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Module</th><th>Activity</th><th>Posted</th><th>Actions</th></tr></thead>
             <tbody>
-              <tr><td>Grading Assistant</td><td>CS 101</td><td><span class="badge badge-open">Open</span></td><td>
-                <button type="button" class="button" onclick="alert('Edit job 1')">Edit</button>
-                <button type="button" class="button button-danger" onclick="alert('Delete job 1')">Delete</button>
-              </td></tr>
-              <tr><td>Lab Instructor</td><td>CS 201</td><td><span class="badge badge-filled">Filled</span></td><td>
-                <button type="button" class="button" onclick="alert('Edit job 2')">Edit</button>
-                <button type="button" class="button button-danger" onclick="alert('Delete job 2')">Delete</button>
-              </td></tr>
-              <tr><td>Office Hours Support</td><td>CS 301</td><td><span class="badge badge-open">Open</span></td><td>
-                <button type="button" class="button" onclick="alert('Edit job 3')">Edit</button>
-                <button type="button" class="button button-danger" onclick="alert('Delete job 3')">Delete</button>
-              </td></tr>
-              <tr><td>Project Mentor</td><td>CS 401</td><td><span class="badge badge-open">Open</span></td><td>
-                <button type="button" class="button" onclick="alert('Edit job 4')">Edit</button>
-                <button type="button" class="button button-danger" onclick="alert('Delete job 4')">Delete</button>
-              </td></tr>
-              <tr><td>Tutorial Leader</td><td>CS 102</td><td><span class="badge badge-closed">Closed</span></td><td>
-                <button type="button" class="button" onclick="alert('Edit job 5')">Edit</button>
-                <button type="button" class="button button-danger" onclick="alert('Delete job 5')">Delete</button>
-              </td></tr>
+              <% for (Job j : jobList) {
+                   String mid = j.getId() == null ? "" : j.getId();
+              %>
+              <tr>
+                <td><%= j.getModuleName() == null ? "-" : j.getModuleName() %></td>
+                <td><%= j.getActivityType() == null ? "-" : j.getActivityType() %></td>
+                <td><%= j.getPostDate() == null ? "-" : j.getPostDate() %></td>
+                <td>
+                  <a class="button button-outline" href="<%= ctx %>/job?id=<%= mid %>" style="text-decoration:none;display:inline-flex;">View</a>
+                  <form method="post" action="<%= ctx %>/admin/jobs" style="display:inline" onsubmit="return confirm('Delete this job from jobs.json?');">
+                    <input type="hidden" name="action" value="delete" />
+                    <input type="hidden" name="jobId" value="<%= mid %>" />
+                    <button type="submit" class="button button-danger">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              <% } %>
             </tbody>
           </table>
+          <% } %>
         </div>
 
         <div id="export" class="tab-content">
-          <p class="tooltip-small">Export system data in your preferred format</p>
-          <button type="button" class="button button-primary" onclick="alert('Exporting CSV...')">Export CSV</button>
-          <button type="button" class="button button-success" onclick="alert('Exporting Excel...')">Export Excel</button>
+          <p class="tooltip-small">Download CSV (UTF-8). Open in Excel if needed.</p>
+          <p style="margin-top:0.75rem">
+            <a class="button button-primary" href="<%= ctx %>/admin/export?type=users" style="text-decoration:none;display:inline-flex;">Export users (CSV)</a>
+            <a class="button button-success" href="<%= ctx %>/admin/export?type=applications" style="text-decoration:none;display:inline-flex;">Export applications (CSV)</a>
+          </p>
         </div>
       </div>
     </section>

@@ -39,6 +39,7 @@ public class JobService {
                 Job job = new Job();
                 job.setId(extractString(obj, "id"));
                 job.setModuleName(extractString(obj, "moduleName"));
+                job.setModuleCode(extractString(obj, "moduleCode"));
                 job.setActivityType(extractString(obj, "activityType"));
                 job.setDescription(extractString(obj, "description"));
                 job.setRequiredSkills(extractStringArray(obj, "requiredSkills"));
@@ -92,6 +93,7 @@ public class JobService {
         sb.append("  {\n");
         sb.append("    \"id\": \"").append(esc(job.getId())).append("\",\n");
         sb.append("    \"moduleName\": \"").append(esc(job.getModuleName())).append("\",\n");
+        sb.append("    \"moduleCode\": \"").append(esc(job.getModuleCode())).append("\",\n");
         sb.append("    \"activityType\": \"").append(esc(job.getActivityType())).append("\",\n");
         sb.append("    \"requiredSkills\": ");
         sb.append(skillsToJson(job.getRequiredSkills()));
