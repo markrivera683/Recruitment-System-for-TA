@@ -11,7 +11,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = {"/applications"})
 public class ApplicationServlet extends BaseServlet {
@@ -23,6 +26,7 @@ public class ApplicationServlet extends BaseServlet {
         appService = new ApplicationService(dataDir);
     }
 
+    // ------------------------------------------------------------------ GET
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -31,16 +35,10 @@ public class ApplicationServlet extends BaseServlet {
             resp.sendRedirect(req.getContextPath() + "/login");
             return;
         }
-        String filter = req.getParameter("filter"); // All | Pending | Accepted | Rejected
+        String filter = req.getParameter("filter"); // All | Pending | Accepted | Rejected | Withdrawn
         if (filter == null || filter.trim().isEmpty()) filter = "All";
 
         List<Application> apps = appService.getByUserId(u.id);
-
-        // Seed demo data for new users so the page isn't empty
-        if (apps.isEmpty()) {
-            seedDemo(u.id);
-            apps = appService.getByUserId(u.id);
-        }
 
         long pending  = apps.stream().filter(a -> "Pending".equals(a.status)).count();
         long accepted = apps.stream().filter(a -> "Accepted".equals(a.status)).count();
@@ -52,7 +50,7 @@ public class ApplicationServlet extends BaseServlet {
         } else {
             final String f = filter;
             filtered = apps.stream().filter(a -> f.equals(a.status))
-                           .collect(java.util.stream.Collectors.toList());
+                           .collect(Collectors.toList());
         }
 
         req.setAttribute("applications", filtered);
@@ -64,23 +62,69 @@ public class ApplicationServlet extends BaseServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/application-status.jsp").forward(req, resp);
     }
 
-    private void seedDemo(String userId) throws IOException {
-        String[][] seed = {
-            {"1", "Data Structures & Algorithms", "CS2040", "Teaching Assistant",  "2026-03-01", "Accepted",
-             "Congratulations! Please check your email for onboarding details."},
-            {"2", "Introduction to Programming",  "CS1010", "Lab Demonstrator",     "2026-03-05", "Pending",  ""},
-            {"3", "Database Systems",              "CS3223", "Teaching Assistant",  "2026-02-20", "Rejected",
-             "Thank you for applying. The position has been filled."},
-            {"4", "Operating Systems",             "CS3210", "Tutor",               "2026-03-10", "Pending",  ""},
-            {"5", "Computer Networks",             "CS4226", "Teaching Assistant",  "2026-02-28", "Accepted",
-             "Welcome aboard! Orientation is scheduled for next Monday."},
-        };
-        for (String[] row : seed) {
-            Application a = new Application(
-                userId + "-" + row[0], userId, row[1], row[2], row[3], row[4]);
-            a.status   = row[5];
-            a.feedback = row[6];
-            appService.save(a);
+    // ------------------------------------------------------------------ POST
+    @Override
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+            throws ServletException, IOException {
+        User u = currentUser(req);
+        if (u == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return;
         }
+
+        String action = req.getParameter("action");
+
+        // --- Withdraw an existing application ---
+        if ("withdraw".equals(action)) {
+            String appId = req.getParameter("appId");
+            if (appId != null && !appId.trim().isEmpty()) {
+                // Only allow the owner to withdraw
+                List<Application> mine = appService.getByUserId(u.id);
+                boolean owns = mine.stream().anyMatch(a -> appId.trim().equals(a.id));
+                if (owns) {
+                    appService.updateStatus(appId.trim(), "Withdrawn", "");
+                }
+            }
+            resp.sendRedirect(req.getContextPath() + "/applications");
+            return;
+        }
+
+        // --- Submit a new application ---
+        String jobId     = req.getParameter("jobId");
+        String moduleName = req.getParameter("moduleName");
+        String moduleCode = req.getParameter("moduleCode");
+        String role       = req.getParameter("role");
+
+        if (moduleName == null || moduleName.trim().isEmpty()) {
+            resp.sendRedirect(req.getContextPath() + "/job");
+            return;
+        }
+
+        // Prevent duplicate active applications for the same job
+        List<Application> existing = appService.getByUserId(u.id);
+        boolean duplicate = existing.stream().anyMatch(a ->
+            moduleName.trim().equals(a.moduleName) &&
+            !"Withdrawn".equals(a.status) &&
+            !"Rejected".equals(a.status)
+        );
+        if (duplicate) {
+            String encodedMsg = java.net.URLEncoder.encode(
+                "You already have an active application for " + moduleName.trim() + ".",
+                java.nio.charset.StandardCharsets.UTF_8);
+            resp.sendRedirect(req.getContextPath() + "/job?id=" + (jobId != null ? jobId : "") + "&err=" + encodedMsg);
+            return;
+        }
+
+        Application app = new Application(
+            UUID.randomUUID().toString(),
+            u.id,
+            moduleName.trim(),
+            moduleCode != null ? moduleCode.trim() : "",
+            role != null && !role.trim().isEmpty() ? role.trim() : "Teaching Assistant",
+            LocalDate.now().toString()
+        );
+        appService.save(app);
+
+        resp.sendRedirect(req.getContextPath() + "/applications");
     }
 }
