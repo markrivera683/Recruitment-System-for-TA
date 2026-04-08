@@ -10,6 +10,10 @@ public class Job {
     private String activityType;
     private List<String> requiredSkills;
     private String postDate;
+    private String duration;
+    private String applicationDeadline;
+    private String numberOfTAs;
+    private List<String> schedule;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -31,4 +35,16 @@ public class Job {
 
     public String getPostDate() { return postDate; }
     public void setPostDate(String postDate) { this.postDate = postDate; }
+
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
+
+    public String getApplicationDeadline() { return applicationDeadline; }
+    public void setApplicationDeadline(String applicationDeadline) { this.applicationDeadline = applicationDeadline; }
+
+    public String getNumberOfTAs() { return numberOfTAs; }
+    public void setNumberOfTAs(String numberOfTAs) { this.numberOfTAs = numberOfTAs; }
+
+    public List<String> getSchedule() { return schedule; }
+    public void setSchedule(List<String> schedule) { this.schedule = schedule; }
 }

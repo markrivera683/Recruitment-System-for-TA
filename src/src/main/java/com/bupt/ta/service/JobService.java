@@ -44,6 +44,24 @@ public class JobService {
                 job.setDescription(extractString(obj, "description"));
                 job.setRequiredSkills(extractStringArray(obj, "requiredSkills"));
                 job.setPostDate(extractString(obj, "postDate"));
+                job.setApplicationDeadline(firstNonEmpty(
+                        extractString(obj, "applicationDeadline"),
+                        extractString(obj, "deadline"),
+                        ""
+                ));
+                job.setDuration(firstNonEmpty(
+                        extractString(obj, "duration"),
+                        "One semester"
+                ));
+                job.setNumberOfTAs(firstNonEmpty(
+                        extractString(obj, "numberOfTAs"),
+                        "1"
+                ));
+                List<String> schedule = extractStringArray(obj, "schedule");
+                if (schedule.isEmpty()) {
+                    schedule = buildDefaultSchedule(job.getActivityType());
+                }
+                job.setSchedule(schedule);
 
                 jobs.add(job);
             }
@@ -99,7 +117,11 @@ public class JobService {
         sb.append(skillsToJson(job.getRequiredSkills()));
         sb.append(",\n");
         sb.append("    \"description\": \"").append(esc(job.getDescription())).append("\",\n");
-        sb.append("    \"postDate\": \"").append(esc(job.getPostDate())).append("\"\n");
+        sb.append("    \"postDate\": \"").append(esc(job.getPostDate())).append("\",\n");
+        sb.append("    \"applicationDeadline\": \"").append(esc(job.getApplicationDeadline())).append("\",\n");
+        sb.append("    \"duration\": \"").append(esc(job.getDuration())).append("\",\n");
+        sb.append("    \"numberOfTAs\": \"").append(esc(job.getNumberOfTAs())).append("\",\n");
+        sb.append("    \"schedule\": ").append(skillsToJson(job.getSchedule())).append("\n");
         sb.append("  }");
         return sb.toString();
     }
@@ -197,5 +219,31 @@ public class JobService {
                 .replace("\\n", "\n")
                 .replace("\\r", "\r")
                 .replace("\\t", "\t");
+    }
+
+    private static String firstNonEmpty(String... values) {
+        for (String v : values) {
+            if (v != null && !v.trim().isEmpty()) {
+                return v.trim();
+            }
+        }
+        return "";
+    }
+
+    private static List<String> buildDefaultSchedule(String activityType) {
+        List<String> slots = new ArrayList<>();
+        String t = activityType == null ? "" : activityType.toLowerCase();
+        if (t.contains("lab")) {
+            slots.add("Monday 14:00 - 16:00");
+            slots.add("Wednesday 14:00 - 16:00");
+        } else if (t.contains("tutorial")) {
+            slots.add("Tuesday 10:00 - 11:30");
+            slots.add("Thursday 10:00 - 11:30");
+        } else if (t.contains("invigil")) {
+            slots.add("Exam period (dates announced by module leader)");
+        } else {
+            slots.add("Schedule to be confirmed");
+        }
+        return slots;
     }
 }
