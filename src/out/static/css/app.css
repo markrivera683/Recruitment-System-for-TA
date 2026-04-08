@@ -34,6 +34,13 @@ body {
   max-width: 384px; /* max-w-sm */
 }
 
+/* Fixed middle-third column for job list / details */
+.container--third {
+  width: 33vw;
+  max-width: 560px;
+  min-width: 460px;
+}
+
 /* ── Header block ─────────────────────────────────────────── */
 .page-header {
   text-align: center;
@@ -320,4 +327,8 @@ a:hover { color: #1d4ed8; }
 @media (max-width: 420px) {
   .card { padding: 1.25rem; }
   .page { padding: .75rem; }
+  .container--third {
+    width: 100%;
+    min-width: 0;
+  }
 }
