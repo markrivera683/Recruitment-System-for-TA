@@ -51,7 +51,7 @@ public class RegisterServlet extends BaseServlet {
         try {
             User u = auth.register(name, studentId, email, password);
             req.getSession(true).setAttribute("user", u);
-            resp.sendRedirect(req.getContextPath() + "/profile");
+            resp.sendRedirect(req.getContextPath() + "/job");
         } catch (IllegalArgumentException e) {
             req.setAttribute("error", e.getMessage());
             req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
