@@ -11,8 +11,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -48,25 +46,25 @@ public class AdminUserServlet extends BaseServlet {
         String ctx = req.getContextPath();
 
         if (userId == null || userId.trim().isEmpty()) {
-            resp.sendRedirect(ctx + "/admin?msg=" + enc("Missing user id."));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Missing user id."));
             return;
         }
         userId = userId.trim();
 
         if (admin != null && userId.equals(admin.id)) {
-            resp.sendRedirect(ctx + "/admin?msg=" + enc("You cannot modify or remove your own account."));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("You cannot modify or remove your own account."));
             return;
         }
 
         Optional<User> targetOpt = auth.findById(userId);
         if (!targetOpt.isPresent()) {
-            resp.sendRedirect(ctx + "/admin?msg=" + enc("User not found."));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("User not found."));
             return;
         }
         User target = targetOpt.get();
 
         if (Roles.ADMIN.equals(target.role) && auth.countAdmins() <= 1) {
-            resp.sendRedirect(ctx + "/admin?msg=" + enc("Cannot remove or deactivate the last administrator."));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Cannot remove or deactivate the last administrator."));
             return;
         }
 
@@ -79,19 +77,15 @@ public class AdminUserServlet extends BaseServlet {
                 deleteCvDir(dataDir, userId);
                 auth.removeUserRecord(userId);
             } else {
-                resp.sendRedirect(ctx + "/admin?msg=" + enc("Unknown action."));
+                resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Unknown action."));
                 return;
             }
         } catch (Exception e) {
-            resp.sendRedirect(ctx + "/admin?msg=" + enc("Operation failed: " + e.getMessage()));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Operation failed: " + e.getMessage()));
             return;
         }
 
         resp.sendRedirect(ctx + "/admin");
-    }
-
-    private static String enc(String s) {
-        return URLEncoder.encode(s == null ? "" : s, StandardCharsets.UTF_8);
     }
 
     private static void deleteCvDir(Path dataDir, String userId) throws IOException {

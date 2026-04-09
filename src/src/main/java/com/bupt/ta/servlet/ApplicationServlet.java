@@ -108,9 +108,8 @@ public class ApplicationServlet extends BaseServlet {
             !"Rejected".equals(a.status)
         );
         if (duplicate) {
-            String encodedMsg = java.net.URLEncoder.encode(
-                "You already have an active application for " + moduleName.trim() + ".",
-                java.nio.charset.StandardCharsets.UTF_8);
+            String encodedMsg = urlEncode(
+                    "You already have an active application for " + moduleName.trim() + ".");
             resp.sendRedirect(req.getContextPath() + "/job?id=" + (jobId != null ? jobId : "") + "&err=" + encodedMsg);
             return;
         }

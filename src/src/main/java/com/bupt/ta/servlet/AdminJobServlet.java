@@ -29,14 +29,14 @@ public class AdminJobServlet extends BaseServlet {
         String ctx = req.getContextPath();
 
         if (!"delete".equals(action) || jobId == null || jobId.trim().isEmpty()) {
-            resp.sendRedirect(ctx + "/admin?msg=" + java.net.URLEncoder.encode("Invalid job action.", java.nio.charset.StandardCharsets.UTF_8));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Invalid job action."));
             return;
         }
 
         try {
             jobService.deleteJobById(jobId.trim());
         } catch (IOException e) {
-            resp.sendRedirect(ctx + "/admin?msg=" + java.net.URLEncoder.encode("Failed to delete job: " + e.getMessage(), java.nio.charset.StandardCharsets.UTF_8));
+            resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Failed to delete job: " + e.getMessage()));
             return;
         }
         resp.sendRedirect(ctx + "/admin");

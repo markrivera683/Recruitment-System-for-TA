@@ -8,8 +8,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public abstract class BaseServlet extends HttpServlet {
+
+    /** Query-string safe redirect messages (e.g. {@code /admin?msg=...}). */
+    protected static String urlEncode(String s) {
+        return URLEncoder.encode(s == null ? "" : s, StandardCharsets.UTF_8);
+    }
 
     protected User currentUser(HttpServletRequest req) {
         HttpSession session = req.getSession(false);

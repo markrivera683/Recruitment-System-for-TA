@@ -29,6 +29,27 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\service\ProfileService.java" ^
   "%SRC%\com\bupt\ta\service\ApplicationService.java" ^
   "%SRC%\com\bupt\ta\service\JobService.java" ^
+  "%SRC%\com\bupt\ta\util\AppConfig.java" ^
+  "%SRC%\com\bupt\ta\util\Strings.java" ^
+  "%SRC%\com\bupt\ta\util\HttpJsonClient.java" ^
+  "%SRC%\com\bupt\ta\ai\LmProviderType.java" ^
+  "%SRC%\com\bupt\ta\ai\LmMessage.java" ^
+  "%SRC%\com\bupt\ta\ai\LmRequest.java" ^
+  "%SRC%\com\bupt\ta\ai\LmResponse.java" ^
+  "%SRC%\com\bupt\ta\ai\LmException.java" ^
+  "%SRC%\com\bupt\ta\ai\LmClient.java" ^
+  "%SRC%\com\bupt\ta\ai\AiFeatureNames.java" ^
+  "%SRC%\com\bupt\ta\ai\LmModelDefaults.java" ^
+  "%SRC%\com\bupt\ta\ai\LmConfig.java" ^
+  "%SRC%\com\bupt\ta\ai\MockLmClient.java" ^
+  "%SRC%\com\bupt\ta\ai\HttpLmClient.java" ^
+  "%SRC%\com\bupt\ta\ai\LmClientFactory.java" ^
+  "%SRC%\com\bupt\ta\service\ai\AiFeatureOutput.java" ^
+  "%SRC%\com\bupt\ta\service\ai\AiLmDefaults.java" ^
+  "%SRC%\com\bupt\ta\service\ai\SkillMatchService.java" ^
+  "%SRC%\com\bupt\ta\service\ai\MissingSkillService.java" ^
+  "%SRC%\com\bupt\ta\service\ai\RecommendationService.java" ^
+  "%SRC%\com\bupt\ta\service\ai\AiFeatureService.java" ^
   "%SRC%\com\bupt\ta\servlet\BaseServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AdminServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AdminUserServlet.java" ^
@@ -42,6 +63,7 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\servlet\JobServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\CvDownloadServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AiDemoServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\ResetPasswordServlet.java"
 
 if %ERRORLEVEL% neq 0 ( echo [ERROR] Compilation failed. ^& exit /b 1 )

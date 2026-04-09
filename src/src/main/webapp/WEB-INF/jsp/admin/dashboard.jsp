@@ -79,6 +79,8 @@
         <h1 class="title">TA Recruitment System</h1>
         <p class="subtitle">Admin Dashboard</p>
         <div class="header-actions">
+          <a href="<%= ctx %>/admin/ai-demo">AI Demo</a>
+          <span style="color:#d1d5db">|</span>
           <a href="<%= ctx %>/profile">Profile</a>
           <span style="color:#d1d5db">|</span>
           <a href="<%= ctx %>/logout">Logout</a>
