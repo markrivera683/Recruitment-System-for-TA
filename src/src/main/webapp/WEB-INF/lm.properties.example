@@ -1,0 +1,14 @@
+# Copy this file to lm.properties in the same folder.
+# Priority: environment variables > JVM properties > this file > defaults.
+
+LM_ENABLED=true
+LM_PROVIDER=mock
+# LM_PROVIDER=openai
+# LM_PROVIDER=custom
+
+# Required only for openai/custom providers:
+LM_BASE_URL=
+LM_API_KEY=
+LM_MODEL=gpt-4o-mini
+LM_TIMEOUT_MS=30000
+LM_HTTP_CHAT_PATH=/chat/completions

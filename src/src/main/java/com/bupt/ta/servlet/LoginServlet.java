@@ -34,18 +34,13 @@ public class LoginServlet extends BaseServlet {
             throws ServletException, IOException {
         String email    = req.getParameter("email");
         String password = req.getParameter("password");
-        Optional<User> u = auth.findByEmail(email);
+        Optional<User> u = auth.verifyCredentials(email, password);
         if (!u.isPresent()) {
             req.setAttribute("error", "Invalid email or password");
             req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
             return;
         }
         User candidate = u.get();
-        if (password == null || !password.equals(candidate.passwordHash)) {
-            req.setAttribute("error", "Invalid email or password");
-            req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
-            return;
-        }
         if (!candidate.active) {
             req.setAttribute("error", "This account has been deactivated.");
             req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);

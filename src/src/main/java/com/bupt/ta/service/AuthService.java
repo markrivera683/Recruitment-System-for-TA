@@ -83,12 +83,31 @@ public class AuthService {
         return u;
     }
 
-    public Optional<User> login(String email, String password) throws IOException {
+    /**
+     * Email exists and password matches (may still be inactive). Used by web login to show a specific
+     * deactivated message; for API-style login use {@link #login}.
+     */
+    public Optional<User> verifyCredentials(String email, String password) throws IOException {
         Optional<User> u = findByEmail(email);
-        if (!u.isPresent()) return Optional.empty();
+        if (!u.isPresent()) {
+            return Optional.empty();
+        }
         User user = u.get();
-        if (password == null || !password.equals(user.passwordHash)) return Optional.empty();
-        if (!user.active) return Optional.empty();
+        if (password == null || !password.equals(user.passwordHash)) {
+            return Optional.empty();
+        }
+        return Optional.of(user);
+    }
+
+    /** Successful login only if credentials match and account is active. */
+    public Optional<User> login(String email, String password) throws IOException {
+        Optional<User> u = verifyCredentials(email, password);
+        if (!u.isPresent()) {
+            return Optional.empty();
+        }
+        if (!u.get().active) {
+            return Optional.empty();
+        }
         return u;
     }
 
