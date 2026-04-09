@@ -64,7 +64,7 @@ public class ProfileServlet extends BaseServlet {
         req.setAttribute("user", u);
         req.setAttribute("editable", editable);
         if (msg != null && !msg.trim().isEmpty()) {
-            req.setAttribute("infoMessage", msg.trim());
+            req.setAttribute("infoMessage", escapeHtml(msg.trim()));
         }
         List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
         if (edus.isEmpty()) {
@@ -137,15 +137,14 @@ public class ProfileServlet extends BaseServlet {
             return;
         }
 
-        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
         String oldName = p.cvFileName;
         boolean deleteCv = "1".equals(req.getParameter("deleteCv"));
-        if (deleteCv && oldName != null && !oldName.isEmpty()) {
-            Files.deleteIfExists(cvUserDir.resolve(oldName));
-            p.cvFileName = "";
-        }
+        if (deleteCv) p.cvFileName = "";
 
         Part cvPart = req.getPart("cv");
+        String uploadedName = null;
+        Path uploadedPath = null;
+        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
         if (cvPart != null && cvPart.getSize() > 0) {
             String submitted = cvPart.getSubmittedFileName();
             String safe = safeFileName(submitted);
@@ -163,18 +162,28 @@ public class ProfileServlet extends BaseServlet {
             Files.createDirectories(cvUserDir);
             Path dest = cvUserDir.resolve(safe);
             cvPart.write(dest.toAbsolutePath().toString());
+            uploadedName = safe;
+            uploadedPath = dest;
             p.cvFileName = safe;
-            if (oldName != null && !oldName.isEmpty() && !oldName.equals(safe)) {
-                Path oldPath = cvUserDir.resolve(oldName);
-                Files.deleteIfExists(oldPath);
-            }
         }
 
         try {
             auth.updateUserBasics(u, p.fullName, p.studentId, p.email);
             req.getSession().setAttribute("user", u);
             profiles.upsert(p);
+            // Only delete old file after profile is persisted successfully.
+            if (oldName != null && !oldName.isEmpty()) {
+                boolean replacedByDifferent = uploadedName != null && !oldName.equals(uploadedName);
+                boolean deletedWithoutReplace = deleteCv && uploadedName == null;
+                if (replacedByDifferent || deletedWithoutReplace) {
+                    Files.deleteIfExists(cvUserDir.resolve(oldName));
+                }
+            }
         } catch (IllegalArgumentException ex) {
+            // Roll back newly uploaded file when save fails.
+            if (uploadedPath != null && uploadedName != null && (oldName == null || !oldName.equals(uploadedName))) {
+                Files.deleteIfExists(uploadedPath);
+            }
             Map<String, String> authErrors = new LinkedHashMap<>();
             authErrors.put("email", ex.getMessage());
             req.setAttribute("profile", p);
@@ -272,6 +281,15 @@ public class ProfileServlet extends BaseServlet {
 
     private static boolean isBlank(String s) {
         return s == null || s.trim().isEmpty();
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static String safeFileName(String submitted) {
