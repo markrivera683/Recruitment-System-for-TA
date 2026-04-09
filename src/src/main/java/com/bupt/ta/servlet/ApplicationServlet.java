@@ -1,8 +1,10 @@
 package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Application;
+import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.ProfileService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -19,11 +21,13 @@ import java.util.stream.Collectors;
 @WebServlet(urlPatterns = {"/applications"})
 public class ApplicationServlet extends BaseServlet {
     private ApplicationService appService;
+    private ProfileService profiles;
 
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         appService = new ApplicationService(dataDir);
+        profiles = new ProfileService(dataDir);
     }
 
     // ------------------------------------------------------------------ GET
@@ -100,6 +104,14 @@ public class ApplicationServlet extends BaseServlet {
             return;
         }
 
+        // Require completed profile before applying for a job.
+        ApplicantProfile profile = profiles.getByUserId(u.id).orElse(null);
+        if (!isProfileComplete(profile)) {
+            String msg = urlEncode("Please complete your profile before applying for a job.");
+            resp.sendRedirect(req.getContextPath() + "/profile?edit=1&msg=" + msg);
+            return;
+        }
+
         // Prevent duplicate active applications for the same job
         List<Application> existing = appService.getByUserId(u.id);
         boolean duplicate = existing.stream().anyMatch(a ->
@@ -125,5 +137,18 @@ public class ApplicationServlet extends BaseServlet {
         appService.save(app);
 
         resp.sendRedirect(req.getContextPath() + "/applications");
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private static boolean isProfileComplete(ApplicantProfile p) {
+        if (p == null) return false;
+        if (isBlank(p.fullName) || isBlank(p.gender) || isBlank(p.degree) || isBlank(p.major)) return false;
+        if (isBlank(p.studentId) || isBlank(p.idCard) || isBlank(p.phone) || isBlank(p.email)) return false;
+        if (isBlank(p.courses) || isBlank(p.freeTime) || isBlank(p.skills)) return false;
+        if (isBlank(p.educationJson)) return false;
+        return !ProfileService.parseEducationJson(p.educationJson).isEmpty();
     }
 }
