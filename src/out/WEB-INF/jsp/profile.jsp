@@ -32,7 +32,7 @@
   if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
 %>
 <div class="page--top">
-  <div class="container--third">
+  <div class="container--profile">
 
     <!-- Header -->
     <div class="page-header page-header--sm">
