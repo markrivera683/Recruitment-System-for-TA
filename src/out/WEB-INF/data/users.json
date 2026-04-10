@@ -7,5 +7,14 @@
     "passwordHash": "admin123",
     "role": "ADMIN",
     "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000002",
+    "name": "Module Organiser",
+    "studentId": "MO001",
+    "email": "mo@bupt.local",
+    "passwordHash": "mo123",
+    "role": "MO",
+    "active": "true"
   }
 ]
