@@ -48,9 +48,16 @@ public class LoginServlet extends BaseServlet {
         }
         User loggedIn = candidate;
         req.getSession(true).setAttribute("user", loggedIn);
-        String next = Roles.ADMIN.equals(loggedIn.role)
-                ? "/admin"
-                : "/job";
+
+        String next;
+        if (Roles.ADMIN.equals(loggedIn.role)) {
+            next = "/admin";
+        } else if (Roles.MO.equals(loggedIn.role)) {
+            next = "/mo";
+        } else {
+            next = "/job";
+        }
+
         resp.sendRedirect(req.getContextPath() + next);
     }
 }
