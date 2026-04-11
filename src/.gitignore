@@ -37,6 +37,9 @@ build/
 ### Local LM API secrets (copy from lm.properties.example) ###
 **/WEB-INF/lm.properties
 
+### Local Tomcat instance (run.ps1 CATALINA_BASE) ###
+tomcat-base/
+
 ### VS Code ###
 .vscode/
 

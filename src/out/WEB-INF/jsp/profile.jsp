@@ -31,52 +31,39 @@
   Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
   if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
 %>
-<div class="page--top">
-  <div class="container--profile">
+<div class="page--top fade-in">
+  <div class="layout-wide">
 
-    <!-- Header -->
-    <div class="page-header page-header--sm">
-      <div class="logo-wrap">
-        <div class="logo logo--sm">
+    <!-- Horizontal header row (matches ProfilePage.tsx) -->
+    <div class="page-header-row">
+      <div class="header-left">
+        <div class="logo">
           <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
         </div>
+        <div>
+          <h1 class="page-title">Applicant Profile</h1>
+          <p class="page-subtitle">Create or edit your TA profile</p>
+        </div>
       </div>
-      <h1 class="page-title">Applicant Profile</h1>
-      <p class="page-subtitle">Create or edit your TA profile</p>
+      <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <% if (!editable) { %>
+        <a class="link-pill" href="${pageContext.request.contextPath}/profile?edit=1">
+          Edit
+        </a>
+        <% } %>
+        <a class="link-pill" href="${pageContext.request.contextPath}/job">
+          <svg viewBox="0 0 24 24"><path d="M9 18V5a2 2 0 0 1 2-2h10"/><path d="M9 18a2 2 0 0 0 2 2h10"/><path d="M3 11h6"/><path d="M3 15h6"/><path d="M3 7h6"/></svg>
+          Job List
+        </a>
+        <a class="link-pill" href="${pageContext.request.contextPath}/logout">
+          <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Logout
+        </a>
+      </div>
     </div>
 
     <!-- Card -->
-    <div class="card">
-
-      <!-- Top bar: title + logout -->
-      <div class="top-bar">
-        <span style="font-size:.9375rem;font-weight:600;color:#0f172a;">My Profile</span>
-        <div style="display:flex;gap:.5rem;align-items:center;">
-          <% if (!editable) { %>
-          <a class="btn-ghost" href="${pageContext.request.contextPath}/profile?edit=1" style="white-space:nowrap;">
-            Edit
-          </a>
-          <% } %>
-          <a class="btn-ghost" href="${pageContext.request.contextPath}/job" style="white-space:nowrap;">
-            <svg viewBox="0 0 24 24">
-              <path d="M9 18V5a2 2 0 0 1 2-2h10"/>
-              <path d="M9 18a2 2 0 0 0 2 2h10"/>
-              <path d="M3 11h6"/>
-              <path d="M3 15h6"/>
-              <path d="M3 7h6"/>
-            </svg>
-            Job List
-          </a>
-          <a class="btn-ghost" href="${pageContext.request.contextPath}/logout" style="white-space:nowrap;">
-            <svg viewBox="0 0 24 24">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Logout
-          </a>
-        </div>
-      </div>
+    <div class="card" style="padding:1.5rem 2.5rem;">
 
       <% if (!editable) { %>
         <div class="alert" style="margin-bottom:.875rem;">Profile is in view mode. Click <strong>Edit</strong> to update your information.</div>
@@ -91,8 +78,10 @@
             novalidate
             data-editable="<%= editable ? "1" : "0" %>">
 
-        <!-- Personal Information -->
-        <p class="section-title">Personal Information</p>
+        <div class="grid-2col">
+          <!-- Left Column: Personal Information -->
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <h3 class="section-heading">Personal Information</h3>
 
         <div class="field">
           <label for="fullName">Full Name</label>
@@ -101,7 +90,7 @@
           <% if (fieldErrors.get("fullName") != null) { %><div class="field-error"><%= fieldErrors.get("fullName") %></div><% } %>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="grid-2col" style="gap:.75rem 1rem;">
           <div class="field">
             <label for="gender">Gender</label>
             <select id="gender" name="gender" required>
@@ -120,7 +109,7 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="grid-2col" style="gap:.75rem 1rem;">
           <div class="field">
             <label for="major">Major</label>
             <input id="major" name="major" type="text" placeholder="Computer Science"
@@ -136,7 +125,7 @@
           </div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;">
+        <div class="grid-2col" style="gap:.75rem 1rem;">
           <div class="field">
             <label for="phone">Phone</label>
             <input id="phone" name="phone" type="text" placeholder="+44 7700 000000"
@@ -157,17 +146,19 @@
                  pattern="[A-Za-z0-9]{8,30}" />
           <% if (fieldErrors.get("idCard") != null) { %><div class="field-error"><%= fieldErrors.get("idCard") %></div><% } %>
         </div>
+          </div>
 
-        <!-- Education Background -->
-        <p class="section-title">Education Background</p>
+          <!-- Right Column: Education, Skills, CV -->
+          <div style="display:flex;flex-direction:column;gap:1rem;">
+            <h3 class="section-heading">Qualifications &amp; Availability</h3>
         <table class="edu-table" id="edu-table">
           <thead>
             <tr>
-              <th style="width:32%">School</th>
-              <th style="width:22%">Degree</th>
-              <th style="width:24%">Major</th>
-              <th style="width:18%">Period</th>
-              <th style="width:4%"></th>
+              <th>School</th>
+              <th>Degree</th>
+              <th>Major</th>
+              <th>Period</th>
+              <th></th>
             </tr>
           </thead>
           <tbody id="edu-body">
@@ -195,7 +186,7 @@
               </td>
               <td style="text-align:center;vertical-align:middle;">
                 <button type="button" onclick="removeEduRow(this)"
-                        style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;padding:0 .25rem;"
+                        class="btn-withdraw"
                         title="Remove row">&times;</button>
               </td>
             </tr>
@@ -204,20 +195,14 @@
         </table>
         <% if (fieldErrors.get("education") != null) { %><div class="field-error"><%= fieldErrors.get("education") %></div><% } %>
         <button id="add-edu-btn" type="button" onclick="addEduRow()"
-                style="margin-top:.5rem;background:none;border:1px dashed #cbd5e1;border-radius:.5rem;
-                       width:100%;padding:.5rem;font-size:.8125rem;color:#64748b;cursor:pointer;
-                       font-family:inherit;transition:border-color .15s,color .15s;"
-                onmouseover="this.style.borderColor='#3b82f6';this.style.color='#2563eb';"
-                onmouseout="this.style.borderColor='#cbd5e1';this.style.color='#64748b';"
-        >+ Add education row</button>
+                class="upload-area" style="margin-top:.5rem;">+ Add education row</button>
 
-        <!-- Courses & Availability -->
-        <p class="section-title">Courses &amp; Availability</p>
+        <p class="section-title" style="margin-top:1.5rem;">Courses &amp; Availability</p>
 
         <div class="field">
           <label for="courses">Courses Completed <span style="font-weight:400;color:#94a3b8;">(one per line)</span></label>
           <textarea id="courses" name="courses" placeholder="eg: Data Structures"
-                    style="min-height:5rem;" required><%= p.courses != null ? p.courses : def %></textarea>
+                    required><%= p.courses != null ? p.courses : def %></textarea>
           <% if (fieldErrors.get("courses") != null) { %><div class="field-error"><%= fieldErrors.get("courses") %></div><% } %>
         </div>
 
@@ -225,7 +210,7 @@
           <label for="freeTime">Availability</label>
           <textarea id="freeTime" name="freeTime"
                     placeholder="eg: Mon 14:00-17:00"
-                    style="min-height:4rem;" required><%= p.freeTime != null ? p.freeTime : (p.availability != null ? p.availability : def) %></textarea>
+                    required><%= p.freeTime != null ? p.freeTime : (p.availability != null ? p.availability : def) %></textarea>
           <% if (fieldErrors.get("freeTime") != null) { %><div class="field-error"><%= fieldErrors.get("freeTime") %></div><% } %>
         </div>
 
@@ -236,7 +221,7 @@
           <label for="skills">Skills</label>
           <textarea id="skills" name="skills"
                     placeholder="eg: Python"
-                    style="min-height:4rem;" required><%= p.skills != null ? p.skills : def %></textarea>
+                    required><%= p.skills != null ? p.skills : def %></textarea>
           <% if (fieldErrors.get("skills") != null) { %><div class="field-error"><%= fieldErrors.get("skills") %></div><% } %>
         </div>
 
@@ -245,9 +230,7 @@
 
         <div class="field">
           <% if (p.cvFileName != null && !p.cvFileName.isEmpty()) { %>
-            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;
-                        padding:.5rem .75rem;background:#f0fdf4;border:1px solid #bbf7d0;
-                        border-radius:.5rem;font-size:.875rem;color:#166534;">
+            <div class="alert alert-success" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
               <svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
                           stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -255,7 +238,7 @@
               </svg>
               <span>Current: <%= p.cvFileName %></span>
               <a href="${pageContext.request.contextPath}/cv" target="_blank"
-                 style="margin-left:auto;font-size:.8125rem;color:#2563eb;font-weight:500;">View</a>
+                 class="link-sm" style="margin-left:auto;">View</a>
             </div>
             <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#64748b;margin-bottom:.5rem;">
               <input id="deleteCv" name="deleteCv" value="1" type="checkbox" style="width:auto;height:auto;" />
@@ -271,17 +254,21 @@
                    style="display:none;"
                    onchange="document.getElementById('cv-name').textContent = this.files[0] ? this.files[0].name : 'Upload CV';" />
           </label>
-          <p style="font-size:.75rem;color:#94a3b8;margin-top:.25rem;">PDF, DOC or DOCX &mdash; max 10 MB</p>
+          <p class="page-subtitle" style="margin-top:.25rem;">PDF, DOC or DOCX &mdash; max 10 MB</p>
           <% if (fieldErrors.get("cv") != null) { %><div class="field-error"><%= fieldErrors.get("cv") %></div><% } %>
         </div>
 
         <% if (editable) { %>
-        <button type="submit" class="btn btn-primary" style="margin-top:.5rem;">Save Profile</button>
+        <div class="save-bar">
+          <button type="submit" class="btn btn-primary">Save Profile</button>
+        </div>
         <% } %>
-      </form>
-    </div>
 
-  </div>
+        </div><!-- /right column -->
+        </div><!-- /grid-2col -->
+      </form>
+    </div><!-- /card -->
+  </div><!-- /layout-wide -->
 </div>
 
 <script>
@@ -295,7 +282,7 @@ function addEduRow() {
     '<td><input name="edu_period" type="text" placeholder="2020-2024" required /></td>' +
     '<td style="text-align:center;vertical-align:middle;">' +
     '<button type="button" onclick="removeEduRow(this)" ' +
-    'style="background:none;border:none;cursor:pointer;color:#94a3b8;font-size:1rem;padding:0 .25rem;" ' +
+    'class="btn-withdraw" ' +
     'title="Remove row">&times;</button></td>';
   tbody.appendChild(tr);
 }

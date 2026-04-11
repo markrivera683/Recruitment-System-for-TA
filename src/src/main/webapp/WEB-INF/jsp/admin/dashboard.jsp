@@ -74,22 +74,22 @@
 </head>
 <body>
   <header class="header">
-    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:1rem;">
+    <div class="header-row">
       <div>
         <h1 class="title">TA Recruitment System</h1>
         <p class="subtitle">Admin Dashboard</p>
         <div class="header-actions">
           <a href="<%= ctx %>/admin/ai-demo">AI Demo</a>
-          <span style="color:#d1d5db">|</span>
+          <span class="header-sep">|</span>
           <a href="<%= ctx %>/profile">Profile</a>
-          <span style="color:#d1d5db">|</span>
+          <span class="header-sep">|</span>
           <a href="<%= ctx %>/logout">Logout</a>
         </div>
       </div>
       <div class="profile">
-        <div style="text-align:right;">
-          <p style="font-weight:600; margin:0;"><%= adminName %></p>
-          <p style="font-size:0.75rem; color:#6b7280; margin:0.25rem 0 0;"><%= adminEmail %></p>
+        <div class="header-user">
+          <p class="header-user-name"><%= adminName %></p>
+          <p class="header-user-email"><%= adminEmail %></p>
         </div>
         <div class="avatar" aria-hidden="true"><%= avatarLetter %></div>
       </div>
@@ -101,7 +101,7 @@
   %>
   <% if (adminMessage != null && !adminMessage.trim().isEmpty()) { %>
   <div class="container" style="padding-bottom:0">
-    <p style="background:#fef3c7;color:#92400e;padding:10px 12px;border-radius:8px;border:1px solid #fcd34d;margin:0 0 1rem;font-size:0.875rem;"><%= adminMessage.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") %></p>
+    <p class="admin-notice"><%= adminMessage.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") %></p>
   </div>
   <% } %>
 
@@ -284,7 +284,7 @@
                 <td><%= j.getActivityType() == null ? "-" : j.getActivityType() %></td>
                 <td><%= j.getPostDate() == null ? "-" : j.getPostDate() %></td>
                 <td>
-                  <a class="button button-outline" href="<%= ctx %>/job?id=<%= mid %>" style="text-decoration:none;display:inline-flex;">View</a>
+                  <a class="button button-outline" href="<%= ctx %>/job?id=<%= mid %>">View</a>
                   <form method="post" action="<%= ctx %>/admin/jobs" style="display:inline" onsubmit="return confirm('Delete this job from jobs.json?');">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="jobId" value="<%= mid %>" />
@@ -300,10 +300,10 @@
 
         <div id="export" class="tab-content">
           <p class="tooltip-small">Download CSV (UTF-8). Open in Excel if needed.</p>
-          <p style="margin-top:0.75rem">
-            <a class="button button-primary" href="<%= ctx %>/admin/export?type=users" style="text-decoration:none;display:inline-flex;">Export users (CSV)</a>
-            <a class="button button-success" href="<%= ctx %>/admin/export?type=applications" style="text-decoration:none;display:inline-flex;">Export applications (CSV)</a>
-          </p>
+          <div class="export-bar">
+            <a class="button button-primary" href="<%= ctx %>/admin/export?type=users">Export users (CSV)</a>
+            <a class="button button-success" href="<%= ctx %>/admin/export?type=applications">Export applications (CSV)</a>
+          </div>
         </div>
       </div>
     </section>
