@@ -1,15 +1,5 @@
 package com.bupt.ta.servlet;
 
-import com.bupt.ta.model.Application;
-import com.bupt.ta.model.Job;
-import com.bupt.ta.model.User;
-import com.bupt.ta.service.ApplicationService;
-import com.bupt.ta.service.JobService;
-import com.bupt.ta.service.ProfileService;
-
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +8,17 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
+import com.bupt.ta.model.Application;
+import com.bupt.ta.model.Job;
+import com.bupt.ta.model.User;
+import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.JobService;
+import com.bupt.ta.service.ProfileService;
 
 public class MoServlet extends BaseServlet {
     private ApplicationService applications;

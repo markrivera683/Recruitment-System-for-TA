@@ -3,6 +3,7 @@
 <%@ page import="com.bupt.ta.model.User" %>
 <%@ page import="com.bupt.ta.model.Application" %>
 <%@ page import="com.bupt.ta.model.Job" %>
+<%@ page import="com.bupt.ta.model.TaWorkloadStats" %>
 <%@ page import="java.util.List" %>
 <%@ page import="java.util.Map" %>
 <%@ page import="java.util.LinkedHashMap" %>
@@ -18,6 +19,12 @@
   @SuppressWarnings("unchecked")
   List<Job> jobList = (List<Job>) request.getAttribute("jobs");
   if (jobList == null) jobList = java.util.Collections.emptyList();
+  @SuppressWarnings("unchecked")
+  Map<String, TaWorkloadStats> taWorkload = (Map<String, TaWorkloadStats>) request.getAttribute("taWorkload");
+  if (taWorkload == null) taWorkload = java.util.Collections.emptyMap();
+  @SuppressWarnings("unchecked")
+  List<User> taUsersWorkloadOrder = (List<User>) request.getAttribute("taUsersWorkloadOrder");
+  if (taUsersWorkloadOrder == null) taUsersWorkloadOrder = java.util.Collections.emptyList();
 
   User admin = (User) session.getAttribute("user");
   String adminName = admin != null && admin.name != null && !admin.name.isEmpty() ? admin.name : "Admin";
@@ -187,7 +194,11 @@
             %>
             <div class="bar-row">
               <div class="bar-meta"><span><%= m.getKey() %></span><span><%= m.getValue() %></span></div>
-              <div class="bar-track"><div class="bar-fill" style="width:<%= width %>%"></div></div>
+              <div class="bar-track"><%
+                out.write("<div class=\"bar-fill\" style=\"width:");
+                out.print(width);
+                out.write("%;\"></div>");
+              %></div>
             </div>
             <% } %>
           </div>
@@ -199,19 +210,61 @@
     <section class="card">
       <div class="card-header"><h2 class="card-title">TA Workload Overview</h2></div>
       <div class="card-content">
-        <table class="table">
+        <p class="tooltip-small" style="margin-top:0">Only <strong>TA</strong> accounts are listed. <strong>Assigned jobs</strong> is the number of accepted (assigned) positions. <strong>Accepted work</strong> / <strong>Rejected work</strong> list applications by status (from <code>applications.json</code>). A <strong>warning</strong> appears when assigned jobs reach <%= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD %> or more.</p>
+        <table class="table table-workload">
           <thead>
-            <tr><th>TA Name</th><th>Email</th><th>Role</th></tr>
+            <tr>
+              <th>TA Name</th>
+              <th>Email</th>
+              <th>Assigned jobs</th>
+              <th>Accepted work</th>
+              <th>Rejected work</th>
+            </tr>
           </thead>
           <tbody>
-            <% if (users.isEmpty()) { %>
-            <tr><td colspan="3" class="tooltip-small">No user data available.</td></tr>
+            <% if (taUsersWorkloadOrder.isEmpty()) { %>
+            <tr><td colspan="5" class="tooltip-small">No TA accounts yet.</td></tr>
             <% } else { %>
-            <% for (User u : users) { %>
+            <% for (User u : taUsersWorkloadOrder) {
+                 String tid = u.id == null ? "" : u.id.trim();
+                 TaWorkloadStats ws = taWorkload.get(tid);
+                 if (ws == null) ws = new TaWorkloadStats();
+            %>
             <tr>
               <td><%= u.name == null ? "-" : u.name %></td>
               <td><%= u.email == null ? "-" : u.email %></td>
-              <td><span class="badge badge-active"><%= u.role == null ? "-" : u.role %></span></td>
+              <td class="workload-assigned-cell"><strong><%= ws.accepted %></strong></td>
+              <td class="workload-accepted-cell">
+                <% if (ws.accepted >= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD) { %>
+                <div class="workload-warning" role="alert">
+                  <strong>Warning:</strong> workload limit reached or exceeded (<%= ws.accepted %> assigned jobs, limit <%= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD %>).
+                </div>
+                <% } %>
+                <% if (ws.acceptedPositions.isEmpty()) { %>
+                  <span class="tooltip-small">—</span>
+                <% } else { %>
+                  <ul class="workload-accepted-list">
+                  <% for (String line : ws.acceptedPositions) {
+                       String safe = line == null ? "" : line.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
+                  %>
+                    <li><%= safe %></li>
+                  <% } %>
+                  </ul>
+                <% } %>
+              </td>
+              <td class="workload-rejected-cell">
+                <% if (ws.rejectedPositions.isEmpty()) { %>
+                  <span class="tooltip-small">—</span>
+                <% } else { %>
+                  <ul class="workload-rejected-list">
+                  <% for (String line : ws.rejectedPositions) {
+                       String safeR = line == null ? "" : line.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
+                  %>
+                    <li><%= safeR %></li>
+                  <% } %>
+                  </ul>
+                <% } %>
+              </td>
             </tr>
             <% } %>
             <% } %>

@@ -318,3 +318,42 @@ body {
   text-decoration: none;
   display: inline-flex;
 }
+
+.table-workload .workload-assigned-cell {
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.table-workload .workload-accepted-cell,
+.table-workload .workload-rejected-cell {
+  max-width: 22rem;
+  vertical-align: top;
+}
+.workload-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fcd34d;
+  border-radius: 0.5rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.875rem;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+.workload-accepted-list,
+.workload-rejected-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+}
+.workload-accepted-list {
+  color: #14532d;
+}
+.workload-rejected-list {
+  color: #7f1d1d;
+}
+.workload-accepted-list li,
+.workload-rejected-list li {
+  margin: 0.2rem 0;
+  word-break: break-word;
+}
