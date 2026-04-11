@@ -4,7 +4,7 @@ setlocal
 REM Manual build - run from the src\ folder
 REM Requires: Java 11+  (javac on PATH),  Tomcat 9
 
-set TOMCAT_HOME=D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115
+set TOMCAT_HOME=D:\tomcat\apache-tomcat-9.0.116
 set SERVLET_JAR=%TOMCAT_HOME%\lib\servlet-api.jar
 set SRC=src\main\java
 set WEB=src\main\webapp
@@ -65,6 +65,7 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\servlet\LogoutServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\ProfileServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\JobServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\MoServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\CvDownloadServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\ForgotPasswordServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AiDemoServlet.java" ^

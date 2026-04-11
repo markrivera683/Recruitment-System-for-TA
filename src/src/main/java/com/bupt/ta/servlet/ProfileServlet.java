@@ -11,11 +11,13 @@ import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import javax.servlet.http.Part;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +32,9 @@ import java.util.regex.Pattern;
         maxRequestSize = 12 * 1024 * 1024
 )
 public class ProfileServlet extends BaseServlet {
+    /** Session key: CV file name on disk not yet written to profiles.json (validation failed after upload). */
+    public static final String PENDING_CV_SESSION_ATTR = "taPendingCvFileName";
+
     private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L} .'-]{2,60}$");
     private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{4,30}$");
     private static final Pattern ID_CARD_PATTERN = Pattern.compile("^[A-Za-z0-9]{8,30}$");
@@ -60,6 +65,7 @@ public class ProfileServlet extends BaseServlet {
         boolean editable = !existing.isPresent() || "1".equals(req.getParameter("edit"));
         String msg = req.getParameter("msg");
         mergeDefaultsFromUser(u, p);
+        applyPendingCvFromSession(req, u.id, p);
         req.setAttribute("profile", p);
         req.setAttribute("user", u);
         req.setAttribute("editable", editable);
@@ -98,6 +104,11 @@ public class ProfileServlet extends BaseServlet {
         }
 
         Optional<ApplicantProfile> existing = profiles.getByUserId(u.id);
+        final String dbCvFileNameAtStart = existing
+                .map(e -> e.cvFileName == null ? "" : e.cvFileName.trim())
+                .filter(s -> !s.isEmpty())
+                .orElse("");
+
         ApplicantProfile p = new ApplicantProfile(u.id);
         p.fullName = trim(req.getParameter("fullName"));
         p.gender = trim(req.getParameter("gender"));
@@ -126,37 +137,29 @@ public class ProfileServlet extends BaseServlet {
         p.availability = existing.map(e -> e.availability).orElse("");
         p.selfIntro = existing.map(e -> e.selfIntro).orElse("");
 
-        Map<String, String> fieldErrors = validateProfileInput(p, eduRows);
-        if (!fieldErrors.isEmpty()) {
-            req.setAttribute("profile", p);
-            req.setAttribute("user", u);
-            req.setAttribute("editable", true);
-            req.setAttribute("educationList", eduRows.isEmpty() ? defaultEduList() : eduRows);
-            req.setAttribute("fieldErrors", fieldErrors);
-            req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
-            return;
+        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
+        Part cvPart = req.getPart("cv");
+        final boolean newCvUpload = cvPart != null && cvPart.getSize() > 0;
+        if (!newCvUpload) {
+            mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
         }
 
-        String oldName = p.cvFileName;
+        String preDeleteCvName = p.cvFileName == null ? "" : p.cvFileName.trim();
         boolean deleteCv = "1".equals(req.getParameter("deleteCv"));
-        if (deleteCv) p.cvFileName = "";
+        if (deleteCv) {
+            p.cvFileName = "";
+        }
 
-        Part cvPart = req.getPart("cv");
         String uploadedName = null;
         Path uploadedPath = null;
-        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
-        if (cvPart != null && cvPart.getSize() > 0) {
+        if (newCvUpload) {
             String submitted = cvPart.getSubmittedFileName();
             String safe = safeFileName(submitted);
             if (!isAllowedCvFile(safe)) {
+                p.cvFileName = preDeleteCvName;
                 Map<String, String> cvError = new LinkedHashMap<>();
                 cvError.put("cv", "Invalid CV file type. Please upload PDF, DOC, or DOCX.");
-                req.setAttribute("profile", p);
-                req.setAttribute("user", u);
-                req.setAttribute("editable", true);
-                req.setAttribute("educationList", eduRows.isEmpty() ? defaultEduList() : eduRows);
-                req.setAttribute("fieldErrors", cvError);
-                req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
+                forwardProfileEdit(req, resp, u, p, eduRows, cvError);
                 return;
             }
             Files.createDirectories(cvUserDir);
@@ -167,40 +170,164 @@ public class ProfileServlet extends BaseServlet {
             p.cvFileName = safe;
         }
 
+        Map<String, String> fieldErrors = validateProfileInput(p, eduRows);
+        if (!fieldErrors.isEmpty()) {
+            setPendingCvSessionIfFileExists(req, u.id, p, cvUserDir);
+            forwardProfileEdit(req, resp, u, p, eduRows, fieldErrors);
+            return;
+        }
+
         try {
             auth.updateUserBasics(u, p.fullName, p.studentId, p.email);
             req.getSession().setAttribute("user", u);
             profiles.upsert(p);
-            // Only delete old file after profile is persisted successfully.
-            if (oldName != null && !oldName.isEmpty()) {
-                boolean replacedByDifferent = uploadedName != null && !oldName.equals(uploadedName);
+            req.getSession().removeAttribute(PENDING_CV_SESSION_ATTR);
+            if (!dbCvFileNameAtStart.isEmpty()) {
+                boolean replacedByDifferent = uploadedName != null && !dbCvFileNameAtStart.equals(uploadedName);
                 boolean deletedWithoutReplace = deleteCv && uploadedName == null;
-                if (replacedByDifferent || deletedWithoutReplace) {
-                    Files.deleteIfExists(cvUserDir.resolve(oldName));
+                if (replacedByDifferent) {
+                    archiveReplacedCv(cvUserDir, dbCvFileNameAtStart);
+                } else if (deletedWithoutReplace) {
+                    Files.deleteIfExists(cvUserDir.resolve(dbCvFileNameAtStart));
                 }
             }
         } catch (IllegalArgumentException ex) {
-            // Roll back newly uploaded file when save fails.
-            if (uploadedPath != null && uploadedName != null && (oldName == null || !oldName.equals(uploadedName))) {
+            if (uploadedPath != null && uploadedName != null
+                    && !uploadedName.equals(dbCvFileNameAtStart)) {
                 Files.deleteIfExists(uploadedPath);
             }
+            p.cvFileName = dbCvFileNameAtStart;
+            mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
             Map<String, String> authErrors = new LinkedHashMap<>();
             authErrors.put("email", ex.getMessage());
-            req.setAttribute("profile", p);
-            req.setAttribute("user", u);
-            req.setAttribute("editable", true);
-            req.setAttribute("fieldErrors", authErrors);
             List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
             if (edus.isEmpty()) {
                 edus = new ArrayList<>();
                 edus.add(new EducationEntry());
             }
-            req.setAttribute("educationList", edus);
-            req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
+            forwardProfileEdit(req, resp, u, p, edus, authErrors);
+            return;
+        } catch (Exception ex) {
+            if (uploadedPath != null && uploadedName != null
+                    && !uploadedName.equals(dbCvFileNameAtStart)) {
+                try {
+                    Files.deleteIfExists(uploadedPath);
+                } catch (IOException ignored) {
+                    // best-effort cleanup
+                }
+            }
+            p.cvFileName = dbCvFileNameAtStart;
+            mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
+            Map<String, String> saveErr = new LinkedHashMap<>();
+            saveErr.put("cv", "Could not save your profile. Your CV upload was cancelled. Please try again.");
+            forwardProfileEdit(req, resp, u, p, eduRows, saveErr);
             return;
         }
 
         resp.sendRedirect(req.getContextPath() + "/profile");
+    }
+
+    /**
+     * When the browser sends no new {@code cv} part, restore the in-memory filename from a prior
+     * failed save (session + file on disk) so validation re-runs with the correct CV state.
+     */
+    private void mergePendingCvIntoProfileForPost(HttpServletRequest req, String userId,
+                                                  ApplicantProfile p, Path cvUserDir) {
+        HttpSession s = req.getSession(false);
+        if (s == null) {
+            return;
+        }
+        Object o = s.getAttribute(PENDING_CV_SESSION_ATTR);
+        if (!(o instanceof String)) {
+            return;
+        }
+        String pend = ((String) o).trim();
+        if (pend.isEmpty()) {
+            return;
+        }
+        Path pendFile = cvUserDir.resolve(pend);
+        try {
+            if (!Files.isRegularFile(pendFile)) {
+                s.removeAttribute(PENDING_CV_SESSION_ATTR);
+                return;
+            }
+        } catch (Exception e) {
+            s.removeAttribute(PENDING_CV_SESSION_ATTR);
+            return;
+        }
+        String dbName = p.cvFileName == null ? "" : p.cvFileName.trim();
+        if (dbName.isEmpty() || !dbName.equals(pend)) {
+            p.cvFileName = pend;
+        }
+    }
+
+    private void applyPendingCvFromSession(HttpServletRequest req, String userId, ApplicantProfile p) {
+        HttpSession s = req.getSession(false);
+        if (s == null) {
+            return;
+        }
+        Object o = s.getAttribute(PENDING_CV_SESSION_ATTR);
+        if (!(o instanceof String)) {
+            return;
+        }
+        String pend = ((String) o).trim();
+        if (pend.isEmpty()) {
+            return;
+        }
+        Path f = dataDir.resolve("cv").resolve(userId).resolve(pend);
+        try {
+            if (Files.isRegularFile(f)) {
+                p.cvFileName = pend;
+            } else {
+                s.removeAttribute(PENDING_CV_SESSION_ATTR);
+            }
+        } catch (Exception e) {
+            s.removeAttribute(PENDING_CV_SESSION_ATTR);
+        }
+    }
+
+    private static void setPendingCvSessionIfFileExists(HttpServletRequest req, String userId,
+                                                        ApplicantProfile p, Path cvUserDir) {
+        HttpSession s = req.getSession(true);
+        String fn = p.cvFileName == null ? "" : p.cvFileName.trim();
+        if (fn.isEmpty()) {
+            s.removeAttribute(PENDING_CV_SESSION_ATTR);
+            return;
+        }
+        Path f = cvUserDir.resolve(fn);
+        try {
+            if (Files.isRegularFile(f)) {
+                s.setAttribute(PENDING_CV_SESSION_ATTR, fn);
+            } else {
+                s.removeAttribute(PENDING_CV_SESSION_ATTR);
+            }
+        } catch (Exception e) {
+            s.removeAttribute(PENDING_CV_SESSION_ATTR);
+        }
+    }
+
+    private void forwardProfileEdit(HttpServletRequest req, HttpServletResponse resp, User u,
+                                    ApplicantProfile p, List<EducationEntry> eduRows,
+                                    Map<String, String> fieldErrors) throws ServletException, IOException {
+        req.setAttribute("profile", p);
+        req.setAttribute("user", u);
+        req.setAttribute("editable", true);
+        req.setAttribute("educationList", eduRows.isEmpty() ? defaultEduList() : eduRows);
+        req.setAttribute("fieldErrors", fieldErrors);
+        req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
+    }
+
+    /** Moves the previous CV into {@code _archive/} when the applicant uploads a new file. */
+    private static void archiveReplacedCv(Path cvUserDir, String oldName) throws IOException {
+        Path oldPath = cvUserDir.resolve(oldName);
+        if (!Files.isRegularFile(oldPath)) {
+            return;
+        }
+        Path archiveDir = cvUserDir.resolve("_archive");
+        Files.createDirectories(archiveDir);
+        String stamp = String.valueOf(System.currentTimeMillis());
+        Path dest = archiveDir.resolve(stamp + "_" + oldName);
+        Files.move(oldPath, dest, StandardCopyOption.REPLACE_EXISTING);
     }
 
     private static String trim(String s) {

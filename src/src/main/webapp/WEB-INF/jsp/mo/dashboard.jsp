@@ -1,5 +1,8 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Map" %>
+<%@ page import="java.net.URLEncoder" %>
+<%@ page import="java.nio.charset.StandardCharsets" %>
 <%@ page import="com.bupt.ta.model.User" %>
 <%@ page import="com.bupt.ta.model.Job" %>
 <%@ page import="com.bupt.ta.model.Application" %>
@@ -9,6 +12,9 @@
     List<Application> applications = (List<Application>) request.getAttribute("applications");
     if (jobs == null) jobs = java.util.Collections.emptyList();
     if (applications == null) applications = java.util.Collections.emptyList();
+    @SuppressWarnings("unchecked")
+    Map<String, String> cvByUserId = (Map<String, String>) request.getAttribute("cvByUserId");
+    if (cvByUserId == null) cvByUserId = java.util.Collections.emptyMap();
 %>
 <!DOCTYPE html>
 <html>
@@ -222,6 +228,7 @@
                     <th>Role</th>
                     <th>Application Date</th>
                     <th>Status</th>
+                    <th>CV</th>
                     <th>Feedback</th>
                 </tr>
                 </thead>
@@ -237,6 +244,21 @@
                         <td><%= app.role %></td>
                         <td><%= app.applicationDate %></td>
                         <td><%= app.status %></td>
+                        <td>
+                            <%
+                                String cvName = cvByUserId.get(app.userId);
+                                if (cvName != null) {
+                                    String q = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
+                            %>
+                                <a href="<%= request.getContextPath() %>/cv?userId=<%= q %>" target="_blank" rel="noopener">Open CV</a>
+                            <%
+                                } else {
+                            %>
+                                <span class="muted">No CV</span>
+                            <%
+                                }
+                            %>
+                        </td>
                         <td><%= app.feedback == null ? "" : app.feedback %></td>
                     </tr>
                 <% } %>
