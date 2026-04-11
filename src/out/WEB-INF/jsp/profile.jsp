@@ -146,9 +146,61 @@
                  pattern="[A-Za-z0-9]{8,30}" />
           <% if (fieldErrors.get("idCard") != null) { %><div class="field-error"><%= fieldErrors.get("idCard") %></div><% } %>
         </div>
+
+        <p class="section-title" style="margin-top:1.25rem;">Curriculum Vitae (CV)</p>
+        <%
+          boolean hasCv = p.cvFileName != null && !p.cvFileName.isEmpty();
+          String cvEsc = hasCv ? p.cvFileName.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") : "";
+          String ctx = request.getContextPath();
+        %>
+        <div class="cv-compact" data-context="<%= ctx %>" data-server-cv="<%= hasCv ? "1" : "0" %>">
+          <% if (editable) { %>
+          <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx" class="cv-file-input" title="" />
+          <div class="cv-file-block">
+            <label for="cv" class="cv-file-card-label">
+              <div class="upload-area cv-file-card" id="cv-file-card">
+                <svg class="cv-file-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                  <polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/>
+                </svg>
+                <span id="cv-display-label" class="cv-display-label"><%= hasCv ? cvEsc : "Choose file..." %></span>
+              </div>
+            </label>
+            <div class="cv-icon-row">
+              <a id="cv-view-btn" class="cv-icon-btn" target="_blank" rel="noopener noreferrer" title="View" aria-label="View CV"
+                 href="<%= hasCv ? ctx + "/cv" : "#" %>"
+                 style="<%= hasCv ? "" : "display:none;" %>">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/></svg>
+              </a>
+              <% if (hasCv) { %>
+              <button type="button" class="cv-icon-btn" title="Replace CV" aria-label="Replace CV" onclick="document.getElementById('cv').click()">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              </button>
+              <% } %>
+            </div>
+          </div>
+          <% } else if (hasCv) { %>
+          <div class="cv-file-block">
+            <div class="upload-area cv-file-card cv-file-card--readonly">
+              <svg class="cv-file-card-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="14 2 14 8 20 8"/>
+              </svg>
+              <span class="cv-display-label"><%= cvEsc %></span>
+            </div>
+            <div class="cv-icon-row">
+              <a class="cv-icon-btn" href="<%= ctx %>/cv" target="_blank" rel="noopener noreferrer" title="View" aria-label="View CV">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/></svg>
+              </a>
+            </div>
+          </div>
+          <% } %>
+          <% if (fieldErrors.get("cv") != null) { %><div class="field-error" style="margin-top:.35rem;"><%= fieldErrors.get("cv") %></div><% } %>
+        </div>
+
           </div>
 
-          <!-- Right Column: Education, Skills, CV -->
+          <!-- Right Column: Education, Skills, Availability -->
           <div style="display:flex;flex-direction:column;gap:1rem;">
             <h3 class="section-heading">Qualifications &amp; Availability</h3>
         <table class="edu-table" id="edu-table">
@@ -225,39 +277,6 @@
           <% if (fieldErrors.get("skills") != null) { %><div class="field-error"><%= fieldErrors.get("skills") %></div><% } %>
         </div>
 
-        <!-- CV Upload -->
-        <p class="section-title">Curriculum Vitae</p>
-
-        <div class="field">
-          <% if (p.cvFileName != null && !p.cvFileName.isEmpty()) { %>
-            <div class="alert alert-success" style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
-              <svg style="width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;
-                          stroke-linecap:round;stroke-linejoin:round;" viewBox="0 0 24 24">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-              <span>Current: <%= p.cvFileName %></span>
-              <a href="${pageContext.request.contextPath}/cv" target="_blank"
-                 class="link-sm" style="margin-left:auto;">View</a>
-            </div>
-            <label style="display:flex;align-items:center;gap:.4rem;font-size:.82rem;color:#64748b;margin-bottom:.5rem;">
-              <input id="deleteCv" name="deleteCv" value="1" type="checkbox" style="width:auto;height:auto;" />
-              Delete current CV on save
-            </label>
-          <% } %>
-          <label for="cv" style="cursor:pointer;">
-            <div class="upload-area" id="upload-label">
-              <svg viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
-              <span id="cv-name"><%= (p.cvFileName != null && !p.cvFileName.isEmpty()) ? "Replace CV" : "Upload CV" %></span>
-            </div>
-            <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx"
-                   style="display:none;"
-                   onchange="document.getElementById('cv-name').textContent = this.files[0] ? this.files[0].name : 'Upload CV';" />
-          </label>
-          <p class="page-subtitle" style="margin-top:.25rem;">PDF, DOC or DOCX &mdash; max 10 MB</p>
-          <% if (fieldErrors.get("cv") != null) { %><div class="field-error"><%= fieldErrors.get("cv") %></div><% } %>
-        </div>
-
         <% if (editable) { %>
         <div class="save-bar">
           <button type="submit" class="btn btn-primary">Save Profile</button>
@@ -308,11 +327,6 @@ function removeEduRow(btn) {
     }
     if (el.type === 'file') {
       el.disabled = true;
-      var upload = document.getElementById('upload-label');
-      if (upload) {
-        upload.style.opacity = '.6';
-        upload.style.cursor = 'not-allowed';
-      }
       return;
     }
     if (el.type === 'checkbox') {
@@ -321,6 +335,49 @@ function removeEduRow(btn) {
     }
     el.setAttribute('disabled', 'disabled');
   });
+})();
+
+(function () {
+  var cv = document.getElementById('cv');
+  var label = document.getElementById('cv-display-label');
+  var viewBtn = document.getElementById('cv-view-btn');
+  var compact = document.querySelector('.cv-compact');
+  if (!cv || !label || !compact) return;
+  var contextPath = compact.getAttribute('data-context') || '';
+  var hasServerCv = compact.getAttribute('data-server-cv') === '1';
+  var initial = label.textContent;
+  var blobUrl = null;
+  function revokeBlob() {
+    if (blobUrl) {
+      URL.revokeObjectURL(blobUrl);
+      blobUrl = null;
+    }
+  }
+  function syncViewLink(file) {
+    if (!viewBtn) return;
+    revokeBlob();
+    if (file) {
+      blobUrl = URL.createObjectURL(file);
+      viewBtn.setAttribute('href', blobUrl);
+      viewBtn.style.display = 'inline-flex';
+      return;
+    }
+    if (hasServerCv && contextPath) {
+      viewBtn.setAttribute('href', contextPath + '/cv');
+      viewBtn.style.display = 'inline-flex';
+    } else {
+      viewBtn.setAttribute('href', '#');
+      viewBtn.style.display = 'none';
+    }
+  }
+  cv.addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    label.textContent = f ? f.name : initial;
+    syncViewLink(f);
+  });
+  if (!cv.files || cv.files.length === 0) {
+    syncViewLink(null);
+  }
 })();
 </script>
 </body>

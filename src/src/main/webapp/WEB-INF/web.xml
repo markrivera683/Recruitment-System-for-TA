@@ -7,4 +7,23 @@
   <welcome-file-list>
     <welcome-file>login</welcome-file>
   </welcome-file-list>
+
+  <!-- Explicit mapping so /mo works even if annotation scanning misses @WebServlet -->
+  <servlet>
+    <servlet-name>MoServlet</servlet-name>
+    <servlet-class>com.bupt.ta.servlet.MoServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MoServlet</servlet-name>
+    <url-pattern>/mo</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
+    <servlet-name>CvDownloadServlet</servlet-name>
+    <servlet-class>com.bupt.ta.servlet.CvDownloadServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>CvDownloadServlet</servlet-name>
+    <url-pattern>/cv</url-pattern>
+  </servlet-mapping>
 </web-app>
