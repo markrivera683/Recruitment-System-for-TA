@@ -38,4 +38,18 @@ public abstract class BaseServlet extends HttpServlet {
         }
         return true;
     }
+
+    /** @return true if caller may continue; otherwise response already committed (redirect or 403). */
+    protected boolean ensureMo(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        User u = currentUser(req);
+        if (u == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        if (!Roles.MO.equals(u.role)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;
+    }
 }

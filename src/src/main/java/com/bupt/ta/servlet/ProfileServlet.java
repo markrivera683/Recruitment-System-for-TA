@@ -17,8 +17,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @WebServlet(urlPatterns = {"/profile"})
 @MultipartConfig(
@@ -27,6 +30,12 @@ import java.util.Optional;
         maxRequestSize = 12 * 1024 * 1024
 )
 public class ProfileServlet extends BaseServlet {
+    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L} .'-]{2,60}$");
+    private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{4,30}$");
+    private static final Pattern ID_CARD_PATTERN = Pattern.compile("^[A-Za-z0-9]{8,30}$");
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9()\\-\\s]{6,25}$");
+    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
     private ProfileService profiles;
     private AuthService auth;
     private Path dataDir;
@@ -49,10 +58,14 @@ public class ProfileServlet extends BaseServlet {
         Optional<ApplicantProfile> existing = profiles.getByUserId(u.id);
         ApplicantProfile p = existing.orElse(new ApplicantProfile(u.id));
         boolean editable = !existing.isPresent() || "1".equals(req.getParameter("edit"));
+        String msg = req.getParameter("msg");
         mergeDefaultsFromUser(u, p);
         req.setAttribute("profile", p);
         req.setAttribute("user", u);
         req.setAttribute("editable", editable);
+        if (msg != null && !msg.trim().isEmpty()) {
+            req.setAttribute("infoMessage", escapeHtml(msg.trim()));
+        }
         List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
         if (edus.isEmpty()) {
             edus = new ArrayList<>();
@@ -113,31 +126,70 @@ public class ProfileServlet extends BaseServlet {
         p.availability = existing.map(e -> e.availability).orElse("");
         p.selfIntro = existing.map(e -> e.selfIntro).orElse("");
 
+        Map<String, String> fieldErrors = validateProfileInput(p, eduRows);
+        if (!fieldErrors.isEmpty()) {
+            req.setAttribute("profile", p);
+            req.setAttribute("user", u);
+            req.setAttribute("editable", true);
+            req.setAttribute("educationList", eduRows.isEmpty() ? defaultEduList() : eduRows);
+            req.setAttribute("fieldErrors", fieldErrors);
+            req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
+            return;
+        }
+
+        String oldName = p.cvFileName;
+        boolean deleteCv = "1".equals(req.getParameter("deleteCv"));
+        if (deleteCv) p.cvFileName = "";
+
         Part cvPart = req.getPart("cv");
+        String uploadedName = null;
+        Path uploadedPath = null;
+        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
         if (cvPart != null && cvPart.getSize() > 0) {
             String submitted = cvPart.getSubmittedFileName();
             String safe = safeFileName(submitted);
-            Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
+            if (!isAllowedCvFile(safe)) {
+                Map<String, String> cvError = new LinkedHashMap<>();
+                cvError.put("cv", "Invalid CV file type. Please upload PDF, DOC, or DOCX.");
+                req.setAttribute("profile", p);
+                req.setAttribute("user", u);
+                req.setAttribute("editable", true);
+                req.setAttribute("educationList", eduRows.isEmpty() ? defaultEduList() : eduRows);
+                req.setAttribute("fieldErrors", cvError);
+                req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
+                return;
+            }
             Files.createDirectories(cvUserDir);
             Path dest = cvUserDir.resolve(safe);
-            String oldName = p.cvFileName;
             cvPart.write(dest.toAbsolutePath().toString());
+            uploadedName = safe;
+            uploadedPath = dest;
             p.cvFileName = safe;
-            if (oldName != null && !oldName.isEmpty() && !oldName.equals(safe)) {
-                Path oldPath = cvUserDir.resolve(oldName);
-                Files.deleteIfExists(oldPath);
-            }
         }
 
         try {
             auth.updateUserBasics(u, p.fullName, p.studentId, p.email);
             req.getSession().setAttribute("user", u);
             profiles.upsert(p);
+            // Only delete old file after profile is persisted successfully.
+            if (oldName != null && !oldName.isEmpty()) {
+                boolean replacedByDifferent = uploadedName != null && !oldName.equals(uploadedName);
+                boolean deletedWithoutReplace = deleteCv && uploadedName == null;
+                if (replacedByDifferent || deletedWithoutReplace) {
+                    Files.deleteIfExists(cvUserDir.resolve(oldName));
+                }
+            }
         } catch (IllegalArgumentException ex) {
-            req.setAttribute("error", ex.getMessage());
+            // Roll back newly uploaded file when save fails.
+            if (uploadedPath != null && uploadedName != null && (oldName == null || !oldName.equals(uploadedName))) {
+                Files.deleteIfExists(uploadedPath);
+            }
+            Map<String, String> authErrors = new LinkedHashMap<>();
+            authErrors.put("email", ex.getMessage());
             req.setAttribute("profile", p);
             req.setAttribute("user", u);
             req.setAttribute("editable", true);
+            req.setAttribute("fieldErrors", authErrors);
             List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
             if (edus.isEmpty()) {
                 edus = new ArrayList<>();
@@ -173,6 +225,71 @@ public class ProfileServlet extends BaseServlet {
             list.add(new EducationEntry(school, degree, major, period));
         }
         return list;
+    }
+
+    private static List<EducationEntry> defaultEduList() {
+        List<EducationEntry> edus = new ArrayList<>();
+        edus.add(new EducationEntry());
+        return edus;
+    }
+
+    private static Map<String, String> validateProfileInput(ApplicantProfile p, List<EducationEntry> edus) {
+        Map<String, String> errors = new LinkedHashMap<>();
+        if (isBlank(p.fullName) || !NAME_PATTERN.matcher(p.fullName).matches()) {
+            errors.put("fullName", "Please enter a valid full name (2-60 letters).");
+        }
+        if (!("Male".equals(p.gender) || "Female".equals(p.gender) || "Other".equals(p.gender))) {
+            errors.put("gender", "Please select a valid gender.");
+        }
+        if (isBlank(p.degree)) errors.put("degree", "Degree is required.");
+        if (isBlank(p.major)) errors.put("major", "Major is required.");
+        if (isBlank(p.studentId) || !STUDENT_ID_PATTERN.matcher(p.studentId).matches()) {
+            errors.put("studentId", "Please enter a valid student ID (letters/numbers, 4-30 chars).");
+        }
+        if (isBlank(p.idCard) || !ID_CARD_PATTERN.matcher(p.idCard).matches()) {
+            errors.put("idCard", "Please enter a valid national ID (8-30 letters/numbers).");
+        }
+        if (isBlank(p.phone) || !PHONE_PATTERN.matcher(p.phone).matches()) {
+            errors.put("phone", "Please enter a valid phone number.");
+        }
+        if (isBlank(p.email) || !EMAIL_PATTERN.matcher(p.email).matches()) {
+            errors.put("email", "Please enter a valid email address.");
+        }
+        if (isBlank(p.courses)) errors.put("courses", "Courses completed is required.");
+        if (isBlank(p.freeTime)) errors.put("freeTime", "Availability is required.");
+        if (isBlank(p.skills)) errors.put("skills", "Skills is required.");
+
+        if (edus == null || edus.isEmpty()) {
+            errors.put("education", "Please add at least one education background record.");
+            return errors;
+        }
+        for (int i = 0; i < edus.size(); i++) {
+            EducationEntry e = edus.get(i);
+            if (isBlank(e.school)) errors.put("edu_school_" + i, "School is required.");
+            if (isBlank(e.degree)) errors.put("edu_degree_" + i, "Degree is required.");
+            if (isBlank(e.major)) errors.put("edu_major_" + i, "Major is required.");
+            if (isBlank(e.period)) errors.put("edu_period_" + i, "Period is required.");
+        }
+        return errors;
+    }
+
+    private static boolean isAllowedCvFile(String fileName) {
+        if (fileName == null) return false;
+        String n = fileName.toLowerCase();
+        return n.endsWith(".pdf") || n.endsWith(".doc") || n.endsWith(".docx");
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
+    }
+
+    private static String escapeHtml(String s) {
+        if (s == null) return "";
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 
     private static String safeFileName(String submitted) {
