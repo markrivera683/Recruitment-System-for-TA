@@ -46,28 +46,40 @@ Recruitment-System-for-TA/
 │   │   ├── java/com/bupt/ta/
 │   │   │   ├── ai/                # LM client interfaces, mock + HTTP scaffold, factory
 │   │   │   ├── model/             # Data models
-│   │   │   │   ├── Roles.java     # Role constants (TA, ADMIN)
+│   │   │   │   ├── Roles.java            # TA, ADMIN, MO (module organiser)
 │   │   │   │   ├── User.java
-│   │   │   │   ├── EducationEntry.java   # One row of education background
-│   │   │   │   └── ApplicantProfile.java # Applicant profile + CV metadata
-│   │   │   │   └── Application.java      # TA job application record
+│   │   │   │   ├── EducationEntry.java
+│   │   │   │   ├── ApplicantProfile.java
+│   │   │   │   ├── Application.java      # TA job application record
+│   │   │   │   ├── Job.java              # Job posting (TA browse)
+│   │   │   │   ├── TaResumeDisplay.java
+│   │   │   │   └── TaWorkloadStats.java
 │   │   │   ├── service/           # Business logic & file persistence
-│   │   │   │   ├── ai/            # AiFeatureService + feature prompt builders (mock/LM)
-│   │   │   │   ├── FileStore.java       # Hand-rolled JSON read/write
-│   │   │   │   ├── AuthService.java     # Register / Login / updateUserBasics
-│   │   │   │   └── ProfileService.java  # Profile CRUD (incl. education JSON)
-│   │   │   └── ApplicationService.java # Application CRUD + status update
-│   │   │   ├── util/              # AppConfig, HttpJsonClient (JDK 11)
-│   │   │   └── servlet/           # HTTP request handlers
+│   │   │   │   ├── ai/            # AiFeatureService + feature builders (mock/LM)
+│   │   │   │   ├── FileStore.java
+│   │   │   │   ├── AuthService.java
+│   │   │   │   ├── ProfileService.java
+│   │   │   │   ├── ApplicationService.java
+│   │   │   │   └── JobService.java       # jobs.json
+│   │   │   ├── util/              # AppConfig, HttpJsonClient, Strings
+│   │   │   └── servlet/           # HTTP handlers (@WebServlet; /mo and /cv also in web.xml)
 │   │   │       ├── BaseServlet.java
-│   │   │       ├── AiDemoServlet.java   # /admin/ai-demo (mock AI demo)
-│   │   │       ├── AdminServlet.java
 │   │   │       ├── LoginServlet.java
 │   │   │       ├── RegisterServlet.java
 │   │   │       ├── LogoutServlet.java
-│   │   │       ├── ProfileServlet.java        # Multipart: profile + CV upload
-│   │       ├── ApplicationServlet.java    # Application status + filter
-│   │   │       ├── CvDownloadServlet.java # Serve uploaded CV (logged-in user)
+│   │   │       ├── ProfileServlet.java
+│   │   │       ├── JobServlet.java       # /job
+│   │   │       ├── MoServlet.java        # /mo (mapped in web.xml)
+│   │   │       ├── ApplicationServlet.java
+│   │   │       ├── CvDownloadServlet.java # /cv (mapped in web.xml)
+│   │   │       ├── AdminServlet.java
+│   │   │       ├── AdminUserServlet.java  # /admin/users
+│   │   │       ├── AdminJobServlet.java   # /admin/jobs
+│   │   │       ├── AdminJobViewServlet.java
+│   │   │       ├── AdminTaProfilesServlet.java
+│   │   │       ├── AdminCvServlet.java
+│   │   │       ├── AdminExportServlet.java
+│   │   │       ├── AiDemoServlet.java     # /admin/ai-demo
 │   │   │       ├── ForgotPasswordServlet.java
 │   │   │       └── ResetPasswordServlet.java
 │   │   └── webapp/
@@ -80,20 +92,28 @@ Recruitment-System-for-TA/
 │   │           │   ├── users.json
 │   │           │   ├── profiles.json
 │   │           │   ├── applications.json
+│   │           │   ├── jobs.json          # Job postings (TA / MO)
 │   │           │   └── cv/{userId}/...    # Created at runtime when users upload CVs
 │   │           └── jsp/           # JSP view templates
 │   │               ├── admin/
 │   │               │   ├── ai-demo.jsp
+│   │               │   ├── dashboard.jsp
+│   │               │   ├── job-view.jsp
+│   │               │   └── ta-profiles.jsp
+│   │               ├── mo/
 │   │               │   └── dashboard.jsp
+│   │               ├── jobs.jsp
+│   │               ├── job-detail.jsp
 │   │               ├── login.jsp
 │   │               ├── register.jsp
 │   │               ├── profile.jsp              # Profile + CV upload
 │   │               ├── application-status.jsp   # My Applications page
+│   │               ├── cv-error.jsp
 │   │               ├── forgot-password.jsp
 │   │               └── reset-password.jsp
-│   ├── run.ps1                    # One-command: compile + package + deploy + start Tomcat
+│   ├── run.ps1                    # Compile all *.java, WAR, start Tomcat (see script for ports/paths)
 │   ├── run-tests.ps1              # Run JUnit tests (requires Maven: mvn test)
-│   ├── compile.bat                # Legacy Windows build script
+│   ├── compile.bat                # Windows: full explicit javac list; set TOMCAT_HOME
 │   └── pom.xml                    # Maven reference (optional, IDE use only)
 └── README.md
 ```
@@ -126,12 +146,7 @@ The recommended way is **one command**: `run.ps1` compiles all sources, packages
 | Apache Tomcat | 9.x         | Provides `servlet-api.jar` and the runtime |
 
 
-Edit the two path variables at the top of `**src\run.ps1`** to match your machine:
-
-```powershell
-$JDK_HOME = 'D:\Apps\OpenJDKs\OpenJDK21.0.2'          # your JDK path
-$TOMCAT   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115' # your Tomcat path
-```
+Edit `**src\run.ps1**`: set `$DefaultJdkHome` and `$DefaultTomcat` (or set `JAVA_HOME` / `CATALINA_HOME` in the environment). The script uses a custom HTTP port by default (see `$HTTP_PORT` in the file, often `18080`).
 
 ### Run (one command)
 
@@ -150,11 +165,11 @@ Or from inside the `src\` folder:
 The script will:
 
 1. **Clean** the previous build output
-2. **Compile** all 14 Java source files with `javac -source 11`
+2. **Compile** all `src/main/java/**/*.java` in one `javac` pass (`compile.bat` lists every file explicitly)
 3. **Package** `webapp/` + compiled classes into `ta-recruitment.war`
-4. **Deploy** the WAR to `%TOMCAT%\webapps\`
-5. **Start** Tomcat (`startup.bat` with `CATALINA_HOME` set automatically)
-6. **Open** `http://localhost:8080/ta-recruitment/login` in the default browser
+4. **Deploy** the WAR (see script: may use a project-local `tomcat-base` and non-default port)
+5. **Start** Tomcat via `startup.bat`
+6. **Open** the login URL printed by the script (port may differ from `8080`)
 
 ### Stop Tomcat
 
@@ -164,26 +179,9 @@ Stop-Process -Name java -Force
 
 ### Source files compiled
 
-All files in a single `javac` pass (order matters for dependencies):
+Single `javac` pass with **all** sources: use `src/compile.bat` (explicit list) or `src/run.ps1` (discovers every `*.java` under `src/main/java`).
 
-```
-model/Roles.java
-model/EducationEntry.java
-model/User.java
-model/ApplicantProfile.java
-service/FileStore.java
-service/AuthService.java
-service/ProfileService.java
-servlet/BaseServlet.java
-servlet/LoginServlet.java
-servlet/RegisterServlet.java
-servlet/LogoutServlet.java
-servlet/ProfileServlet.java
-servlet/ForgotPasswordServlet.java
-servlet/ResetPasswordServlet.java
-```
-
-> **Note:** The warning `bootstrap classpath not set with -source 11` appears when compiling with JDK 17+ targeting Java 11. It is harmless and does not affect the build.
+> **Note:** The warning `bootstrap classpath not set with -source 11` may appear when compiling with JDK 17+ targeting Java 11. It is usually harmless.
 
 ---
 
@@ -213,11 +211,19 @@ On save, `**AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/forgot-password` | GET / POST | Forgot password (demo placeholder)                                                        |
 | `/reset-password`  | GET / POST | Reset password (demo placeholder)                                                         |
 | `/applications`    | GET        | View and filter own application statuses                                                  |
+| `/job`             | GET        | TA job list + detail (`?id=`); login required                                             |
+| `/mo`              | GET / POST | Module organiser dashboard (`MoServlet`; mapping in `web.xml`)                            |
 | `/admin`           | GET        | Administrator dashboard (requires `role` = `ADMIN`)                                       |
+| `/admin/users`     | GET / POST | User management (ADMIN)                                                                   |
+| `/admin/jobs`      | GET / POST | Job management (ADMIN)                                                                    |
+| `/admin/job-view`  | GET        | Admin job view                                                                            |
+| `/admin/ta-profiles` | GET      | TA profiles listing (ADMIN)                                                               |
+| `/admin/cv`        | GET        | Admin CV download                                                                         |
+| `/admin/export`    | GET        | Data export (ADMIN)                                                                       |
 | `/admin/ai-demo`   | GET / POST | **Mock / demo** AI scaffold (admin only): skill match, missing skills, job recommendation |
 
 
-The repository includes a **development seed** administrator in `src/src/main/webapp/WEB-INF/data/users.json`: email `**admin@bupt.local`**, password `**admin123**`. Change or remove this account in production; new registrations get `role` = `TA`.
+Seed accounts in `src/src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`). New registrations get `role` = `TA`. Remove or change in production.
 
 ---
 
@@ -228,9 +234,10 @@ All data is stored as JSON arrays in plain text files under `WEB-INF/data/`:
 
 | File / location     | Contents                                                                                                                                                                                                                                                                                                                                                       |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `users.json`        | Registered user accounts (`id`, `name`, `studentId`, `email`, `passwordHash`, `role`)                                                                                                                                                                                                                                                                          |
+| `users.json`        | User accounts (`id`, `name`, `studentId`, `email`, `passwordHash`, `role`, `active`)                                                                                                                                                                                                                                                                           |
 | `profiles.json`     | Applicant profiles per `userId`: personal fields (`fullName`, `gender`, `degree`, `major`, `studentId`, `idCard`, `phone`, `email`), `educationJson` (array of education objects), `courses` (multiline text), `freeTime`, `skills`, `cvFileName`. Legacy keys (`degreeProgramme`, `yearOfStudy`, `availability`, `selfIntro`) may still exist for older rows. |
 | `applications.json` | Application records per user: `id`, `userId`, `moduleName`, `moduleCode`, `role`, `applicationDate`, `status` (Pending/Accepted/Rejected), `feedback`                                                                                                                                                                                                          |
+| `jobs.json`         | Job postings (`Job` / `JobService`)                                                                                                                                                                                                                                                                                                                             |
 | `cv/{userId}/…`     | Uploaded CV files (created at runtime; not checked into Git)                                                                                                                                                                                                                                                                                                   |
 
 
