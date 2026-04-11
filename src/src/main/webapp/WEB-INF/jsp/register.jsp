@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
-<div class="page">
+<div class="page fade-in">
   <div class="container">
 
     <!-- Header -->
@@ -54,11 +54,11 @@
           <input id="confirm" name="confirm" type="password" placeholder="Confirm your password" required />
         </div>
 
-        <button type="submit" class="btn btn-primary">Register</button>
+        <button type="submit" class="btn btn-primary" style="margin-top:.5rem;">Register</button>
       </form>
 
-      <div class="card-footer">
-        <a class="back-link" href="${pageContext.request.contextPath}/login">
+      <div class="card-footer" style="text-align:center;">
+        <a class="back-link" href="${pageContext.request.contextPath}/login" style="justify-content:center;">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
           Back to login
         </a>

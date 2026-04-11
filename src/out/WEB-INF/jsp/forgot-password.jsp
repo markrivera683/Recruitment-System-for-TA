@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
-<div class="page">
+<div class="page fade-in">
   <div class="container">
 
     <!-- Header -->
@@ -30,12 +30,13 @@
         <div class="icon-circle icon-circle--green">
           <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
-        <div style="text-align:center;">
-          <h2 style="font-size:1.0625rem;font-weight:600;color:#0f172a;margin-bottom:.5rem;">Check Your Inbox</h2>
-          <p style="font-size:.875rem;color:#64748b;line-height:1.6;margin-bottom:1.25rem;"><%= message %></p>
+        <div class="success-state">
+          <h2>Check Your Email</h2>
+          <p><%= message %></p>
         </div>
-        <div class="card-footer">
-          <a class="back-link" href="${pageContext.request.contextPath}/login">
+        <a href="${pageContext.request.contextPath}/forgot-password" class="btn-outline" style="margin-bottom:1rem;">Try a different email</a>
+        <div class="card-footer" style="text-align:center;">
+          <a class="back-link" href="${pageContext.request.contextPath}/login" style="justify-content:center;">
             <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             Back to Login
           </a>
@@ -45,7 +46,7 @@
         <div class="icon-circle icon-circle--blue">
           <svg viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
         </div>
-        <p style="font-size:.875rem;color:#64748b;text-align:center;margin-bottom:1.25rem;line-height:1.6;">
+        <p style="text-align:center;margin-bottom:1.5rem;line-height:1.625;font-size:.9375rem;color:#475569;">
           We'll send a password reset link to your registered university email address.
         </p>
         <form class="form" method="post" action="${pageContext.request.contextPath}/forgot-password">
@@ -55,8 +56,8 @@
           </div>
           <button type="submit" class="btn btn-primary">Send Reset Link</button>
         </form>
-        <div class="card-footer">
-          <a class="back-link" href="${pageContext.request.contextPath}/login">
+        <div class="card-footer" style="text-align:center;">
+          <a class="back-link" href="${pageContext.request.contextPath}/login" style="justify-content:center;">
             <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             Back to Login
           </a>

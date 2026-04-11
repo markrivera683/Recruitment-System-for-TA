@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
-<div class="page">
+<div class="page fade-in">
   <div class="container">
 
     <!-- Header -->
@@ -30,9 +30,9 @@
         <div class="icon-circle icon-circle--green">
           <svg viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
         </div>
-        <div style="text-align:center;">
-          <h2 style="font-size:1.0625rem;font-weight:600;color:#0f172a;margin-bottom:.5rem;">Password Updated!</h2>
-          <p style="font-size:.875rem;color:#64748b;line-height:1.6;margin-bottom:1.5rem;"><%= message %></p>
+        <div class="success-state">
+          <h2>Password Updated!</h2>
+          <p><%= message %></p>
           <a href="${pageContext.request.contextPath}/login" class="btn btn-primary">Go to Login</a>
         </div>
       <% } else { %>
@@ -54,8 +54,8 @@
           </div>
           <button type="submit" class="btn btn-primary">Reset Password</button>
         </form>
-        <div class="card-footer">
-          <a class="back-link" href="${pageContext.request.contextPath}/login">
+        <div class="card-footer" style="text-align:center;">
+          <a class="back-link" href="${pageContext.request.contextPath}/login" style="justify-content:center;">
             <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
             Back to Login
           </a>

@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
-<div class="page">
+<div class="page fade-in">
   <div class="container">
 
     <!-- Header -->
@@ -39,17 +39,17 @@
           <input id="password" name="password" type="password" placeholder="Enter your password" required />
         </div>
 
-        <div style="text-align:right; margin-top:-.25rem;">
-          <a class="link-sm" href="${pageContext.request.contextPath}/forgot-password">Forgot password?</a>
+        <div style="display:flex;justify-content:flex-end;padding-top:.25rem;">
+          <a class="forgot-link" href="${pageContext.request.contextPath}/forgot-password">Forgot password?</a>
         </div>
 
-        <button type="submit" class="btn btn-primary">Login</button>
+        <button type="submit" class="btn btn-primary">Sign in</button>
       </form>
 
       <div class="card-footer">
         <p class="card-footer-text">
           Don't have an account?
-          <a class="link-sm" href="${pageContext.request.contextPath}/register">Register here</a>
+          <a href="${pageContext.request.contextPath}/register" style="font-weight:600;">Register here</a>
         </p>
       </div>
     </div>

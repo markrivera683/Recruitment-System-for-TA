@@ -9,6 +9,11 @@ $DefaultTomcat   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115'
 
 $JDK_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { $DefaultJdkHome }
 $TOMCAT   = if ($env:CATALINA_HOME) { $env:CATALINA_HOME } else { $DefaultTomcat }
+
+# 独立 CATALINA_BASE，避免与本机其它 Tomcat/IDEA 抢 8080 / 8005
+$HTTP_PORT      = 18080
+$SHUTDOWN_PORT  = 18005
+$AJP_PORT       = 18009
 # ============================================================
 
 function Get-Executable($name, $defaultPath) {
@@ -47,6 +52,33 @@ if (-not $BASE) {
     $BASE = $SCRIPT_DIR
 }
 
+function Initialize-TomcatBase {
+    param(
+        [string]$TomcatHome,
+        [string]$TomcatBase,
+        [int]$HttpPort,
+        [int]$ShutdownPort,
+        [int]$AjpPort
+    )
+    foreach ($d in @('conf', 'logs', 'temp', 'work', 'webapps')) {
+        New-Item -ItemType Directory -Force -Path (Join-Path $TomcatBase $d) | Out-Null
+    }
+    $serverXml = Join-Path $TomcatBase 'conf\server.xml'
+    if (-not (Test-Path $serverXml)) {
+        Copy-Item (Join-Path $TomcatHome 'conf\*') (Join-Path $TomcatBase 'conf') -Recurse -Force
+    }
+    $raw = Get-Content $serverXml -Raw -Encoding UTF8
+    $httpMarker = ('port="{0}"' -f $HttpPort)
+    if ($raw -notmatch [regex]::Escape($httpMarker)) {
+        $raw = $raw -replace '<Server port="8005" ', "<Server port=`"$ShutdownPort`" "
+        $raw = $raw -replace '<Connector port="8080" ', "<Connector port=`"$HttpPort`" "
+        $raw = $raw -replace 'protocol="HTTP/1.1"(\s+)port="8080"', "protocol=`"HTTP/1.1`"`$1port=`"$HttpPort`""
+        $raw = $raw -replace 'port="8009"', "port=`"$AjpPort`""
+        Set-Content -Path $serverXml -Value $raw -Encoding UTF8 -NoNewline
+        Write-Host "Patched server.xml: HTTP=$HttpPort shutdown=$ShutdownPort AJP=$AjpPort"
+    }
+}
+
 $SRC    = Join-Path $BASE 'src\main\java'
 $WEB    = Join-Path $BASE 'src\main\webapp'
 $OUT    = Join-Path $BASE 'out'
@@ -80,13 +112,18 @@ if (-not (Test-Path "$dataDir\applications.json")) { Set-Content "$dataDir\appli
 Push-Location $OUT
 & $JAR -cvf $WAR . | Out-Null
 Pop-Location
-Copy-Item -Force $WAR "$TOMCAT\webapps\"
-Write-Host "WAR deployed: $WAR"
+Write-Host "WAR built: $WAR"
 
 # --- 4. Start Tomcat ---
 Write-Host '[4/4] Starting Tomcat...'
+$TOMCAT_BASE = Join-Path $BASE 'tomcat-base'
+Initialize-TomcatBase -TomcatHome $TOMCAT -TomcatBase $TOMCAT_BASE -HttpPort $HTTP_PORT -ShutdownPort $SHUTDOWN_PORT -AjpPort $AJP_PORT
+Copy-Item -Force $WAR (Join-Path $TOMCAT_BASE 'webapps\ta-recruitment.war')
+
+$env:CATALINA_BASE = $TOMCAT_BASE
 & "$TOMCAT\bin\startup.bat"
 Write-Host 'Waiting for Tomcat to start (6s)...'
 Start-Sleep -Seconds 6
-Start-Process 'http://localhost:8080/ta-recruitment/login'
-Write-Host 'Done!  http://localhost:8080/ta-recruitment/login'
+$loginUrl = "http://localhost:$HTTP_PORT/ta-recruitment/login"
+Start-Process $loginUrl
+Write-Host "Done!  $loginUrl  (CATALINA_BASE=$TOMCAT_BASE)"
