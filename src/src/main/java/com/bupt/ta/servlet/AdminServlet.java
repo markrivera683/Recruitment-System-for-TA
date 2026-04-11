@@ -1,5 +1,8 @@
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.model.Application;
+import com.bupt.ta.model.Roles;
+import com.bupt.ta.model.TaWorkloadStats;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.AuthService;
@@ -12,7 +15,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @WebServlet(urlPatterns = {"/admin"})
 public class AdminServlet extends BaseServlet {
@@ -40,9 +47,60 @@ public class AdminServlet extends BaseServlet {
             req.setAttribute("adminMessage", msg);
         }
         List<User> users = auth.listAllUsers();
-        req.setAttribute("applications", applications.listAll());
+        List<Application> appList = applications.listAll();
+        req.setAttribute("applications", appList);
         req.setAttribute("users", users);
         req.setAttribute("jobs", jobs.getAllJobs());
+
+        Map<String, TaWorkloadStats> taWorkload = new HashMap<>();
+        for (User user : users) {
+            if (user != null && Roles.TA.equals(user.role) && user.id != null && !user.id.trim().isEmpty()) {
+                taWorkload.put(user.id.trim(), new TaWorkloadStats());
+            }
+        }
+        for (Application app : appList) {
+            if (app == null || app.userId == null) {
+                continue;
+            }
+            String applicantId = app.userId.trim();
+            if (applicantId.isEmpty()) {
+                continue;
+            }
+            TaWorkloadStats row = taWorkload.get(applicantId);
+            if (row == null) {
+                continue;
+            }
+            row.total++;
+            String raw = app.status == null ? "" : app.status.trim();
+            if ("Accepted".equalsIgnoreCase(raw)) {
+                row.accepted++;
+                row.acceptedPositions.add(TaWorkloadStats.formatAcceptedLine(app));
+            } else if ("Rejected".equalsIgnoreCase(raw)) {
+                row.rejected++;
+                row.rejectedPositions.add(TaWorkloadStats.formatAcceptedLine(app));
+            } else {
+                row.pending++;
+            }
+        }
+        req.setAttribute("taWorkload", taWorkload);
+
+        List<User> taUsersWorkloadOrder = users.stream()
+                .filter(user -> user != null && Roles.TA.equals(user.role)
+                        && user.id != null && !user.id.trim().isEmpty())
+                .sorted(Comparator
+                        .comparingInt((User user) -> {
+                            TaWorkloadStats row = taWorkload.get(user.id.trim());
+                            return row == null ? 0 : row.accepted;
+                        }).reversed()
+                        .thenComparingInt((User user) -> {
+                            TaWorkloadStats row = taWorkload.get(user.id.trim());
+                            return row == null ? 0 : row.total;
+                        }).reversed()
+                        .thenComparing(user -> user.name != null ? user.name : "",
+                                String.CASE_INSENSITIVE_ORDER))
+                .collect(Collectors.toList());
+        req.setAttribute("taUsersWorkloadOrder", taUsersWorkloadOrder);
+
         req.getRequestDispatcher("/WEB-INF/jsp/admin/dashboard.jsp").forward(req, resp);
     }
 }

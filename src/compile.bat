@@ -19,6 +19,7 @@ echo [2/4] Compiling...
 REM Single javac pass with ALL sources (Roles + EducationEntry + CvDownloadServlet + AdminServlet, etc.)
 javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\model\TaResumeDisplay.java" ^
+  "%SRC%\com\bupt\ta\model\TaWorkloadStats.java" ^
   "%SRC%\com\bupt\ta\model\Roles.java" ^
   "%SRC%\com\bupt\ta\model\User.java" ^
   "%SRC%\com\bupt\ta\model\EducationEntry.java" ^
