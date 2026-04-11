@@ -18,7 +18,11 @@ public final class SkillMatchService {
     }
 
     public LmResponse matchApplicantSkills(String applicantSkills, String jobRequirements) throws LmException {
-        LmRequest req = LmRequest.builder()
+        return client.generate(buildMatchRequest(applicantSkills, jobRequirements));
+    }
+
+    public LmRequest buildMatchRequest(String applicantSkills, String jobRequirements) {
+        return LmRequest.builder()
                 .featureName(AiFeatureNames.SKILL_MATCH)
                 .systemPrompt("You are a TA recruitment assistant.\n"
                         + "Return concise Markdown with sections:\n"
@@ -33,6 +37,5 @@ public final class SkillMatchService {
                 .maxTokens(512)
                 .model(AiLmDefaults.modelOrFallback(config))
                 .build();
-        return client.generate(req);
     }
 }

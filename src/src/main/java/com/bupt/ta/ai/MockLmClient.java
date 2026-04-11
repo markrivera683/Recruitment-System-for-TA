@@ -24,6 +24,24 @@ public final class MockLmClient implements LmClient {
     }
 
     @Override
+    public void stream(LmRequest request, LmStreamListener listener) {
+        LmResponse r = generate(request);
+        if (!r.isSuccess()) {
+            listener.onError(r.getErrorMessage() != null ? r.getErrorMessage() : "Generation failed");
+            return;
+        }
+        String t = r.getText();
+        if (t == null) {
+            t = "";
+        }
+        int step = 28;
+        for (int i = 0; i < t.length(); i += step) {
+            listener.onDelta(t.substring(i, Math.min(t.length(), i + step)));
+        }
+        listener.onComplete(r.getModel());
+    }
+
+    @Override
     public LmResponse generate(LmRequest request) {
         String model = request.getModel() != null && !request.getModel().isEmpty()
                 ? request.getModel()

@@ -3,6 +3,10 @@ package com.bupt.ta.ai;
 import com.bupt.ta.util.HttpJsonClient;
 import com.bupt.ta.util.Strings;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.logging.Level;
@@ -59,6 +63,61 @@ public final class HttpLmClient implements LmClient {
         }
     }
 
+    @Override
+    public void stream(LmRequest request, LmStreamListener listener) throws LmException {
+        if (!config.hasHttpCredentials()) {
+            throw new LmException("HTTP LM requires LM_BASE_URL and LM_API_KEY.");
+        }
+        String url = joinBaseAndPath(config.getBaseUrl(), config.getHttpChatPath());
+        String model = Strings.firstNonBlank(request.getModel(), config.getModel(), LmModelDefaults.CHAT_FALLBACK);
+        String body;
+        try {
+            body = buildOpenAiCompatibleChatBodyStream(request, model);
+        } catch (Exception e) {
+            throw new LmException("Failed to build streaming request JSON: " + e.getMessage(), e);
+        }
+        Map<String, String> headers = new LinkedHashMap<>();
+        headers.put("Authorization", "Bearer " + config.getApiKey());
+        try (InputStream rawIn = HttpJsonClient.postJsonStream(url, headers, body, config.getTimeoutMs());
+             BufferedReader br = new BufferedReader(new InputStreamReader(rawIn, StandardCharsets.UTF_8))) {
+            String line;
+            String lastModel = model;
+            while ((line = br.readLine()) != null) {
+                String trimmed = line.trim();
+                if (trimmed.isEmpty()) {
+                    continue;
+                }
+                if (!trimmed.startsWith("data:")) {
+                    continue;
+                }
+                String payload = trimmed.substring(trimmed.indexOf(':') + 1).trim();
+                if ("[DONE]".equals(payload)) {
+                    listener.onComplete(lastModel);
+                    return;
+                }
+                if (payload.contains("\"error\"")) {
+                    int errIdx = payload.indexOf("\"error\"");
+                    String apiMsg = extractJsonStringValue(payload, "message", errIdx >= 0 ? errIdx : 0);
+                    listener.onError(apiMsg != null ? apiMsg : payload);
+                    return;
+                }
+                String m = extractJsonStringValue(payload, "model", 0);
+                if (m != null && !m.isEmpty()) {
+                    lastModel = m;
+                }
+                int deltaIdx = payload.indexOf("\"delta\"");
+                String delta = extractJsonStringValue(payload, "content", deltaIdx >= 0 ? deltaIdx : 0);
+                if (delta != null && !delta.isEmpty()) {
+                    listener.onDelta(delta);
+                }
+            }
+            listener.onComplete(lastModel);
+        } catch (Exception e) {
+            LOG.log(Level.WARNING, "LM HTTP stream failed: " + url, e);
+            throw new LmException("LM HTTP stream failed: " + e.getMessage(), e);
+        }
+    }
+
     private static String joinBaseAndPath(String baseUrl, String path) {
         String b = baseUrl == null ? "" : baseUrl.trim();
         String p = path == null ? "" : path.trim();
@@ -99,6 +158,36 @@ public final class HttpLmClient implements LmClient {
         sb.append("\"model\":\"").append(jsonEscape(model)).append("\",");
         sb.append("\"temperature\":").append(request.getTemperature()).append(',');
         sb.append("\"max_tokens\":").append(request.getMaxTokens()).append(',');
+        sb.append("\"messages\":[").append(messagesJson).append(']');
+        sb.append('}');
+        return sb.toString();
+    }
+
+    private static String buildOpenAiCompatibleChatBodyStream(LmRequest request, String model) {
+        StringBuilder messagesJson = new StringBuilder();
+        if (request.getMessages() != null && !request.getMessages().isEmpty()) {
+            boolean first = true;
+            for (LmMessage m : request.getMessages()) {
+                if (!first) {
+                    messagesJson.append(',');
+                }
+                first = false;
+                messagesJson.append("{\"role\":\"").append(jsonEscape(m.role))
+                        .append("\",\"content\":\"").append(jsonEscape(m.content)).append("\"}");
+            }
+        } else {
+            String sys = request.getSystemPrompt() != null ? request.getSystemPrompt() : "";
+            String usr = request.getUserPrompt() != null ? request.getUserPrompt() : "";
+            messagesJson.append("{\"role\":\"system\",\"content\":\"").append(jsonEscape(sys)).append("\"},");
+            messagesJson.append("{\"role\":\"user\",\"content\":\"").append(jsonEscape(usr)).append("\"}");
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append('{');
+        sb.append("\"model\":\"").append(jsonEscape(model)).append("\",");
+        sb.append("\"temperature\":").append(request.getTemperature()).append(',');
+        sb.append("\"max_tokens\":").append(request.getMaxTokens()).append(',');
+        sb.append("\"stream\":true,");
         sb.append("\"messages\":[").append(messagesJson).append(']');
         sb.append('}');
         return sb.toString();

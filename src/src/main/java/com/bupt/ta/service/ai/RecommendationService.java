@@ -18,7 +18,12 @@ public final class RecommendationService {
     }
 
     public LmResponse recommendJobs(String candidateProfile, String openPositions) throws LmException {
-        LmRequest req = LmRequest.builder()
+        return client.generate(buildRecommendRequest(candidateProfile, openPositions));
+    }
+
+    /** Same prompts as {@link #recommendJobs} — for streaming endpoints. */
+    public LmRequest buildRecommendRequest(String candidateProfile, String openPositions) {
+        return LmRequest.builder()
                 .featureName(AiFeatureNames.JOB_RECOMMENDATION)
                 .systemPrompt("You recommend TA positions based on the candidate profile and open postings.\n"
                         + "Return concise Markdown with sections:\n"
@@ -32,6 +37,5 @@ public final class RecommendationService {
                 .maxTokens(700)
                 .model(AiLmDefaults.modelOrFallback(config))
                 .build();
-        return client.generate(req);
     }
 }

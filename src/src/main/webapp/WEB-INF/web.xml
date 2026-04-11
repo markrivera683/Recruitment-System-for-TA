@@ -26,4 +26,13 @@
     <servlet-name>CvDownloadServlet</servlet-name>
     <url-pattern>/cv</url-pattern>
   </servlet-mapping>
+
+  <servlet>
+    <servlet-name>AiStreamServlet</servlet-name>
+    <servlet-class>com.bupt.ta.servlet.AiStreamServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>AiStreamServlet</servlet-name>
+    <url-pattern>/api/ai/stream</url-pattern>
+  </servlet-mapping>
 </web-app>
