@@ -18,7 +18,11 @@ public final class MissingSkillService {
     }
 
     public LmResponse identifyMissingSkills(String candidateSkills, String requiredJobSkills) throws LmException {
-        LmRequest req = LmRequest.builder()
+        return client.generate(buildMissingRequest(candidateSkills, requiredJobSkills));
+    }
+
+    public LmRequest buildMissingRequest(String candidateSkills, String requiredJobSkills) {
+        return LmRequest.builder()
                 .featureName(AiFeatureNames.MISSING_SKILLS)
                 .systemPrompt("You identify skill gaps for TA recruitment screening.\n"
                         + "Return concise Markdown with sections:\n"
@@ -32,6 +36,5 @@ public final class MissingSkillService {
                 .maxTokens(512)
                 .model(AiLmDefaults.modelOrFallback(config))
                 .build();
-        return client.generate(req);
     }
 }
