@@ -63,7 +63,7 @@ public class JobServlet extends BaseServlet {
             String sortBy = safe(req.getParameter("sortBy"));
             if (sortBy.isEmpty()) sortBy = "postingDate";
 
-            List<Job> jobs = jobService.getAllJobs();
+            List<Job> jobs = jobService.listPublishedJobs();
             jobs = applySearch(jobs, q);
             jobs = applySort(jobs, sortBy);
 

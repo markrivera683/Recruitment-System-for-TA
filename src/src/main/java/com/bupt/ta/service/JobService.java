@@ -11,6 +11,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.time.LocalDate;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 /*
 功能：
@@ -31,9 +34,8 @@ public class JobService {
 
         try {
             String json = new String(
-                Files.readAllBytes(Paths.get(jobsJsonPath)),
-                StandardCharsets.UTF_8
-            );
+                    Files.readAllBytes(Paths.get(jobsJsonPath)),
+                    StandardCharsets.UTF_8);
 
             for (String obj : splitTopLevelObjects(json)) {
                 Job job = new Job();
@@ -47,16 +49,18 @@ public class JobService {
                 job.setApplicationDeadline(firstNonEmpty(
                         extractString(obj, "applicationDeadline"),
                         extractString(obj, "deadline"),
-                        ""
-                ));
+                        ""));
                 job.setDuration(firstNonEmpty(
                         extractString(obj, "duration"),
-                        "One semester"
-                ));
+                        "One semester"));
                 job.setNumberOfTAs(firstNonEmpty(
                         extractString(obj, "numberOfTAs"),
-                        "1"
-                ));
+                        "1"));
+                job.setStatus(firstNonEmpty(extractString(obj, "status"), "Published"));
+                job.setCreatedByMoId(extractString(obj, "createdByMoId"));
+                job.setCreatedAt(extractString(obj, "createdAt"));
+                job.setPublishedAt(extractString(obj, "publishedAt"));
+                job.setWorkloadHours(extractString(obj, "workloadHours"));
                 List<String> schedule = extractStringArray(obj, "schedule");
                 if (schedule.isEmpty()) {
                     schedule = buildDefaultSchedule(job.getActivityType());
@@ -80,7 +84,7 @@ public class JobService {
         }
         List<Job> jobs = getAllJobs();
         boolean changed = false;
-        for (Iterator<Job> it = jobs.iterator(); it.hasNext(); ) {
+        for (Iterator<Job> it = jobs.iterator(); it.hasNext();) {
             Job j = it.next();
             if (id.equals(j.getId())) {
                 it.remove();
@@ -123,6 +127,11 @@ public class JobService {
         sb.append("    \"numberOfTAs\": \"").append(esc(job.getNumberOfTAs())).append("\",\n");
         sb.append("    \"schedule\": ").append(skillsToJson(job.getSchedule())).append("\n");
         sb.append("  }");
+        sb.append("    \"status\": \"").append(esc(firstNonEmpty(job.getStatus(), "Published"))).append("\",\n");
+        sb.append("    \"createdByMoId\": \"").append(esc(job.getCreatedByMoId())).append("\",\n");
+        sb.append("    \"createdAt\": \"").append(esc(job.getCreatedAt())).append("\",\n");
+        sb.append("    \"publishedAt\": \"").append(esc(job.getPublishedAt())).append("\",\n");
+        sb.append("    \"workloadHours\": \"").append(esc(job.getWorkloadHours())).append("\",\n");
         return sb.toString();
     }
 
@@ -181,7 +190,8 @@ public class JobService {
             if (c == '"') {
                 inString = true;
             } else if (c == '{') {
-                if (depth == 0) start = i;
+                if (depth == 0)
+                    start = i;
                 depth++;
             } else if (c == '}') {
                 depth--;
@@ -204,7 +214,8 @@ public class JobService {
         List<String> values = new ArrayList<>();
         Pattern p = Pattern.compile("\"" + Pattern.quote(key) + "\"\\s*:\\s*\\[(.*?)\\]", Pattern.DOTALL);
         Matcher m = p.matcher(objJson);
-        if (!m.find()) return values;
+        if (!m.find())
+            return values;
 
         Matcher itemMatcher = Pattern.compile("\"((?:\\\\.|[^\"])*)\"").matcher(m.group(1));
         while (itemMatcher.find()) {
@@ -245,5 +256,65 @@ public class JobService {
             slots.add("Schedule to be confirmed");
         }
         return slots;
+    }
+
+    public List<Job> listPublishedJobs() {
+        return getAllJobs().stream()
+                .filter(j -> !"Draft".equalsIgnoreCase(firstNonEmpty(j.getStatus(), "Published")))
+                .collect(Collectors.toList());
+    }
+
+    public Job createJob(Job job) throws IOException {
+        List<Job> jobs = getAllJobs();
+        String today = LocalDate.now().toString();
+
+        if (job.getId() == null || job.getId().trim().isEmpty()) {
+            job.setId(UUID.randomUUID().toString());
+        }
+        if (job.getStatus() == null || job.getStatus().trim().isEmpty()) {
+            job.setStatus("Draft");
+        }
+        if (job.getCreatedAt() == null || job.getCreatedAt().trim().isEmpty()) {
+            job.setCreatedAt(today);
+        }
+        if ("Published".equalsIgnoreCase(job.getStatus())) {
+            if (job.getPostDate() == null || job.getPostDate().trim().isEmpty()) {
+                job.setPostDate(today);
+            }
+            if (job.getPublishedAt() == null || job.getPublishedAt().trim().isEmpty()) {
+                job.setPublishedAt(today);
+            }
+        }
+        jobs.add(job);
+        writeJobs(jobs);
+        return job;
+    }
+
+    public boolean publishJob(String jobId, String moId) throws IOException {
+        if (jobId == null || jobId.trim().isEmpty())
+            return false;
+        List<Job> jobs = getAllJobs();
+        boolean changed = false;
+        String today = LocalDate.now().toString();
+
+        for (Job j : jobs) {
+            if (jobId.trim().equals(j.getId())) {
+                j.setStatus("Published");
+                if (j.getPostDate() == null || j.getPostDate().trim().isEmpty()) {
+                    j.setPostDate(today);
+                }
+                if (j.getPublishedAt() == null || j.getPublishedAt().trim().isEmpty()) {
+                    j.setPublishedAt(today);
+                }
+                if (j.getCreatedByMoId() == null || j.getCreatedByMoId().trim().isEmpty()) {
+                    j.setCreatedByMoId(moId == null ? "" : moId);
+                }
+                changed = true;
+                break;
+            }
+        }
+        if (changed)
+            writeJobs(jobs);
+        return changed;
     }
 }
