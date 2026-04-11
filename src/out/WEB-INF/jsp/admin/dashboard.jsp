@@ -81,7 +81,7 @@
         <div class="header-actions">
           <a href="<%= ctx %>/admin/ai-demo">AI Demo</a>
           <span class="header-sep">|</span>
-          <a href="<%= ctx %>/profile">Profile</a>
+          <a href="<%= ctx %>/admin/ta-profiles">Profile</a>
           <span class="header-sep">|</span>
           <a href="<%= ctx %>/logout">Logout</a>
         </div>
@@ -284,7 +284,7 @@
                 <td><%= j.getActivityType() == null ? "-" : j.getActivityType() %></td>
                 <td><%= j.getPostDate() == null ? "-" : j.getPostDate() %></td>
                 <td>
-                  <a class="button button-outline" href="<%= ctx %>/job?id=<%= mid %>">View</a>
+                  <a class="button button-outline" href="<%= ctx %>/admin/job-view?id=<%= mid %>">View</a>
                   <form method="post" action="<%= ctx %>/admin/jobs" style="display:inline" onsubmit="return confirm('Delete this job from jobs.json?');">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="jobId" value="<%= mid %>" />
