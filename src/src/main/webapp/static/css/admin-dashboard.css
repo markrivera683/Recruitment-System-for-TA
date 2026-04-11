@@ -5,8 +5,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 18px;
+  line-height: 1.55;
   background: radial-gradient(ellipse at top, #e2e8f0, #f8fafc 50%, #ffffff);
   color: #0f172a;
   min-height: 100vh;
@@ -22,14 +22,14 @@ body {
   box-shadow: 0 1px 3px rgba(0,0,0,.04);
 }
 .header .title {
-  font-size: 1.5rem;
+  font-size: 1.875rem;
   font-weight: 700;
   color: #0f172a;
   margin: 0;
 }
 .header .subtitle {
   margin: .25rem 0 0;
-  font-size: .875rem;
+  font-size: 1rem;
   color: #64748b;
 }
 .header .profile {
@@ -38,8 +38,8 @@ body {
   gap: .75rem;
 }
 .header .avatar {
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: 9999px;
   background-color: #2563eb;
   color: #fff;
@@ -56,7 +56,7 @@ body {
   margin-top: .5rem;
 }
 .header-actions a {
-  font-size: .75rem;
+  font-size: .9375rem;
   color: #2563eb;
   text-decoration: none;
   font-weight: 500;
@@ -106,7 +106,7 @@ body {
   align-items: center;
 }
 .card-title {
-  font-size: .875rem;
+  font-size: 1.0625rem;
   font-weight: 600;
   color: #334155;
   margin: 0;
@@ -117,13 +117,13 @@ body {
 
 /* ── Stat values ──────────────────────────────────────────── */
 .stat-value {
-  font-size: 1.875rem;
+  font-size: 2.25rem;
   font-weight: 700;
   color: #0f172a;
 }
 .icon-wrap {
-  width: 2rem;
-  height: 2rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: .75rem;
   display: flex;
   align-items: center;
@@ -141,12 +141,13 @@ body {
 }
 .table th,
 .table td {
+  font-size: 1rem;
   padding: .75rem .5rem;
   border-bottom: 1px solid rgba(226,232,240,.40);
   text-align: left;
 }
 .table th {
-  font-size: .75rem;
+  font-size: .8125rem;
   text-transform: uppercase;
   color: #64748b;
   letter-spacing: .05em;
@@ -157,9 +158,9 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: .25rem .6rem;
+  padding: .3rem .65rem;
   border-radius: 9999px;
-  font-size: .75rem;
+  font-size: .875rem;
   font-weight: 600;
 }
 .badge-active   { background: #dbeafe; color: #1d4ed8; }
@@ -174,9 +175,9 @@ body {
   color: #334155;
   background: rgba(255,255,255,.80);
   border-radius: .5rem;
-  padding: .4rem .75rem;
+  padding: .5rem .9rem;
   cursor: pointer;
-  font-size: .75rem;
+  font-size: .9375rem;
   display: inline-flex;
   align-items: center;
   gap: .25rem;
@@ -206,10 +207,11 @@ body {
 .tab-btn {
   border: none;
   background: transparent;
-  padding: .5rem .75rem;
+  padding: .55rem .9rem;
   border-radius: .5rem;
   cursor: pointer;
   font-weight: 600;
+  font-size: 1rem;
   color: #64748b;
   font-family: inherit;
   transition: background .15s, color .15s;
@@ -223,7 +225,7 @@ body {
 .tab-content.active { display: block; }
 
 /* ── Status grid ──────────────────────────────────────────── */
-.tooltip-small { font-size: .75rem; color: #64748b; }
+.tooltip-small { font-size: .9375rem; color: #64748b; }
 .status-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -238,7 +240,7 @@ body {
 .status-label { margin: 0; }
 .status-value {
   margin: .25rem 0 0;
-  font-size: 1.5rem;
+  font-size: 1.75rem;
   font-weight: 700;
   color: #0f172a;
 }
@@ -251,7 +253,7 @@ body {
 .bar-meta {
   display: flex;
   justify-content: space-between;
-  font-size: .75rem;
+  font-size: .9375rem;
   color: #475569;
 }
 .bar-track {
@@ -290,7 +292,7 @@ body {
   margin: 0;
 }
 .header-user-email {
-  font-size: .75rem;
+  font-size: .9375rem;
   color: #6b7280;
   margin: .25rem 0 0;
 }
@@ -301,7 +303,7 @@ body {
   border-radius: .5rem;
   border: 1px solid #fcd34d;
   margin: 0 0 1rem;
-  font-size: .875rem;
+  font-size: 1rem;
 }
 .inline-form {
   display: inline;
