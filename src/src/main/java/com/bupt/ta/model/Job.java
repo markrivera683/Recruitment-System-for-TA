@@ -15,6 +15,12 @@ public class Job {
     private String numberOfTAs;
     private List<String> schedule;
 
+    private String status;
+    private String createdByMoId;
+    private String createdAt;
+    private String publishedAt;
+    private String workloadHours;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -47,4 +53,19 @@ public class Job {
 
     public List<String> getSchedule() { return schedule; }
     public void setSchedule(List<String> schedule) { this.schedule = schedule; }
+
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+
+    public String getCreatedByMoId() { return createdByMoId; }
+    public void setCreatedByMoId(String createdByMoId) { this.createdByMoId = createdByMoId; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getPublishedAt() { return publishedAt; }
+    public void setPublishedAt(String publishedAt) { this.publishedAt = publishedAt; }
+
+    public String getWorkloadHours() { return workloadHours; }
+    public void setWorkloadHours(String workloadHours) { this.workloadHours = workloadHours; }
 }
