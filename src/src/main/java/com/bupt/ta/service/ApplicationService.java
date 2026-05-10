@@ -4,10 +4,10 @@ import com.bupt.ta.model.Application;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ApplicationService {
@@ -55,6 +55,16 @@ public class ApplicationService {
         return store.readMaps(FILE).stream()
                     .map(ApplicationService::mapToApp)
                     .collect(Collectors.toList());
+    }
+
+    public Optional<Application> findById(String appId) throws IOException {
+        if (appId == null || appId.isEmpty()) {
+            return Optional.empty();
+        }
+        return store.readMaps(FILE).stream()
+                .filter(m -> appId.equals(m.get("id")))
+                .map(ApplicationService::mapToApp)
+                .findFirst();
     }
 
     public Application save(Application app) throws IOException {

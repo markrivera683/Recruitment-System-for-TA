@@ -273,6 +273,80 @@ body {
   .status-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* Application Status — same control style as Management Deactivate / Delete */
+.card-content--status-analysis {
+  padding-top: 1rem;
+}
+.status-grid--app-buttons {
+  gap: 0.75rem;
+}
+a.status-app-btn {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 4.25rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.65rem 0.9rem;
+  text-align: center;
+  text-decoration: none !important;
+  -webkit-text-decoration: none !important;
+  font-weight: 600;
+}
+a.status-app-btn:visited {
+  text-decoration: none !important;
+}
+/* Default .button: match Deactivate (slate text) */
+a.button.status-app-btn:not(.button-success):not(.button-danger),
+a.button.status-app-btn:not(.button-success):not(.button-danger):visited {
+  color: #334155;
+}
+a.button.status-app-btn:not(.button-success):not(.button-danger) .status-app-btn__label,
+a.button.status-app-btn:not(.button-success):not(.button-danger) .status-app-btn__count {
+  color: inherit;
+}
+/* Success: white label + count on green */
+a.button.button-success.status-app-btn,
+a.button.button-success.status-app-btn:visited {
+  color: #fff;
+}
+a.button.button-success.status-app-btn .status-app-btn__label,
+a.button.button-success.status-app-btn .status-app-btn__count {
+  color: #fff;
+}
+/* Danger: same red tones as Delete */
+a.button.button-danger.status-app-btn,
+a.button.button-danger.status-app-btn:visited {
+  color: #991b1b;
+}
+a.button.button-danger.status-app-btn .status-app-btn__label,
+a.button.button-danger.status-app-btn .status-app-btn__count {
+  color: inherit;
+}
+.status-app-btn__label {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.status-app-btn__count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+a.status-app-btn span {
+  text-decoration: none !important;
+}
+a.status-app-btn:focus-visible {
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
+}
+a.button.button-success.status-app-btn:focus-visible {
+  outline-color: #fff;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.45);
+}
+
 /* ── Admin-specific layout helpers ────────────────────────── */
 .header-row {
   display: flex;
@@ -307,6 +381,31 @@ body {
 }
 .inline-form {
   display: inline;
+}
+.admin-app-actions-cell {
+  vertical-align: top;
+  min-width: 12rem;
+}
+.admin-app-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.admin-app-action-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+.admin-app-feedback {
+  min-width: 7rem;
+  max-width: 14rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.375rem;
+  font: inherit;
+  font-size: 0.875rem;
 }
 .export-bar {
   margin-top: .75rem;
