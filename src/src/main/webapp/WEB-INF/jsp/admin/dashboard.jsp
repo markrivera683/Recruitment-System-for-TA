@@ -50,8 +50,12 @@
   Map<String, Integer> moduleMap = new LinkedHashMap<>();
   Map<String, Integer> monthMap = new LinkedHashMap<>();
   for (Application a : applications) {
-    String status = a.status == null || a.status.trim().isEmpty() ? "Pending" : a.status.trim();
-    statusMap.put(status, statusMap.getOrDefault(status, 0) + 1);
+    String rawSt = a.status == null ? "" : a.status.trim();
+    String bucket;
+    if ("Accepted".equalsIgnoreCase(rawSt)) bucket = "Accepted";
+    else if ("Rejected".equalsIgnoreCase(rawSt)) bucket = "Rejected";
+    else bucket = "Pending";
+    statusMap.put(bucket, statusMap.getOrDefault(bucket, 0) + 1);
     String moduleName = a.moduleName == null || a.moduleName.trim().isEmpty() ? "Unknown Module" : a.moduleName.trim();
     moduleMap.put(moduleName, moduleMap.getOrDefault(moduleName, 0) + 1);
     String month = "Unknown";
@@ -72,7 +76,7 @@
   String ctx = request.getContextPath();
 %>
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -139,21 +143,20 @@
 
     <section class="card">
       <div class="card-header"><h2 class="card-title">Application Status Analysis</h2></div>
-      <div class="card-content">
-        <p class="tooltip-small" style="margin-top:0">Real-time distribution from submitted applications.</p>
-        <div class="status-grid">
-          <div class="status-item">
-            <p class="tooltip-small status-label">Pending</p>
-            <p class="status-value"><%= statusMap.getOrDefault("Pending", 0) %></p>
-          </div>
-          <div class="status-item">
-            <p class="tooltip-small status-label">Accepted</p>
-            <p class="status-value text-green"><%= statusMap.getOrDefault("Accepted", 0) %></p>
-          </div>
-          <div class="status-item">
-            <p class="tooltip-small status-label">Rejected</p>
-            <p class="status-value text-red"><%= statusMap.getOrDefault("Rejected", 0) %></p>
-          </div>
+      <div class="card-content card-content--status-analysis">
+        <div class="status-grid status-grid--app-buttons" role="group" aria-label="Application counts by status">
+          <a class="button status-app-btn" href="<%= ctx %>/admin/applications/by-status?status=pending">
+            <span class="status-app-btn__label">Pending</span>
+            <span class="status-app-btn__count"><%= statusMap.getOrDefault("Pending", 0) %></span>
+          </a>
+          <a class="button button-success status-app-btn" href="<%= ctx %>/admin/applications/by-status?status=accepted">
+            <span class="status-app-btn__label">Accepted</span>
+            <span class="status-app-btn__count"><%= statusMap.getOrDefault("Accepted", 0) %></span>
+          </a>
+          <a class="button button-danger status-app-btn" href="<%= ctx %>/admin/applications/by-status?status=rejected">
+            <span class="status-app-btn__label">Rejected</span>
+            <span class="status-app-btn__count"><%= statusMap.getOrDefault("Rejected", 0) %></span>
+          </a>
         </div>
       </div>
     </section>
@@ -210,7 +213,7 @@
     <section class="card">
       <div class="card-header"><h2 class="card-title">TA Workload Overview</h2></div>
       <div class="card-content">
-        <p class="tooltip-small" style="margin-top:0">Only <strong>TA</strong> accounts are listed. <strong>Assigned jobs</strong> is the number of accepted (assigned) positions. <strong>Accepted work</strong> / <strong>Rejected work</strong> list applications by status (from <code>applications.json</code>). A <strong>warning</strong> appears when assigned jobs reach <%= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD %> or more.</p>
+        <p class="tooltip-small" style="margin-top:0">Only <strong>TA</strong> accounts. <strong>Assigned jobs</strong> = accepted applications. Warning when accepted &ge; <%= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD %>.</p>
         <table class="table table-workload">
           <thead>
             <tr>
