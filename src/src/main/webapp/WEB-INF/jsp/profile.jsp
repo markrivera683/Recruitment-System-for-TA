@@ -153,7 +153,9 @@
           String cvEsc = hasCv ? p.cvFileName.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") : "";
           String ctx = request.getContextPath();
         %>
-        <div class="cv-compact" data-context="<%= ctx %>" data-server-cv="<%= hasCv ? "1" : "0" %>">
+        <div class="cv-compact" data-context="<%= ctx %>" data-server-cv="<%= hasCv ? "1" : "0" %>"
+             data-placeholder="Choose file..."
+             data-server-cv-display="<%= hasCv ? cvEsc : "" %>">
           <% if (editable) { %>
           <input id="cv" name="cv" type="file" accept=".pdf,.doc,.docx" class="cv-file-input" title="" />
           <div class="cv-file-block">
@@ -172,9 +174,13 @@
                  style="<%= hasCv ? "" : "display:none;" %>">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/></svg>
               </a>
-              <% if (hasCv) { %>
-              <button type="button" class="cv-icon-btn" title="Replace CV" aria-label="Replace CV" onclick="document.getElementById('cv').click()">
+              <button type="button" id="cv-replace-btn" class="cv-icon-btn" title="Replace CV" aria-label="Replace CV" onclick="document.getElementById('cv').click()">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+              </button>
+              <% if (hasCv) { %>
+              <button type="button" class="cv-icon-btn cv-icon-btn--danger" title="Delete CV" aria-label="Delete CV"
+                      onclick="if (confirm('Delete your CV from this system? This cannot be undone.')) document.getElementById('form-delete-cv').submit();">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="3 6 5 6 21 6"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="10" y1="11" x2="10" y2="17"/><line fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="14" y1="11" x2="14" y2="17"/></svg>
               </button>
               <% } %>
             </div>
@@ -286,6 +292,9 @@
         </div><!-- /right column -->
         </div><!-- /grid-2col -->
       </form>
+      <form id="form-delete-cv" method="post" action="${pageContext.request.contextPath}/profile" class="profile-hidden-form" aria-hidden="true">
+        <input type="hidden" name="action" value="deleteCvOnly" />
+      </form>
     </div><!-- /card -->
   </div><!-- /layout-wide -->
 </div>
@@ -322,6 +331,9 @@ function removeEduRow(btn) {
       return;
     }
     if (el.type === 'button') {
+      if (el.classList.contains('cv-icon-btn--danger')) {
+        return;
+      }
       el.style.display = 'none';
       return;
     }
@@ -345,14 +357,17 @@ function removeEduRow(btn) {
   if (!cv || !label || !compact) return;
   var contextPath = compact.getAttribute('data-context') || '';
   var hasServerCv = compact.getAttribute('data-server-cv') === '1';
-  var initial = label.textContent;
+  var placeholder = compact.getAttribute('data-placeholder') || 'Choose file...';
+  var serverDisplay = compact.getAttribute('data-server-cv-display') || '';
   var blobUrl = null;
+
   function revokeBlob() {
     if (blobUrl) {
       URL.revokeObjectURL(blobUrl);
       blobUrl = null;
     }
   }
+
   function syncViewLink(file) {
     if (!viewBtn) return;
     revokeBlob();
@@ -370,14 +385,23 @@ function removeEduRow(btn) {
       viewBtn.style.display = 'none';
     }
   }
-  cv.addEventListener('change', function () {
-    var f = this.files && this.files[0];
-    label.textContent = f ? f.name : initial;
-    syncViewLink(f);
-  });
-  if (!cv.files || cv.files.length === 0) {
+
+  /** Keep label + preview in sync with input; if picker ends with no file, fall back to server CV name / placeholder. */
+  function refreshCvUiFromInput() {
+    var f = cv.files && cv.files[0];
+    if (f) {
+      label.textContent = f.name;
+      syncViewLink(f);
+      return;
+    }
+    label.textContent = serverDisplay ? serverDisplay : placeholder;
     syncViewLink(null);
   }
+
+  cv.addEventListener('change', refreshCvUiFromInput);
+  cv.addEventListener('cancel', refreshCvUiFromInput);
+
+  refreshCvUiFromInput();
 })();
 </script>
 </body>

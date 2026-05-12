@@ -1,18 +1,5 @@
 package com.bupt.ta.servlet;
 
-import com.bupt.ta.model.ApplicantProfile;
-import com.bupt.ta.model.EducationEntry;
-import com.bupt.ta.model.User;
-import com.bupt.ta.service.AuthService;
-import com.bupt.ta.service.ProfileService;
-
-import javax.servlet.ServletException;
-import javax.servlet.annotation.MultipartConfig;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
-import javax.servlet.http.Part;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,6 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.Part;
+
+import com.bupt.ta.model.ApplicantProfile;
+import com.bupt.ta.model.EducationEntry;
+import com.bupt.ta.model.User;
+import com.bupt.ta.service.AuthService;
+import com.bupt.ta.service.ProfileService;
 
 @WebServlet(urlPatterns = {"/profile"})
 @MultipartConfig(
@@ -100,6 +101,12 @@ public class ProfileServlet extends BaseServlet {
         User u = currentUser(req);
         if (u == null) {
             resp.sendRedirect(req.getContextPath() + "/login");
+            return;
+        }
+
+        String action = trim(req.getParameter("action"));
+        if ("deleteCvOnly".equals(action)) {
+            handleDeleteCvOnly(req, resp, u);
             return;
         }
 
@@ -225,6 +232,52 @@ public class ProfileServlet extends BaseServlet {
         }
 
         resp.sendRedirect(req.getContextPath() + "/profile");
+    }
+
+    /** Remove CV file(s) from disk and clear {@code cvFileName} without posting the full profile form. */
+    private void handleDeleteCvOnly(HttpServletRequest req, HttpServletResponse resp, User u)
+            throws IOException {
+        String ctx = req.getContextPath();
+        Path cvUserDir = dataDir.resolve("cv").resolve(u.id).normalize();
+        HttpSession session = req.getSession(false);
+        String pending = "";
+        if (session != null) {
+            Object o = session.getAttribute(PENDING_CV_SESSION_ATTR);
+            if (o instanceof String) {
+                pending = ((String) o).trim();
+            }
+            session.removeAttribute(PENDING_CV_SESSION_ATTR);
+        }
+        try {
+            Optional<ApplicantProfile> ex = profiles.getByUserId(u.id);
+            if (ex.isPresent()) {
+                ApplicantProfile pr = ex.get();
+                String fn = pr.cvFileName == null ? "" : pr.cvFileName.trim();
+                deleteCvFileIfSafe(cvUserDir, fn);
+                pr.cvFileName = "";
+                profiles.upsert(pr);
+            }
+            if (!pending.isEmpty()) {
+                deleteCvFileIfSafe(cvUserDir, pending);
+            }
+        } catch (Exception e) {
+            resp.sendRedirect(ctx + "/profile?edit=1&msg=" + urlEncode("Could not delete CV. Please try again."));
+            return;
+        }
+        resp.sendRedirect(ctx + "/profile?edit=1&msg=" + urlEncode("Your CV has been removed."));
+    }
+
+    private static void deleteCvFileIfSafe(Path cvUserDir, String fileName) throws IOException {
+        if (fileName == null || fileName.trim().isEmpty()) {
+            return;
+        }
+        String fn = fileName.trim();
+        Path root = cvUserDir.normalize();
+        Path f = cvUserDir.resolve(fn).normalize();
+        if (!f.startsWith(root) || !Files.isRegularFile(f)) {
+            return;
+        }
+        Files.deleteIfExists(f);
     }
 
     /**
