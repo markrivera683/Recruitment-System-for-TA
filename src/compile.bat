@@ -32,6 +32,7 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\service\ApplicationService.java" ^
   "%SRC%\com\bupt\ta\service\JobService.java" ^
   "%SRC%\com\bupt\ta\util\AppConfig.java" ^
+  "%SRC%\com\bupt\ta\util\ApplicantFieldValidation.java" ^
   "%SRC%\com\bupt\ta\util\Strings.java" ^
   "%SRC%\com\bupt\ta\util\HttpJsonClient.java" ^
   "%SRC%\com\bupt\ta\ai\LmProviderType.java" ^
@@ -61,6 +62,8 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\servlet\AdminTaProfilesServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AdminCvServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\AdminExportServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AdminApplicationServlet.java" ^
+  "%SRC%\com\bupt\ta\servlet\AdminApplicationsByStatusServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\ApplicationServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\LoginServlet.java" ^
   "%SRC%\com\bupt\ta\servlet\RegisterServlet.java" ^

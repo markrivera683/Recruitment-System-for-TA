@@ -2,6 +2,7 @@ package com.bupt.ta.service;
 
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.EducationEntry;
+import com.bupt.ta.util.ApplicantFieldValidation;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -111,6 +112,36 @@ public class ProfileService {
             maps.add(row);
         }
         return FileStore.toJsonArrayOfObjects(maps);
+    }
+
+    /**
+     * True when the applicant has filled everything required to submit a job application
+     * (same rules as profile validation for those fields).
+     */
+    public static boolean isApplicantProfileComplete(ApplicantProfile p) {
+        if (p == null) {
+            return false;
+        }
+        if (isBlank(p.fullName) || isBlank(p.gender) || isBlank(p.degree) || isBlank(p.major)) {
+            return false;
+        }
+        if (!ApplicantFieldValidation.isAllowedApplicantDegreeLevel(p.degree)) {
+            return false;
+        }
+        if (isBlank(p.studentId) || isBlank(p.idCard) || isBlank(p.phone) || isBlank(p.email)) {
+            return false;
+        }
+        if (isBlank(p.courses) || isBlank(p.freeTime) || isBlank(p.skills)) {
+            return false;
+        }
+        if (isBlank(p.educationJson)) {
+            return false;
+        }
+        return !parseEducationJson(p.educationJson).isEmpty();
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     // ---------- API

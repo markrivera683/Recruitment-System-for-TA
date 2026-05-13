@@ -30,6 +30,7 @@
   @SuppressWarnings("unchecked")
   Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
   if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
+  String degVal = p.degree == null ? "" : p.degree;
 %>
 <div class="page--top fade-in">
   <div class="layout-wide">
@@ -85,7 +86,7 @@
 
         <div class="field">
           <label for="fullName">Full Name</label>
-          <input id="fullName" name="fullName" type="text" placeholder="John Doe"
+          <input id="fullName" name="fullName" type="text"
                  value="<%= p.fullName != null ? p.fullName : def %>" required />
           <% if (fieldErrors.get("fullName") != null) { %><div class="field-error"><%= fieldErrors.get("fullName") %></div><% } %>
         </div>
@@ -103,8 +104,11 @@
           </div>
           <div class="field">
             <label for="degree">Degree</label>
-            <input id="degree" name="degree" type="text" placeholder="e.g. Masters"
-                   value="<%= p.degree != null ? p.degree : def %>" required />
+            <select id="degree" name="degree" required>
+              <option value="">Select</option>
+              <option value="Master" <%= "Master".equals(degVal) ? "selected" : "" %>>Master (graduate student)</option>
+              <option value="Doctoral" <%= "Doctoral".equals(degVal) ? "selected" : "" %>>Doctoral (PhD student)</option>
+            </select>
             <% if (fieldErrors.get("degree") != null) { %><div class="field-error"><%= fieldErrors.get("degree") %></div><% } %>
           </div>
         </div>
@@ -112,15 +116,15 @@
         <div class="grid-2col" style="gap:.75rem 1rem;">
           <div class="field">
             <label for="major">Major</label>
-            <input id="major" name="major" type="text" placeholder="Computer Science"
+            <input id="major" name="major" type="text"
                    value="<%= p.major != null ? p.major : def %>" required />
             <% if (fieldErrors.get("major") != null) { %><div class="field-error"><%= fieldErrors.get("major") %></div><% } %>
           </div>
           <div class="field">
             <label for="studentId">Student ID</label>
-            <input id="studentId" name="studentId" type="text" placeholder="123456789"
+            <input id="studentId" name="studentId" type="text"
                    value="<%= p.studentId != null ? p.studentId : def %>" required
-                   pattern="[A-Za-z0-9_-]{4,30}" />
+                   maxlength="10" inputmode="numeric" autocomplete="off" />
             <% if (fieldErrors.get("studentId") != null) { %><div class="field-error"><%= fieldErrors.get("studentId") %></div><% } %>
           </div>
         </div>
@@ -128,22 +132,22 @@
         <div class="grid-2col" style="gap:.75rem 1rem;">
           <div class="field">
             <label for="phone">Phone</label>
-            <input id="phone" name="phone" type="text" placeholder="+44 7700 000000"
+            <input id="phone" name="phone" type="text"
                    value="<%= p.phone != null ? p.phone : def %>" required />
             <% if (fieldErrors.get("phone") != null) { %><div class="field-error"><%= fieldErrors.get("phone") %></div><% } %>
           </div>
           <div class="field">
             <label for="email">Email</label>
-            <input id="email" name="email" type="email" placeholder="student@university.edu"
+            <input id="email" name="email" type="email"
                    value="<%= p.email != null ? p.email : def %>" required />
             <% if (fieldErrors.get("email") != null) { %><div class="field-error"><%= fieldErrors.get("email") %></div><% } %>
           </div>
         </div>
         <div class="field">
           <label for="idCard">National ID</label>
-          <input id="idCard" name="idCard" type="text" placeholder="ID number"
+          <input id="idCard" name="idCard" type="text"
                  value="<%= p.idCard != null ? p.idCard : def %>" required
-                 pattern="[A-Za-z0-9]{8,30}" />
+                 maxlength="18" inputmode="text" autocomplete="off" />
           <% if (fieldErrors.get("idCard") != null) { %><div class="field-error"><%= fieldErrors.get("idCard") %></div><% } %>
         </div>
 
@@ -223,22 +227,22 @@
             <% for (int i = 0; i < eduList.size(); i++) { EducationEntry e = eduList.get(i); %>
             <tr>
               <td>
-                <input name="edu_school" type="text" placeholder="University"
+                <input name="edu_school" type="text"
                        value="<%= e.school != null ? e.school : def %>" required />
                 <% if (fieldErrors.get("edu_school_" + i) != null) { %><div class="field-error"><%= fieldErrors.get("edu_school_" + i) %></div><% } %>
               </td>
               <td>
-                <input name="edu_degree" type="text" placeholder="B.Sc."
+                <input name="edu_degree" type="text"
                        value="<%= e.degree != null ? e.degree : def %>" required />
                 <% if (fieldErrors.get("edu_degree_" + i) != null) { %><div class="field-error"><%= fieldErrors.get("edu_degree_" + i) %></div><% } %>
               </td>
               <td>
-                <input name="edu_major"  type="text" placeholder="CS"
+                <input name="edu_major"  type="text"
                        value="<%= e.major  != null ? e.major  : def %>" required />
                 <% if (fieldErrors.get("edu_major_" + i) != null) { %><div class="field-error"><%= fieldErrors.get("edu_major_" + i) %></div><% } %>
               </td>
               <td>
-                <input name="edu_period" type="text" placeholder="2020-2024"
+                <input name="edu_period" type="text"
                        value="<%= e.period != null ? e.period : def %>" required />
                 <% if (fieldErrors.get("edu_period_" + i) != null) { %><div class="field-error"><%= fieldErrors.get("edu_period_" + i) %></div><% } %>
               </td>
@@ -259,15 +263,15 @@
 
         <div class="field">
           <label for="courses">Courses Completed <span style="font-weight:400;color:#94a3b8;">(one per line)</span></label>
-          <textarea id="courses" name="courses" placeholder="eg: Data Structures"
+          <textarea id="courses" name="courses" placeholder="e.g. Data Structures"
                     required><%= p.courses != null ? p.courses : def %></textarea>
           <% if (fieldErrors.get("courses") != null) { %><div class="field-error"><%= fieldErrors.get("courses") %></div><% } %>
         </div>
 
         <div class="field">
-          <label for="freeTime">Availability</label>
+          <label for="freeTime">Availability <span style="font-weight:400;color:#94a3b8;">(when you can work)</span></label>
           <textarea id="freeTime" name="freeTime"
-                    placeholder="eg: Mon 14:00-17:00"
+                    placeholder="e.g. Mon 14:00-17:00"
                     required><%= p.freeTime != null ? p.freeTime : (p.availability != null ? p.availability : def) %></textarea>
           <% if (fieldErrors.get("freeTime") != null) { %><div class="field-error"><%= fieldErrors.get("freeTime") %></div><% } %>
         </div>
@@ -276,9 +280,8 @@
         <p class="section-title">Skills</p>
 
         <div class="field">
-          <label for="skills">Skills</label>
-          <textarea id="skills" name="skills"
-                    placeholder="eg: Python"
+          <label for="skills">Skills <span style="font-weight:400;color:#94a3b8;">(one per line or comma-separated)</span></label>
+          <textarea id="skills" name="skills" placeholder="e.g. Python, public speaking"
                     required><%= p.skills != null ? p.skills : def %></textarea>
           <% if (fieldErrors.get("skills") != null) { %><div class="field-error"><%= fieldErrors.get("skills") %></div><% } %>
         </div>
@@ -304,10 +307,10 @@ function addEduRow() {
   var tbody = document.getElementById('edu-body');
   var tr = document.createElement('tr');
   tr.innerHTML =
-    '<td><input name="edu_school" type="text" placeholder="University" required /></td>' +
-    '<td><input name="edu_degree" type="text" placeholder="B.Sc." required /></td>' +
-    '<td><input name="edu_major"  type="text" placeholder="CS" required /></td>' +
-    '<td><input name="edu_period" type="text" placeholder="2020-2024" required /></td>' +
+    '<td><input name="edu_school" type="text" required /></td>' +
+    '<td><input name="edu_degree" type="text" required /></td>' +
+    '<td><input name="edu_major"  type="text" required /></td>' +
+    '<td><input name="edu_period" type="text" required /></td>' +
     '<td style="text-align:center;vertical-align:middle;">' +
     '<button type="button" onclick="removeEduRow(this)" ' +
     'class="btn-withdraw" ' +
