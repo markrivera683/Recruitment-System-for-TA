@@ -1,4 +1,5 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.Map" %>
 <!doctype html>
 <html lang="en">
 <head>
@@ -8,6 +9,15 @@
   <link rel="stylesheet" href="${pageContext.request.contextPath}/static/css/app.css" />
 </head>
 <body>
+<%
+  @SuppressWarnings("unchecked")
+  Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
+  if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
+  String vName = request.getAttribute("vName") != null ? (String) request.getAttribute("vName") : "";
+  String vStudentId = request.getAttribute("vStudentId") != null ? (String) request.getAttribute("vStudentId") : "";
+  String vEmail = request.getAttribute("vEmail") != null ? (String) request.getAttribute("vEmail") : "";
+  String vPhone = request.getAttribute("vPhone") != null ? (String) request.getAttribute("vPhone") : "";
+%>
 <div class="page fade-in">
   <div class="container">
 
@@ -19,7 +29,7 @@
         </div>
       </div>
       <h1 class="page-title">Register as TA</h1>
-      <p class="page-subtitle">Create your applicant account</p>
+      <p class="page-subtitle">Complete degree and other details in your profile after sign-up.</p>
     </div>
 
     <!-- Card -->
@@ -28,30 +38,46 @@
         <div class="alert alert-error"><%= error %></div>
       <% } %>
 
-      <form class="form" method="post" action="${pageContext.request.contextPath}/register">
+      <form class="form" method="post" action="${pageContext.request.contextPath}/register" novalidate>
         <div class="field">
           <label for="name">Full Name</label>
-          <input id="name" name="name" type="text" placeholder="John Doe" required />
+          <input id="name" name="name" type="text" required
+                 value="<%= vName.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;") %>" />
+          <% if (fieldErrors.get("name") != null) { %><div class="field-error"><%= fieldErrors.get("name") %></div><% } %>
         </div>
 
         <div class="field">
           <label for="studentId">Student ID</label>
-          <input id="studentId" name="studentId" type="text" placeholder="123456789" />
+          <input id="studentId" name="studentId" type="text" required
+                 maxlength="10" inputmode="numeric" autocomplete="off"
+                 value="<%= vStudentId.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;") %>" />
+          <% if (fieldErrors.get("studentId") != null) { %><div class="field-error"><%= fieldErrors.get("studentId") %></div><% } %>
+        </div>
+
+        <div class="field">
+          <label for="phone">Phone</label>
+          <input id="phone" name="phone" type="text" required
+                 value="<%= vPhone.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;") %>" />
+          <% if (fieldErrors.get("phone") != null) { %><div class="field-error"><%= fieldErrors.get("phone") %></div><% } %>
         </div>
 
         <div class="field">
           <label for="email">Email</label>
-          <input id="email" name="email" type="email" placeholder="student@university.edu" required />
+          <input id="email" name="email" type="email" required
+                 value="<%= vEmail.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;") %>" />
+          <% if (fieldErrors.get("email") != null) { %><div class="field-error"><%= fieldErrors.get("email") %></div><% } %>
         </div>
 
         <div class="field">
           <label for="password">Password</label>
-          <input id="password" name="password" type="password" placeholder="Enter your password" required />
+          <input id="password" name="password" type="password" required />
+          <% if (fieldErrors.get("password") != null) { %><div class="field-error"><%= fieldErrors.get("password") %></div><% } %>
         </div>
 
         <div class="field">
           <label for="confirm">Confirm Password</label>
-          <input id="confirm" name="confirm" type="password" placeholder="Confirm your password" required />
+          <input id="confirm" name="confirm" type="password" required />
+          <% if (fieldErrors.get("confirm") != null) { %><div class="field-error"><%= fieldErrors.get("confirm") %></div><% } %>
         </div>
 
         <button type="submit" class="btn btn-primary" style="margin-top:.5rem;">Register</button>

@@ -6,10 +6,10 @@ package com.bupt.ta.model;
 public class ApplicantProfile {
     public String userId;
 
-    // --- 个人信息
+    // --- Personal information
     public String fullName;
     public String gender;
-    /** 学位（如：硕士在读） */
+    /** Current study level: {@code Master} or {@code Doctoral} (English values only). */
     public String degree;
     public String major;
     public String studentId;
@@ -22,10 +22,10 @@ public class ApplicantProfile {
      */
     public String educationJson;
 
-    /** 已学课程，每行一门 */
+    /** Courses completed (one per line). */
     public String courses;
 
-    /** 空闲时间 */
+    /** Availability / free time. */
     public String freeTime;
 
     public String skills;

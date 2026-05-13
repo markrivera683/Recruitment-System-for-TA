@@ -10,7 +10,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -25,6 +24,7 @@ import com.bupt.ta.model.EducationEntry;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.util.ApplicantFieldValidation;
 
 @WebServlet(urlPatterns = {"/profile"})
 @MultipartConfig(
@@ -35,12 +35,6 @@ import com.bupt.ta.service.ProfileService;
 public class ProfileServlet extends BaseServlet {
     /** Session key: CV file name on disk not yet written to profiles.json (validation failed after upload). */
     public static final String PENDING_CV_SESSION_ATTR = "taPendingCvFileName";
-
-    private static final Pattern NAME_PATTERN = Pattern.compile("^[\\p{L} .'-]{2,60}$");
-    private static final Pattern STUDENT_ID_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{4,30}$");
-    private static final Pattern ID_CARD_PATTERN = Pattern.compile("^[A-Za-z0-9]{8,30}$");
-    private static final Pattern PHONE_PATTERN = Pattern.compile("^\\+?[0-9()\\-\\s]{6,25}$");
-    private static final Pattern EMAIL_PATTERN = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
 
     private ProfileService profiles;
     private AuthService auth;
@@ -63,10 +57,12 @@ public class ProfileServlet extends BaseServlet {
         }
         Optional<ApplicantProfile> existing = profiles.getByUserId(u.id);
         ApplicantProfile p = existing.orElse(new ApplicantProfile(u.id));
-        boolean editable = !existing.isPresent() || "1".equals(req.getParameter("edit"));
-        String msg = req.getParameter("msg");
         mergeDefaultsFromUser(u, p);
+        mapLegacyDegreeForForm(p);
         applyPendingCvFromSession(req, u.id, p);
+        boolean profileComplete = ProfileService.isApplicantProfileComplete(p);
+        boolean editable = !profileComplete || "1".equals(req.getParameter("edit"));
+        String msg = req.getParameter("msg");
         req.setAttribute("profile", p);
         req.setAttribute("user", u);
         req.setAttribute("editable", editable);
@@ -91,6 +87,25 @@ public class ProfileServlet extends BaseServlet {
         }
         if ((p.email == null || p.email.trim().isEmpty()) && u.email != null) {
             p.email = u.email;
+        }
+    }
+
+    /**
+     * Maps legacy stored degree labels to the English whitelist for display only (in-memory).
+     * Clears values that are not eligible (e.g. undergraduate) or unknown.
+     */
+    private static void mapLegacyDegreeForForm(ApplicantProfile p) {
+        if (p == null || p.degree == null) {
+            return;
+        }
+        String d = p.degree.trim();
+        // Legacy DB values (Unicode escapes — stored labels before English-only migration).
+        if ("\u7855\u58eb\u7814\u7a76\u751f".equals(d)) {
+            p.degree = "Master";
+        } else if ("\u535a\u58eb\u7814\u7a76\u751f".equals(d)) {
+            p.degree = "Doctoral";
+        } else if ("\u672c\u79d1".equals(d) || !ApplicantFieldValidation.isAllowedApplicantDegreeLevel(d)) {
+            p.degree = "";
         }
     }
 
@@ -123,7 +138,14 @@ public class ProfileServlet extends BaseServlet {
         p.major = trim(req.getParameter("major"));
         p.studentId = trim(req.getParameter("studentId"));
         p.idCard = trim(req.getParameter("idCard"));
+        if (p.idCard != null && p.idCard.length() == 18) {
+            p.idCard = p.idCard.toUpperCase();
+        }
         p.phone = trim(req.getParameter("phone"));
+        String normalizedPhone = ApplicantFieldValidation.normalizeChinaPhone(p.phone);
+        if (normalizedPhone != null) {
+            p.phone = normalizedPhone;
+        }
         p.email = trim(req.getParameter("email"));
         p.courses = req.getParameter("courses");
         if (p.courses != null) {
@@ -415,25 +437,29 @@ public class ProfileServlet extends BaseServlet {
 
     private static Map<String, String> validateProfileInput(ApplicantProfile p, List<EducationEntry> edus) {
         Map<String, String> errors = new LinkedHashMap<>();
-        if (isBlank(p.fullName) || !NAME_PATTERN.matcher(p.fullName).matches()) {
+        if (isBlank(p.fullName) || !ApplicantFieldValidation.isValidFullName(p.fullName)) {
             errors.put("fullName", "Please enter a valid full name (2-60 letters).");
         }
         if (!("Male".equals(p.gender) || "Female".equals(p.gender) || "Other".equals(p.gender))) {
             errors.put("gender", "Please select a valid gender.");
         }
-        if (isBlank(p.degree)) errors.put("degree", "Degree is required.");
+        if (isBlank(p.degree) || !ApplicantFieldValidation.isAllowedApplicantDegreeLevel(p.degree)) {
+            errors.put("degree",
+                    "Select Master or Doctoral. Undergraduate applicants are not eligible for this system.");
+        }
         if (isBlank(p.major)) errors.put("major", "Major is required.");
-        if (isBlank(p.studentId) || !STUDENT_ID_PATTERN.matcher(p.studentId).matches()) {
-            errors.put("studentId", "Please enter a valid student ID (letters/numbers, 4-30 chars).");
+        if (!ApplicantFieldValidation.isValidBuptTenDigitStudentId(p.studentId)) {
+            errors.put("studentId",
+                    "Student ID must be exactly 10 digits; the first 4 digits are your admission year (e.g. 2023xxxxxxxx).");
         }
-        if (isBlank(p.idCard) || !ID_CARD_PATTERN.matcher(p.idCard).matches()) {
-            errors.put("idCard", "Please enter a valid national ID (8-30 letters/numbers).");
+        if (!ApplicantFieldValidation.isValidChineseResidentId18(p.idCard)) {
+            errors.put("idCard", "Please enter a valid 18-digit national ID (with correct check digit).");
         }
-        if (isBlank(p.phone) || !PHONE_PATTERN.matcher(p.phone).matches()) {
-            errors.put("phone", "Please enter a valid phone number.");
+        if (isBlank(p.phone) || !ApplicantFieldValidation.isValidChinaMobileNormalized(p.phone)) {
+            errors.put("phone", "Please enter a China mobile number: +86 and 11 digits (e.g. +8613912345678 or 13912345678).");
         }
-        if (isBlank(p.email) || !EMAIL_PATTERN.matcher(p.email).matches()) {
-            errors.put("email", "Please enter a valid email address.");
+        if (isBlank(p.email) || !ApplicantFieldValidation.isValidEmailWithRealDomain(p.email)) {
+            errors.put("email", "Please enter a valid email with a real domain (e.g. name@bupt.edu.cn).");
         }
         if (isBlank(p.courses)) errors.put("courses", "Courses completed is required.");
         if (isBlank(p.freeTime)) errors.put("freeTime", "Availability is required.");

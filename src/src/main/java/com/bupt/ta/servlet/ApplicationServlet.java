@@ -108,7 +108,7 @@ public class ApplicationServlet extends BaseServlet {
         ApplicantProfile profile = profiles.getByUserId(u.id).orElse(null);
         if (!isProfileComplete(profile)) {
             String msg = urlEncode("Please complete your profile before applying for a job.");
-            resp.sendRedirect(req.getContextPath() + "/profile?edit=1&msg=" + msg);
+            resp.sendRedirect(req.getContextPath() + "/profile?msg=" + msg);
             return;
         }
 
@@ -139,16 +139,7 @@ public class ApplicationServlet extends BaseServlet {
         resp.sendRedirect(req.getContextPath() + "/applications");
     }
 
-    private static boolean isBlank(String s) {
-        return s == null || s.trim().isEmpty();
-    }
-
     private static boolean isProfileComplete(ApplicantProfile p) {
-        if (p == null) return false;
-        if (isBlank(p.fullName) || isBlank(p.gender) || isBlank(p.degree) || isBlank(p.major)) return false;
-        if (isBlank(p.studentId) || isBlank(p.idCard) || isBlank(p.phone) || isBlank(p.email)) return false;
-        if (isBlank(p.courses) || isBlank(p.freeTime) || isBlank(p.skills)) return false;
-        if (isBlank(p.educationJson)) return false;
-        return !ProfileService.parseEducationJson(p.educationJson).isEmpty();
+        return ProfileService.isApplicantProfileComplete(p);
     }
 }
