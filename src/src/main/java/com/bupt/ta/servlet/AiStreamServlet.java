@@ -9,8 +9,10 @@ import com.bupt.ta.ai.LmStreamListener;
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.Job;
 import com.bupt.ta.model.User;
+import com.bupt.ta.service.FavoriteService;
 import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.util.JobListFilters;
 import com.bupt.ta.service.ai.MissingSkillService;
 import com.bupt.ta.service.ai.RecommendationService;
 import com.bupt.ta.service.ai.SkillMatchService;
@@ -23,11 +25,9 @@ import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 /**
  * SSE stream of AI completions (Markdown deltas) for job recommendation and skill analysis.
@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 public class AiStreamServlet extends BaseServlet {
 
     private JobService jobService;
+    private FavoriteService favoriteService;
     private ProfileService profileService;
     private RecommendationService recommendationService;
     private SkillMatchService skillMatchService;
@@ -47,6 +48,7 @@ public class AiStreamServlet extends BaseServlet {
         String dataDir = getServletContext().getRealPath("/WEB-INF/data");
         String p = dataDir + "/jobs.json";
         this.jobService = new JobService(p);
+        this.favoriteService = new FavoriteService(Paths.get(dataDir));
         this.profileService = new ProfileService(Paths.get(dataDir));
 
         LmConfig lmConfig = LmConfig.load(getServletContext());
@@ -114,9 +116,8 @@ public class AiStreamServlet extends BaseServlet {
         if (sortBy.isEmpty()) {
             sortBy = "postingDate";
         }
-        List<Job> jobs = jobService.listPublishedJobs();
-        jobs = applySearch(jobs, q);
-        jobs = applySort(jobs, sortBy);
+        Set<String> favoriteIds = favoriteService.getFavoriteJobIds(user.id);
+        List<Job> jobs = JobListFilters.apply(jobService.listPublishedJobs(), favoriteIds, q, sortBy);
 
         Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
         if (!profileOpt.isPresent()) {
@@ -249,34 +250,4 @@ public class AiStreamServlet extends BaseServlet {
         return s == null ? "" : s.trim();
     }
 
-    private static List<Job> applySearch(List<Job> jobs, String q) {
-        if (q == null || q.isEmpty()) return jobs;
-        String needle = q.toLowerCase(Locale.ROOT);
-        return jobs.stream()
-                .filter(j -> contains(j.getModuleName(), needle)
-                        || contains(j.getActivityType(), needle)
-                        || (j.getRequiredSkills() != null
-                        && j.getRequiredSkills().stream().anyMatch(s -> contains(s, needle))))
-                .collect(Collectors.toList());
-    }
-
-    private static List<Job> applySort(List<Job> jobs, String sortBy) {
-        Comparator<Job> cmp;
-        if ("moduleName".equals(sortBy)) {
-            cmp = Comparator.comparing(j -> lower(j.getModuleName()));
-        } else if ("activityType".equals(sortBy)) {
-            cmp = Comparator.comparing(j -> lower(j.getActivityType()));
-        } else {
-            cmp = Comparator.comparing((Job j) -> lower(j.getPostDate())).reversed();
-        }
-        return jobs.stream().sorted(cmp).collect(Collectors.toList());
-    }
-
-    private static boolean contains(String s, String needle) {
-        return s != null && s.toLowerCase(Locale.ROOT).contains(needle);
-    }
-
-    private static String lower(String s) {
-        return s == null ? "" : s.toLowerCase(Locale.ROOT);
-    }
 }

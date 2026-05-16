@@ -55,6 +55,7 @@
             <option value="moduleName" <%= "moduleName".equals(sortBy) ? "selected" : "" %>>Module Name</option>
             <option value="postingDate" <%= "postingDate".equals(sortBy) ? "selected" : "" %>>Posting Date</option>
             <option value="activityType" <%= "activityType".equals(sortBy) ? "selected" : "" %>>Activity Type</option>
+            <option value="favorited" <%= "favorited".equals(sortBy) ? "selected" : "" %>>Favorited</option>
           </select>
         </div>
       </div>
@@ -87,8 +88,8 @@
     <div class="app-grid job-portal-grid">
         <% if (jobs.isEmpty()) { %>
           <div class="empty-state">
-            <p class="app-name">No matching jobs found</p>
-            <p class="page-subtitle">Try adjusting your search criteria</p>
+            <p class="app-name"><%= "favorited".equals(sortBy) ? "No favorited jobs yet" : "No matching jobs found" %></p>
+            <p class="page-subtitle"><%= "favorited".equals(sortBy) ? "Save jobs from the detail page to see them here" : "Try adjusting your search criteria" %></p>
           </div>
         <% } else { %>
           <%

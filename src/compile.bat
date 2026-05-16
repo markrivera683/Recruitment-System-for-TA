@@ -31,6 +31,8 @@ javac --release 11 -encoding UTF-8 -cp "%SERVLET_JAR%" -d "%OUT%" ^
   "%SRC%\com\bupt\ta\service\ProfileService.java" ^
   "%SRC%\com\bupt\ta\service\ApplicationService.java" ^
   "%SRC%\com\bupt\ta\service\JobService.java" ^
+  "%SRC%\com\bupt\ta\service\FavoriteService.java" ^
+  "%SRC%\com\bupt\ta\util\JobListFilters.java" ^
   "%SRC%\com\bupt\ta\util\AppConfig.java" ^
   "%SRC%\com\bupt\ta\util\ApplicantFieldValidation.java" ^
   "%SRC%\com\bupt\ta\util\Strings.java" ^
