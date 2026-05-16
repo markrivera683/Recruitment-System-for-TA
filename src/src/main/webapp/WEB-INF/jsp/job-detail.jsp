@@ -12,6 +12,8 @@
 <body>
 <%
   Job job = (Job) request.getAttribute("job");
+  Boolean jobFavorited = (Boolean) request.getAttribute("jobFavorited");
+  if (jobFavorited == null) jobFavorited = Boolean.FALSE;
   String ctx = request.getContextPath();
 %>
 
@@ -189,9 +191,11 @@
               <input type="hidden" name="role"       value="<%= job.getActivityType() == null ? "Teaching Assistant" : job.getActivityType().replace("\"","&quot;") %>" />
               <button type="submit" class="btn btn-primary">Apply for Job</button>
             </form>
-            <a href="<%= ctx %>/job" class="btn-ghost job-aside-back">
-              Back to Job List
-            </a>
+            <form method="post" action="<%= ctx %>/job">
+              <input type="hidden" name="action" value="toggleFavorite" />
+              <input type="hidden" name="jobId" value="<%= job.getId() == null ? "" : job.getId() %>" />
+              <button type="submit" class="btn btn-favorite"><%= jobFavorited.booleanValue() ? "Remove from Favorites" : "Save Job" %></button>
+            </form>
           </div>
         </aside>
       </div>

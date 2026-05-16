@@ -4,8 +4,8 @@
 # ============================================================
 #  CONFIGURE THESE TWO PATHS FOR YOUR MACHINE
 # ============================================================
-$DefaultJdkHome = 'D:\Apps\OpenJDKs\OpenJDK11.0.29'
-$DefaultTomcat   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115'
+$DefaultJdkHome = 'E:\openjdk-21.0.2_windows-x64_bin\jdk-21.0.2'
+$DefaultTomcat   = 'D:\tomcat\apache-tomcat-9.0.116'
 
 $JDK_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { $DefaultJdkHome }
 $TOMCAT   = if ($env:CATALINA_HOME) { $env:CATALINA_HOME } else { $DefaultTomcat }
@@ -109,6 +109,7 @@ if (-not (Test-Path $dataDir)) { New-Item -ItemType Directory -Force -Path $data
 if (-not (Test-Path "$dataDir\users.json"))    { Set-Content "$dataDir\users.json"    '[]' }
 if (-not (Test-Path "$dataDir\profiles.json")) { Set-Content "$dataDir\profiles.json" '[]' }
 if (-not (Test-Path "$dataDir\applications.json")) { Set-Content "$dataDir\applications.json" '[]' }
+if (-not (Test-Path "$dataDir\favorites.json")) { Set-Content "$dataDir\favorites.json" '[]' }
 Push-Location $OUT
 & $JAR -cvf $WAR . | Out-Null
 Pop-Location

@@ -214,6 +214,22 @@ input::placeholder, textarea::placeholder { color: #94a3b8; }
 .btn-primary:hover { background-color: #1d4ed8; box-shadow: 0 6px 12px rgba(37,99,235,.18); }
 .btn-primary:active { background-color: #1e40af; transform: scale(.98); }
 
+.btn-favorite {
+  background-color: #f59e0b;
+  color: #fff;
+  border: 1px solid #d97706;
+  box-shadow: 0 4px 6px rgba(245, 158, 11, .18);
+}
+.btn-favorite:hover {
+  background-color: #d97706;
+  border-color: #b45309;
+  box-shadow: 0 6px 12px rgba(217, 119, 6, .22);
+}
+.btn-favorite:active {
+  background-color: #b45309;
+  transform: scale(.98);
+}
+
 /* ── Links ────────────────────────────────────────────────── */
 a { color: #2563eb; text-decoration: none; transition: color .15s; }
 a:hover { color: #1d4ed8; }
@@ -1112,13 +1128,12 @@ a:hover { color: #1d4ed8; }
 .detail-actions--aside form {
   flex: none;
 }
-.detail-actions--aside .btn-primary {
+.detail-actions--aside .btn-primary,
+.detail-actions--aside .btn-favorite {
   width: 100%;
 }
-.job-aside-back {
-  justify-content: center;
-  text-align: center;
-  padding: .625rem .875rem;
+.detail-actions--aside form + form {
+  margin-top: 0;
 }
 
 .job-card .skill-wrap {
