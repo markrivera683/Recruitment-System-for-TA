@@ -2,7 +2,9 @@ package com.bupt.ta.util;
 
 import com.bupt.ta.model.Job;
 
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -65,5 +67,39 @@ public final class JobListFilters {
 
     private static String safe(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    /**
+     * Puts recently viewed jobs (that appear in {@code jobs}) at the front, preserving
+     * {@code recentJobIds} order (most recent first), then the remaining jobs in their prior order.
+     */
+    public static List<Job> promoteRecentlyViewed(List<Job> jobs, List<String> recentJobIds) {
+        if (jobs == null || jobs.isEmpty() || recentJobIds == null || recentJobIds.isEmpty()) {
+            return jobs;
+        }
+        Set<String> placed = new HashSet<>();
+        List<Job> front = new ArrayList<>();
+        for (String id : recentJobIds) {
+            if (id == null || id.isEmpty() || placed.contains(id)) {
+                continue;
+            }
+            for (Job job : jobs) {
+                if (id.equals(job.getId())) {
+                    front.add(job);
+                    placed.add(id);
+                    break;
+                }
+            }
+        }
+        if (front.isEmpty()) {
+            return jobs;
+        }
+        List<Job> rest = jobs.stream()
+                .filter(j -> j.getId() == null || !placed.contains(j.getId()))
+                .collect(Collectors.toList());
+        List<Job> merged = new ArrayList<>(front.size() + rest.size());
+        merged.addAll(front);
+        merged.addAll(rest);
+        return merged;
     }
 }
