@@ -1064,6 +1064,77 @@ a:hover { color: #1d4ed8; }
 .job-ai-row {
   margin-bottom: 1rem;
 }
+.job-ai-shell {
+  margin-bottom: 1.5rem;
+}
+.job-ai-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+.job-ai-title {
+  margin: 0 0 .25rem;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+.job-ai-actions {
+  display: flex;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+.job-ai-status {
+  margin-bottom: 1rem;
+}
+.job-ai-status-text {
+  font-size: .875rem;
+  line-height: 1.65;
+  color: #475569;
+}
+.job-ai-panels {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+.job-ai-selection-panel {
+  margin-bottom: 0;
+}
+.job-ai-selection-empty {
+  font-size: .875rem;
+  color: #64748b;
+}
+.job-ai-selected-summary {
+  display: flex;
+  flex-direction: column;
+  gap: .75rem;
+}
+.job-ai-selected-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: .75rem;
+}
+.job-ai-selected-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #0f172a;
+  line-height: 1.4;
+}
+.job-ai-selected-meta {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: .375rem;
+}
+.job-ai-selected-skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .375rem;
+}
 .job-portal-grid .job-card {
   background: rgba(255,255,255,.80);
   -webkit-backdrop-filter: blur(16px);
@@ -1073,6 +1144,16 @@ a:hover { color: #1d4ed8; }
 }
 .job-portal-grid .job-card:hover {
   box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.job-card--selected {
+  border-color: rgba(59,130,246,.55);
+  box-shadow: 0 0 0 3px rgba(37,99,235,.12), 0 8px 24px rgba(37,99,235,.10);
+}
+.job-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: .5rem;
 }
 
 /* Job detail: main + sticky aside */
@@ -1377,6 +1458,26 @@ a:hover { color: #1d4ed8; }
   box-shadow: 0 4px 12px rgba(147,51,234,.12);
   color: #6d28d9;
 }
+.btn-ai:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  box-shadow: none;
+}
+.btn-ai:disabled:hover {
+  background: linear-gradient(135deg, rgba(147,51,234,.08), rgba(59,130,246,.08));
+  border-color: rgba(147,51,234,.25);
+  color: #7c3aed;
+}
+.btn-ai--secondary {
+  border-color: rgba(37,99,235,.20);
+  background: linear-gradient(135deg, rgba(59,130,246,.08), rgba(14,165,233,.08));
+  color: #1d4ed8;
+}
+.btn-ai--secondary:hover {
+  background: linear-gradient(135deg, rgba(59,130,246,.16), rgba(14,165,233,.16));
+  border-color: rgba(37,99,235,.35);
+  color: #1e40af;
+}
 .btn-ai--sm {
   padding: .375rem .875rem;
   font-size: .8125rem;
@@ -1482,4 +1583,23 @@ a:hover { color: #1d4ed8; }
   font-size: .875rem;
   color: #dc2626;
   font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .job-ai-actions {
+    width: 100%;
+  }
+  .job-ai-actions .btn-ai {
+    width: 100%;
+    justify-content: center;
+  }
+  .job-card-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+  .job-card-actions .btn,
+  .job-card-actions .btn-ghost {
+    width: 100%;
+    justify-content: center;
+  }
 }

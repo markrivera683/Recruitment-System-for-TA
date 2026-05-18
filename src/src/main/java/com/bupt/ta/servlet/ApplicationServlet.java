@@ -2,8 +2,11 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Application;
 import com.bupt.ta.model.ApplicantProfile;
+import com.bupt.ta.model.Job;
+import com.bupt.ta.model.JobApplicationStats;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
 
 import javax.servlet.ServletException;
@@ -22,12 +25,14 @@ import java.util.stream.Collectors;
 public class ApplicationServlet extends BaseServlet {
     private ApplicationService appService;
     private ProfileService profiles;
+    private JobService jobService;
 
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         appService = new ApplicationService(dataDir);
         profiles = new ProfileService(dataDir);
+        jobService = new JobService(dataDir.resolve("jobs.json").toString());
     }
 
     // ------------------------------------------------------------------ GET
@@ -47,6 +52,13 @@ public class ApplicationServlet extends BaseServlet {
         long pending  = apps.stream().filter(a -> "Pending".equals(a.status)).count();
         long accepted = apps.stream().filter(a -> "Accepted".equals(a.status)).count();
         long rejected = apps.stream().filter(a -> "Rejected".equals(a.status)).count();
+        long withdrawn = apps.stream().filter(a -> "Withdrawn".equals(a.status)).count();
+        long countAll = apps.size();
+
+        String msg = req.getParameter("msg");
+        if (msg != null && !msg.trim().isEmpty()) {
+            req.setAttribute("infoMessage", escapeHtml(msg.trim()));
+        }
 
         List<Application> filtered;
         if ("All".equals(filter)) {
@@ -63,6 +75,8 @@ public class ApplicationServlet extends BaseServlet {
         req.setAttribute("countPending",  pending);
         req.setAttribute("countAccepted", accepted);
         req.setAttribute("countRejected", rejected);
+        req.setAttribute("countWithdrawn", withdrawn);
+        req.setAttribute("countAll", countAll);
         req.getRequestDispatcher("/WEB-INF/jsp/application-status.jsp").forward(req, resp);
     }
 
@@ -87,6 +101,8 @@ public class ApplicationServlet extends BaseServlet {
                 boolean owns = mine.stream().anyMatch(a -> appId.trim().equals(a.id));
                 if (owns) {
                     appService.updateStatus(appId.trim(), "Withdrawn", "");
+                    resp.sendRedirect(req.getContextPath() + "/applications?msg=" + urlEncode("Application withdrawn."));
+                    return;
                 }
             }
             resp.sendRedirect(req.getContextPath() + "/applications");
@@ -98,9 +114,10 @@ public class ApplicationServlet extends BaseServlet {
         String moduleName = req.getParameter("moduleName");
         String moduleCode = req.getParameter("moduleCode");
         String role       = req.getParameter("role");
+        String ctx = req.getContextPath();
 
         if (moduleName == null || moduleName.trim().isEmpty()) {
-            resp.sendRedirect(req.getContextPath() + "/job");
+            resp.sendRedirect(ctx + "/job");
             return;
         }
 
@@ -108,21 +125,51 @@ public class ApplicationServlet extends BaseServlet {
         ApplicantProfile profile = profiles.getByUserId(u.id).orElse(null);
         if (!isProfileComplete(profile)) {
             String msg = urlEncode("Please complete your profile before applying for a job.");
-            resp.sendRedirect(req.getContextPath() + "/profile?msg=" + msg);
+            resp.sendRedirect(ctx + "/profile?msg=" + msg);
             return;
         }
 
-        // Prevent duplicate active applications for the same job
+        if (jobId == null || jobId.trim().isEmpty()) {
+            resp.sendRedirect(ctx + "/job?err=" + urlEncode("Missing job; open the listing and apply again."));
+            return;
+        }
+
+        Job job = jobService.getJobById(jobId.trim());
+        if (job == null) {
+            resp.sendRedirect(ctx + "/job?err=" + urlEncode("That job listing no longer exists."));
+            return;
+        }
+
+        String jn = job.getModuleName() == null ? "" : job.getModuleName().trim();
+        String jc = job.getModuleCode() == null ? "" : job.getModuleCode().trim();
+        String pn = moduleName.trim();
+        String pc = moduleCode != null ? moduleCode.trim() : "";
+        if (!jn.equals(pn) || !jc.equals(pc)) {
+            resp.sendRedirect(ctx + "/job?id=" + urlEncode(jobId.trim()) + "&err=" + urlEncode(
+                    "Job details do not match this listing; please apply from the job page."));
+            return;
+        }
+
+        List<Application> allForJob = appService.listAll();
+        JobApplicationStats stats = JobApplicationStats.forJob(allForJob, jn, jc);
+        int capacity = JobApplicationStats.parseCapacity(job.getNumberOfTAs());
+        if (stats.accepted >= capacity) {
+            resp.sendRedirect(ctx + "/job?id=" + urlEncode(jobId.trim()) + "&err=" + urlEncode(
+                    "All TA slots for this job are filled; new applications are not accepted."));
+            return;
+        }
+
+        // Prevent duplicate active applications for the same job (module + code)
         List<Application> existing = appService.getByUserId(u.id);
         boolean duplicate = existing.stream().anyMatch(a ->
-            moduleName.trim().equals(a.moduleName) &&
-            !"Withdrawn".equals(a.status) &&
-            !"Rejected".equals(a.status)
+                JobApplicationStats.matchesJob(a, jn, jc) &&
+                !"Withdrawn".equalsIgnoreCase(a.status) &&
+                !"Rejected".equalsIgnoreCase(a.status)
         );
         if (duplicate) {
             String encodedMsg = urlEncode(
-                    "You already have an active application for " + moduleName.trim() + ".");
-            resp.sendRedirect(req.getContextPath() + "/job?id=" + (jobId != null ? jobId : "") + "&err=" + encodedMsg);
+                    "You already have an active application for this job.");
+            resp.sendRedirect(ctx + "/job?id=" + urlEncode(jobId.trim()) + "&err=" + encodedMsg);
             return;
         }
 
@@ -134,12 +181,26 @@ public class ApplicationServlet extends BaseServlet {
             role != null && !role.trim().isEmpty() ? role.trim() : "Teaching Assistant",
             LocalDate.now().toString()
         );
-        appService.save(app);
+        try {
+            appService.save(app);
+        } catch (IOException e) {
+            resp.sendRedirect(ctx + "/job?id=" + urlEncode(jobId.trim()) + "&err=" + urlEncode(
+                    "Could not save your application. Please try again."));
+            return;
+        }
 
-        resp.sendRedirect(req.getContextPath() + "/applications");
+        resp.sendRedirect(ctx + "/applications?msg=" + urlEncode(
+                "Application submitted for " + pn + (pc.isEmpty() ? "" : " (" + pc + ")") + "."));
     }
 
     private static boolean isProfileComplete(ApplicantProfile p) {
         return ProfileService.isApplicantProfileComplete(p);
+    }
+
+    private static String escapeHtml(String s) {
+        return s.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;");
     }
 }

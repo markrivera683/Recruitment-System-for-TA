@@ -211,8 +211,9 @@ On save, `**AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/forgot-password` | GET / POST | Forgot password (demo placeholder)                                                        |
 | `/reset-password`  | GET / POST | Reset password (demo placeholder)                                                         |
 | `/applications`    | GET        | View and filter own application statuses                                                  |
-| `/job`             | GET        | TA job list + detail (`?id=`); login required                                             |
+| `/job`             | GET        | TA job list + detail (`?id=`); login required; list page now includes TA-facing AI recommendation and missing-skills guidance |
 | `/mo`              | GET / POST | Module organiser dashboard (`MoServlet`; mapping in `web.xml`)                            |
+| `/mo/applicant-profile` | GET   | MO-only read-only applicant profile view (`?userId=`)                                     |
 | `/admin`           | GET        | Administrator dashboard (requires `role` = `ADMIN`)                                       |
 | `/admin/users`     | GET / POST | User management (ADMIN)                                                                   |
 | `/admin/jobs`      | GET / POST | Job management (ADMIN)                                                                    |
@@ -221,6 +222,7 @@ On save, `**AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/admin/cv`        | GET        | Admin CV download                                                                         |
 | `/admin/export`    | GET        | Data export (ADMIN)                                                                       |
 | `/admin/ai-demo`   | GET / POST | **Mock / demo** AI scaffold (admin only): skill match, missing skills, job recommendation |
+| `/api/ai/stream`   | GET        | SSE endpoint for AI recommendation, skill-match, and missing-skills streaming responses   |
 
 
 Seed accounts in `src/src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`). New registrations get `role` = `TA`. Remove or change in production.
@@ -258,7 +260,8 @@ This project includes a **small, pluggable LM (LLM) integration layer** for cour
 - **Default provider**: `mock` — deterministic, explainable outputs; **no API key** and **no outbound network** required.
 - **HTTP provider**: `HttpLmClient` sends an **OpenAI Chat Completions–compatible** JSON body to `LM_BASE_URL` + `LM_HTTP_CHAT_PATH` and parses assistant text from the JSON response. Vendor-specific differences stay inside that class (marked with `TODO`).
 - **Business entry point**: `AiFeatureService` + thin services (`SkillMatchService`, `MissingSkillService`, `RecommendationService`) assemble prompts; **servlets do not call the LM client directly**.
-- **Demo UI**: `/admin/ai-demo` (admin login required) — clearly labelled **Mock / Demo**.
+- **TA-facing UI**: `/job` exposes AI job recommendations for the current filtered list, plus missing-skills guidance for the selected job.
+- **Admin demo UI**: `/admin/ai-demo` remains available as a clearly labelled **Mock / Demo** surface for manual prompt walkthroughs.
 
 ### Planned / supported scenarios (coursework)
 
@@ -330,14 +333,21 @@ Tests live under `src/src/test/java/**` and mirror the LM integration layers:
 
 `com.bupt.ta.testsupport.LmTestSupport` provides a mocked `ServletContext` with optional `WEB-INF/lm.properties` content.
 
-**Run (requires Maven on `PATH`):**
+**Run JUnit tests (requires Maven on `PATH`):**
 
 ```powershell
 cd src
 mvn test
 ```
 
-Or use `src/run-tests.ps1` (same command, with a clear error if `mvn` is missing).
+**Run no-Maven smoke checks:**
+
+```powershell
+cd src
+.\run-tests.ps1
+```
+
+`src/run-tests.ps1` does **not** call `mvn test`. It recompiles the application classes, compiles `src/src/test/java/com/bupt/ta/nomvn/NoMvnWorkflowChecks.java`, and runs a lightweight LM workflow smoke test with `java -ea`.
 
 **Note:** `AppConfig.resolve` checks **environment variables first**. If a machine has `LM_PROVIDER` set globally, it may override a test file — unset it for deterministic tests, or rely on CI without those variables.
 

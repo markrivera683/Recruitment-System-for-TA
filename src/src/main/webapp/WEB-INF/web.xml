@@ -20,6 +20,15 @@
   </servlet-mapping>
 
   <servlet>
+    <servlet-name>MoApplicantProfileServlet</servlet-name>
+    <servlet-class>com.bupt.ta.servlet.MoApplicantProfileServlet</servlet-class>
+  </servlet>
+  <servlet-mapping>
+    <servlet-name>MoApplicantProfileServlet</servlet-name>
+    <url-pattern>/mo/applicant-profile</url-pattern>
+  </servlet-mapping>
+
+  <servlet>
     <servlet-name>CvDownloadServlet</servlet-name>
     <servlet-class>com.bupt.ta.servlet.CvDownloadServlet</servlet-class>
   </servlet>

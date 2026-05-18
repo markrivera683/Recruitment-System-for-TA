@@ -208,6 +208,11 @@
             opacity: 0.6;
             cursor: not-allowed;
         }
+        .btn-link {
+            display: inline-block;
+            text-decoration: none;
+            margin-bottom: 6px;
+        }
 
         .status-pill {
             display: inline-block;
@@ -431,6 +436,7 @@
                     <th>Application Date</th>
                     <th>Status</th>
                     <th>CV</th>
+                    <th>Profile</th>
                     <th>Feedback</th>
                     <th>Decision</th>
                 </tr>
@@ -461,6 +467,12 @@
                             <%
                                 }
                             %>
+                        </td>
+                        <td>
+                            <%
+                                String applicantQuery = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
+                            %>
+                            <a class="btn btn-primary btn-link" href="<%= request.getContextPath() %>/mo/applicant-profile?userId=<%= applicantQuery %>">View Profile</a>
                         </td>
                         <td><%= app.feedback == null ? "" : app.feedback %></td>
                         <td>

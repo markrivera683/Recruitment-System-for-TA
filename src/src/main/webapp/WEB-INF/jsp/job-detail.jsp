@@ -15,6 +15,10 @@
   Boolean jobFavorited = (Boolean) request.getAttribute("jobFavorited");
   if (jobFavorited == null) jobFavorited = Boolean.FALSE;
   String ctx = request.getContextPath();
+  String qErrRaw = request.getParameter("err");
+  String qMsgRaw = request.getParameter("msg");
+  String qErr = qErrRaw == null ? "" : qErrRaw.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
+  String qMsg = qMsgRaw == null ? "" : qMsgRaw.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace("\"","&quot;");
 %>
 
 <div class="page--top fade-in">
@@ -56,11 +60,39 @@
             </p>
           </div>
         </div>
+        <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a class="link-pill" href="<%= ctx %>/applications">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          My applications
+        </a>
         <a class="link-pill" href="<%= ctx %>/job">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/><path d="M20 12H9"/></svg>
           Back to Job List
         </a>
+        </div>
       </div>
+
+      <% if (!qErr.isEmpty()) { %>
+      <div class="alert alert-error" style="margin-bottom:1rem;"><%= qErr %></div>
+      <% } %>
+      <% if (!qMsg.isEmpty()) { %>
+      <div class="alert alert-success" style="margin-bottom:1rem;"><%= qMsg %></div>
+      <% } %>
+
+      <%
+        com.bupt.ta.model.JobApplicationStats jobAppStats = (com.bupt.ta.model.JobApplicationStats) request.getAttribute("jobAppStats");
+        Integer jobTaCap = (Integer) request.getAttribute("jobTaCapacity");
+        if (jobTaCap == null) jobTaCap = Integer.valueOf(1);
+        boolean jobSlotsFull = Boolean.TRUE.equals(request.getAttribute("jobSlotsFull"));
+        boolean userActiveApplication = Boolean.TRUE.equals(request.getAttribute("userActiveApplicationForJob"));
+        boolean taProfileComplete = Boolean.TRUE.equals(request.getAttribute("taProfileComplete"));
+        boolean statsLoadError = Boolean.TRUE.equals(request.getAttribute("jobAppStatsError"));
+        boolean applyDisabled = !taProfileComplete || jobSlotsFull || userActiveApplication;
+        int pnd = jobAppStats != null ? jobAppStats.pending : 0;
+        int acc = jobAppStats != null ? jobAppStats.accepted : 0;
+        int rej = jobAppStats != null ? jobAppStats.rejected : 0;
+        int wdr = jobAppStats != null ? jobAppStats.withdrawn : 0;
+      %>
 
       <div class="job-detail-shell">
         <div class="job-detail-main card job-detail-card">
@@ -174,9 +206,23 @@
 
         <aside class="job-detail-aside card job-detail-card">
           <div class="job-aside-block">
+            <% if (statsLoadError) { %>
+            <div class="alert alert-error" style="margin-bottom:.75rem;">Could not load live application counts.</div>
+            <% } %>
             <div class="info-box info-box--blue">
               <div class="info-label">Positions Available</div>
-              <div class="info-value"><%= (job.getNumberOfTAs() == null || job.getNumberOfTAs().isEmpty()) ? "1" : job.getNumberOfTAs() %> TAs needed</div>
+              <div class="info-value"><%= jobTaCap %> TA<%= jobTaCap == 1 ? "" : "s" %> funded</div>
+              <div class="page-subtitle" style="margin-top:.5rem;margin-bottom:0;">Accepted hires: <strong><%= acc %></strong> / <%= jobTaCap %>. New applications <%= jobSlotsFull ? "are closed (slots full)." : "are open while slots remain." %></div>
+            </div>
+            <div class="info-box" style="margin-top:.75rem;border:1px solid #e2e8f0;background:rgba(248,250,252,.85);">
+              <div class="info-label">Applicants on this listing</div>
+              <div class="page-subtitle" style="margin:.35rem 0;">Visible to all signed-in TAs (same module + code).</div>
+              <ul style="margin:.5rem 0 0;padding-left:1.1rem;line-height:1.6;font-size:.9375rem;color:#334155;">
+                <li><strong><%= pnd %></strong> pending</li>
+                <li><strong><%= acc %></strong> accepted</li>
+                <li><strong><%= rej %></strong> rejected</li>
+                <li><strong><%= wdr %></strong> withdrawn</li>
+              </ul>
             </div>
             <div class="info-box info-box--amber" style="margin-top:.75rem;">
               <div class="info-label">Application Deadline</div>
@@ -189,8 +235,15 @@
               <input type="hidden" name="moduleName" value="<%= job.getModuleName() == null ? "" : job.getModuleName().replace("\"","&quot;") %>" />
               <input type="hidden" name="moduleCode" value="<%= job.getModuleCode() == null ? "" : job.getModuleCode().replace("\"","&quot;") %>" />
               <input type="hidden" name="role"       value="<%= job.getActivityType() == null ? "Teaching Assistant" : job.getActivityType().replace("\"","&quot;") %>" />
-              <button type="submit" class="btn btn-primary">Apply for Job</button>
+              <button type="submit" class="btn btn-primary" <%= applyDisabled ? "disabled aria-disabled=\"true\"" : "" %>>Apply for Job</button>
             </form>
+            <% if (applyDisabled) { %>
+            <div class="alert alert-info" style="margin-top:.75rem;">
+              <% if (!taProfileComplete) { %><div>Complete your <a href="<%= ctx %>/profile">profile</a> before applying.</div><% } %>
+              <% if (jobSlotsFull) { %><div>TA slots are full for this listing; applications are closed.</div><% } %>
+              <% if (userActiveApplication) { %><div>You already have an active application for this job. Track it under <a href="<%= ctx %>/applications">My applications</a>.</div><% } %>
+            </div>
+            <% } %>
             <form method="post" action="<%= ctx %>/job">
               <input type="hidden" name="action" value="toggleFavorite" />
               <input type="hidden" name="jobId" value="<%= job.getId() == null ? "" : job.getId() %>" />
