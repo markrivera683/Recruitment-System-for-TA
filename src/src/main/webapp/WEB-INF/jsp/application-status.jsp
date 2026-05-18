@@ -9,6 +9,9 @@
   Long countPending  = (Long)   request.getAttribute("countPending");  if (countPending  == null) countPending  = 0L;
   Long countAccepted = (Long)   request.getAttribute("countAccepted"); if (countAccepted == null) countAccepted = 0L;
   Long countRejected = (Long)   request.getAttribute("countRejected"); if (countRejected == null) countRejected = 0L;
+  Long countWithdrawn = (Long)  request.getAttribute("countWithdrawn"); if (countWithdrawn == null) countWithdrawn = 0L;
+  Long countAll = (Long)        request.getAttribute("countAll");      if (countAll == null) countAll = countPending + countAccepted + countRejected + countWithdrawn;
+  String infoMessage = (String) request.getAttribute("infoMessage");
   String ctx = request.getContextPath();
 %>
 <!doctype html>
@@ -35,11 +38,21 @@
           <p class="page-subtitle">Track your TA application statuses</p>
         </div>
       </div>
-      <a class="link-pill" href="<%= ctx %>/profile">
-        <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
-        Back to profile
-      </a>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a class="link-pill" href="<%= ctx %>/job">
+          <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          Browse jobs
+        </a>
+        <a class="link-pill" href="<%= ctx %>/profile">
+          <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+          Back to profile
+        </a>
+      </div>
     </div>
+
+    <% if (infoMessage != null && !infoMessage.isEmpty()) { %>
+    <div class="alert alert-success" style="margin-bottom:1rem;"><%= infoMessage %></div>
+    <% } %>
 
     <!-- Summary cards + Filter panel (side by side on lg) -->
     <div class="app-summary-row">
@@ -72,14 +85,23 @@
           </div>
           <div class="stat-number"><%= countRejected %></div>
         </div>
+        <div class="stat-card stat-card--withdrawn">
+          <div class="stat-top">
+            <div class="stat-label">Withdrawn</div>
+            <div class="stat-icon" style="border-color:rgba(203,213,225,.75);">
+              <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+            </div>
+          </div>
+          <div class="stat-number"><%= countWithdrawn %></div>
+        </div>
       </div>
 
       <!-- Filter panel -->
       <div class="filter-panel">
         <div class="filter-panel-label">Filter by Status</div>
         <div class="filter-grid">
-          <% String[] filters = {"All","Pending","Accepted","Rejected"};
-             long[] fCounts = {countPending + countAccepted + countRejected, countPending, countAccepted, countRejected};
+          <% String[] filters = {"All","Pending","Accepted","Rejected","Withdrawn"};
+             long[] fCounts = {countAll, countPending, countAccepted, countRejected, countWithdrawn};
              for (int fi = 0; fi < filters.length; fi++) { String f = filters[fi]; %>
             <a href="<%= ctx %>/applications?filter=<%= f %>"
                class="seg-btn <%= f.equals(filter) ? "active" : "" %>"><%= f %><span class="count"><%= fCounts[fi] %></span></a>
@@ -96,12 +118,12 @@
           <svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
         </div>
         <p style="font-size:1rem;font-weight:600;color:#0f172a;margin-bottom:.25rem;">No applications found</p>
-        <p class="page-subtitle">Try adjusting your filters or apply for a new role.</p>
+        <p class="page-subtitle">Try adjusting your filters or <a href="<%= ctx %>/job">browse open jobs</a> to apply.</p>
       </div>
     <% } else {
          for (Application a : apps) {
            String st = a.status != null ? a.status : "Pending";
-           String dot = st.equals("Accepted") ? "&#10003;" : st.equals("Rejected") ? "&#10007;" : "&#8987;";
+           String dot = st.equals("Accepted") ? "&#10003;" : st.equals("Rejected") ? "&#10007;" : st.equals("Withdrawn") ? "&#8680;" : "&#8987;";
     %>
       <div class="app-card">
         <div class="app-accent acc-<%= st %>"></div>

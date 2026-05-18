@@ -4,8 +4,8 @@
 # ============================================================
 #  CONFIGURE THESE TWO PATHS FOR YOUR MACHINE
 # ============================================================
-$DefaultJdkHome = 'E:\openjdk-21.0.2_windows-x64_bin\jdk-21.0.2'
-$DefaultTomcat   = 'D:\tomcat\apache-tomcat-9.0.116'
+$DefaultJdkHome = 'D:\Apps\OpenJDKs\OpenJDK21.0.2'
+$DefaultTomcat   = 'D:\Apps\IntelliJ Idea\apache-tomcat-9.0.115'
 
 $JDK_HOME = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { $DefaultJdkHome }
 $TOMCAT   = if ($env:CATALINA_HOME) { $env:CATALINA_HOME } else { $DefaultTomcat }

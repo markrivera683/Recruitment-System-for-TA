@@ -6,10 +6,16 @@ POST action=toggleFavorite → save/unsave job
 */
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.ai.LmConfig;
+import com.bupt.ta.model.Application;
+import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.Job;
+import com.bupt.ta.model.JobApplicationStats;
 import com.bupt.ta.model.User;
+import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.FavoriteService;
 import com.bupt.ta.service.JobService;
+import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.JobListFilters;
 
 import javax.servlet.ServletException;
@@ -18,7 +24,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 @WebServlet("/job")
@@ -26,6 +34,8 @@ public class JobServlet extends BaseServlet {
 
     private JobService jobService;
     private FavoriteService favoriteService;
+    private ProfileService profileService;
+    private ApplicationService applicationService;
 
     @Override
     public void init() throws ServletException {
@@ -33,6 +43,8 @@ public class JobServlet extends BaseServlet {
         String p = dataDir + "/jobs.json";
         this.jobService = new JobService(p);
         this.favoriteService = new FavoriteService(Paths.get(dataDir));
+        this.profileService = new ProfileService(Paths.get(dataDir));
+        this.applicationService = new ApplicationService(Paths.get(dataDir));
     }
 
     @Override
@@ -61,6 +73,7 @@ public class JobServlet extends BaseServlet {
             req.setAttribute("jobs", jobs);
             req.setAttribute("q", q);
             req.setAttribute("sortBy", sortBy);
+            attachAiState(req, user);
 
             req.getRequestDispatcher("/WEB-INF/jsp/jobs.jsp")
                     .forward(req, resp);
@@ -74,6 +87,8 @@ public class JobServlet extends BaseServlet {
             } else {
                 req.setAttribute("jobFavorited", Boolean.FALSE);
             }
+
+            attachJobApplicationContext(req, user, job);
 
             req.getRequestDispatcher("/WEB-INF/jsp/job-detail.jsp")
                     .forward(req, resp);
@@ -127,5 +142,51 @@ public class JobServlet extends BaseServlet {
 
     private static String safe(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    private void attachJobApplicationContext(HttpServletRequest req, User user, Job job) {
+        if (job == null) {
+            return;
+        }
+        try {
+            List<Application> allApps = applicationService.listAll();
+            JobApplicationStats stats = JobApplicationStats.forJob(allApps, job.getModuleName(), job.getModuleCode());
+            int cap = JobApplicationStats.parseCapacity(job.getNumberOfTAs());
+            req.setAttribute("jobAppStats", stats);
+            req.setAttribute("jobTaCapacity", cap);
+            req.setAttribute("jobSlotsFull", stats.accepted >= cap);
+
+            List<Application> mine = applicationService.getByUserId(user.id);
+            boolean activeApp = mine.stream().anyMatch(a ->
+                    JobApplicationStats.matchesJob(a, job.getModuleName(), job.getModuleCode()) &&
+                            !"Withdrawn".equalsIgnoreCase(a.status) &&
+                            !"Rejected".equalsIgnoreCase(a.status));
+            req.setAttribute("userActiveApplicationForJob", activeApp);
+
+            Optional<ApplicantProfile> prof = profileService.getByUserId(user.id);
+            boolean profileComplete = prof.isPresent() && ProfileService.isApplicantProfileComplete(prof.get());
+            req.setAttribute("taProfileComplete", profileComplete);
+            req.setAttribute("jobAppStatsError", Boolean.FALSE);
+        } catch (IOException e) {
+            req.setAttribute("jobAppStats", JobApplicationStats.forJob(Collections.emptyList(), "", ""));
+            req.setAttribute("jobTaCapacity", 1);
+            req.setAttribute("jobSlotsFull", Boolean.FALSE);
+            req.setAttribute("userActiveApplicationForJob", Boolean.FALSE);
+            req.setAttribute("taProfileComplete", Boolean.FALSE);
+            req.setAttribute("jobAppStatsError", Boolean.TRUE);
+        }
+    }
+
+    private void attachAiState(HttpServletRequest req, User user) throws IOException {
+        boolean aiEnabled = LmConfig.load(getServletContext()).isEnabled();
+        Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
+        boolean profileExists = profileOpt.isPresent();
+        boolean profileComplete = profileExists && ProfileService.isApplicantProfileComplete(profileOpt.get());
+        boolean profileHasSkills = profileExists && !safe(profileOpt.get().skills).isEmpty();
+
+        req.setAttribute("aiEnabled", aiEnabled);
+        req.setAttribute("aiProfileExists", profileExists);
+        req.setAttribute("aiProfileComplete", profileComplete);
+        req.setAttribute("aiProfileHasSkills", profileHasSkills);
     }
 }
