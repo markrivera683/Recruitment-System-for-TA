@@ -1,6 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="com.bupt.ta.model.Job" %>
 <%@ page import="java.util.List" %>
+<%@ page import="java.util.Set" %>
 <!doctype html>
 <html lang="en">
 <head>
@@ -25,6 +26,8 @@
   boolean aiProfileHasSkills = Boolean.TRUE.equals(request.getAttribute("aiProfileHasSkills"));
   boolean hasJobs = !jobs.isEmpty();
   boolean aiInteractive = aiEnabled && aiProfileExists && aiProfileHasSkills;
+  Set recentViewedJobIds = (Set) request.getAttribute("recentViewedJobIds");
+  if (recentViewedJobIds == null) recentViewedJobIds = java.util.Collections.emptySet();
 %>
 <div class="page--top fade-in">
   <div class="layout-xl">
@@ -39,10 +42,16 @@
           <p class="page-subtitle">Browse available TA positions and view role details</p>
         </div>
       </div>
-      <a class="link-pill" href="<%= ctx %>/profile">
-        <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        Profile
-      </a>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;">
+        <a class="link-pill" href="<%= ctx %>/applications">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          My applications
+        </a>
+        <a class="link-pill" href="<%= ctx %>/profile">
+          <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          Profile
+        </a>
+      </div>
     </div>
 
     <form method="get" action="<%= ctx %>/job" class="app-summary-row">
@@ -235,8 +244,12 @@
               }
               String skillsJoined = String.join(", ", skillTexts);
               String skillsAttrEsc = skillsJoined.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&#39;");
+              boolean recentlyViewed = !jobId.isEmpty() && recentViewedJobIds.contains(jobId);
           %>
-            <div class="job-card" data-job-card="true" data-job-id="<%= jobIdEsc %>" data-job-title="<%= moduleAttrEsc %>" data-job-code="<%= moduleCodeAttrEsc %>" data-job-type="<%= actAttrEsc %>" data-job-desc="<%= descAttrEsc %>" data-job-skills="<%= skillsAttrEsc %>">
+            <div class="job-card<%= recentlyViewed ? " job-card--recent-viewed" : "" %>" data-job-card="true" data-job-id="<%= jobIdEsc %>" data-job-title="<%= moduleAttrEsc %>" data-job-code="<%= moduleCodeAttrEsc %>" data-job-type="<%= actAttrEsc %>" data-job-desc="<%= descAttrEsc %>" data-job-skills="<%= skillsAttrEsc %>">
+              <% if (recentlyViewed) { %>
+                <span class="job-recent-badge">Recently viewed</span>
+              <% } %>
               <div class="job-card-header">
                 <h3 class="job-card-title"><%= moduleEsc %></h3>
                 <span class="chip"><%= actEsc %></span>

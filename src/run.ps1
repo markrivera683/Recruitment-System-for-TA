@@ -110,6 +110,7 @@ if (-not (Test-Path "$dataDir\users.json"))    { Set-Content "$dataDir\users.jso
 if (-not (Test-Path "$dataDir\profiles.json")) { Set-Content "$dataDir\profiles.json" '[]' }
 if (-not (Test-Path "$dataDir\applications.json")) { Set-Content "$dataDir\applications.json" '[]' }
 if (-not (Test-Path "$dataDir\favorites.json")) { Set-Content "$dataDir\favorites.json" '[]' }
+if (-not (Test-Path "$dataDir\recently-viewed.json")) { Set-Content "$dataDir\recently-viewed.json" '[]' }
 Push-Location $OUT
 & $JAR -cvf $WAR . | Out-Null
 Pop-Location

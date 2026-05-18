@@ -16,6 +16,7 @@ import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.FavoriteService;
 import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.service.RecentlyViewedService;
 import com.bupt.ta.util.JobListFilters;
 
 import javax.servlet.ServletException;
@@ -25,6 +26,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -34,6 +36,7 @@ public class JobServlet extends BaseServlet {
 
     private JobService jobService;
     private FavoriteService favoriteService;
+    private RecentlyViewedService recentlyViewedService;
     private ProfileService profileService;
     private ApplicationService applicationService;
 
@@ -43,6 +46,7 @@ public class JobServlet extends BaseServlet {
         String p = dataDir + "/jobs.json";
         this.jobService = new JobService(p);
         this.favoriteService = new FavoriteService(Paths.get(dataDir));
+        this.recentlyViewedService = new RecentlyViewedService(Paths.get(dataDir));
         this.profileService = new ProfileService(Paths.get(dataDir));
         this.applicationService = new ApplicationService(Paths.get(dataDir));
     }
@@ -69,8 +73,11 @@ public class JobServlet extends BaseServlet {
 
             Set<String> favoriteIds = favoriteService.getFavoriteJobIds(user.id);
             List<Job> jobs = JobListFilters.apply(jobService.listPublishedJobs(), favoriteIds, q, sortBy);
+            List<String> recentJobIds = recentlyViewedService.getRecentJobIds(user.id);
+            jobs = JobListFilters.promoteRecentlyViewed(jobs, recentJobIds);
 
             req.setAttribute("jobs", jobs);
+            req.setAttribute("recentViewedJobIds", new HashSet<>(recentJobIds));
             req.setAttribute("q", q);
             req.setAttribute("sortBy", sortBy);
             attachAiState(req, user);
@@ -81,6 +88,9 @@ public class JobServlet extends BaseServlet {
         } else {
             // ── DETAIL PAGE ──
             Job job = jobService.getJobById(id);
+            if (job != null && job.getId() != null) {
+                recentlyViewedService.recordView(user.id, job.getId());
+            }
             req.setAttribute("job", job);
             if (job != null && job.getId() != null) {
                 req.setAttribute("jobFavorited", favoriteService.isFavorite(user.id, job.getId()));
