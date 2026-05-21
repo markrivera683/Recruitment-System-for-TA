@@ -182,7 +182,7 @@ public class ProfileServlet extends BaseServlet {
         String uploadedName = null;
         Path uploadedPath = null;
         if (newCvUpload) {
-            String submitted = cvPart.getSubmittedFileName();
+            String submitted = getSubmittedFileNameCompat(cvPart);
             String safe = safeFileName(submitted);
             if (!isAllowedCvFile(safe)) {
                 p.cvFileName = preDeleteCvName;
@@ -483,6 +483,28 @@ public class ProfileServlet extends BaseServlet {
         if (fileName == null) return false;
         String n = fileName.toLowerCase();
         return n.endsWith(".pdf") || n.endsWith(".doc") || n.endsWith(".docx");
+    }
+
+    private static String getSubmittedFileNameCompat(Part part) {
+        if (part == null) {
+            return null;
+        }
+        String contentDisposition = part.getHeader("content-disposition");
+        if (contentDisposition == null) {
+            return null;
+        }
+        String[] tokens = contentDisposition.split(";");
+        for (String token : tokens) {
+            String trimmed = token.trim();
+            if (trimmed.startsWith("filename=")) {
+                String name = trimmed.substring("filename=".length()).trim();
+                if (name.length() >= 2 && name.startsWith("\"") && name.endsWith("\"")) {
+                    name = name.substring(1, name.length() - 1);
+                }
+                return name;
+            }
+        }
+        return null;
     }
 
     private static boolean isBlank(String s) {

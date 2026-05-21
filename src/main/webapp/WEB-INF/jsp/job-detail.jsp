@@ -137,7 +137,7 @@
             <div class="info-box">
               <%
                 List<String> schedule = job.getSchedule();
-                if (schedule == null) schedule = new java.util.ArrayList<>();
+                if (schedule == null) schedule = new java.util.ArrayList<String>();
                 if (schedule.isEmpty()) {
               %>
                 <div class="page-subtitle">Schedule to be confirmed</div>
