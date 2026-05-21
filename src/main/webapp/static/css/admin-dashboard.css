@@ -306,23 +306,43 @@ a.button.status-app-btn:not(.button-success):not(.button-danger) .status-app-btn
 a.button.status-app-btn:not(.button-success):not(.button-danger) .status-app-btn__count {
   color: inherit;
 }
-/* Success: white label + count on green */
-a.button.button-success.status-app-btn,
-a.button.button-success.status-app-btn:visited {
+/* Accepted: green background, white text (default + hover + visited) */
+.status-grid--app-buttons a.button.button-success.status-app-btn,
+.status-grid--app-buttons a.button.button-success.status-app-btn:link,
+.status-grid--app-buttons a.button.button-success.status-app-btn:visited {
+  background: #46c374;
+  background-color: #46c374;
   color: #fff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(22, 163, 74, 0.15);
 }
-a.button.button-success.status-app-btn .status-app-btn__label,
-a.button.button-success.status-app-btn .status-app-btn__count {
+.status-grid--app-buttons a.button.button-success.status-app-btn:hover {
+  background: #46c374;
+  background-color: #46c374;
   color: #fff;
+  border: none;
 }
-/* Danger: same red tones as Delete */
-a.button.button-danger.status-app-btn,
-a.button.button-danger.status-app-btn:visited {
-  color: #991b1b;
+/* Rejected: red background, white text — mirrors Accepted */
+.status-grid--app-buttons a.button.button-danger.status-app-btn,
+.status-grid--app-buttons a.button.button-danger.status-app-btn:link,
+.status-grid--app-buttons a.button.button-danger.status-app-btn:visited {
+  background: #e75656;
+  background-color: #e75656;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15);
 }
-a.button.button-danger.status-app-btn .status-app-btn__label,
-a.button.button-danger.status-app-btn .status-app-btn__count {
-  color: inherit;
+.status-grid--app-buttons a.button.button-danger.status-app-btn:hover {
+  background: #e75656;
+  background-color: #e75656;
+  color: #fff;
+  border: none;
+}
+.status-grid--app-buttons a.button.button-success.status-app-btn .status-app-btn__label,
+.status-grid--app-buttons a.button.button-success.status-app-btn .status-app-btn__count,
+.status-grid--app-buttons a.button.button-danger.status-app-btn .status-app-btn__label,
+.status-grid--app-buttons a.button.button-danger.status-app-btn .status-app-btn__count {
+  color: #fff;
 }
 .status-app-btn__label {
   font-size: 0.9375rem;
@@ -345,6 +365,10 @@ a.status-app-btn:focus-visible {
 a.button.button-success.status-app-btn:focus-visible {
   outline-color: #fff;
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.45);
+}
+a.button.button-danger.status-app-btn:focus-visible {
+  outline-color: #fff;
+  box-shadow: 0 0 0 3px rgba(211, 29, 29, 0.45);
 }
 
 /* ── Admin-specific layout helpers ────────────────────────── */
@@ -397,6 +421,20 @@ a.button.button-success.status-app-btn:focus-visible {
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
+}
+/* Pending / Accepted list: Force reject — red fill, white text (like Force accept green) */
+.admin-app-action-form .button.button-danger {
+  background: #e75656;
+  background-color: #e75656;
+  color: #fff;
+  border: none;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.15);
+}
+.admin-app-action-form .button.button-danger:hover {
+  background: #e75656;
+  background-color: #e75656;
+  color: #fff;
+  border: none;
 }
 .admin-app-feedback {
   min-width: 7rem;
