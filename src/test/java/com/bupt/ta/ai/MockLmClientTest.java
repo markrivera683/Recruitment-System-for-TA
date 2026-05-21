@@ -53,6 +53,29 @@ class MockLmClientTest {
     }
 
     @Test
+    void workloadAdvice_highLoadRecommendsCautionOrReject() throws LmException {
+        LmRequest req = LmRequest.builder()
+                .featureName(AiFeatureNames.WORKLOAD_ADVICE)
+                .userPrompt("Accepted count: 1\nPending count: 3\nPotential load if approve: 4\nWarning threshold: 3\n")
+                .build();
+        LmResponse r = client.generate(req);
+        assertTrue(r.isSuccess());
+        String lower = r.getText().toLowerCase();
+        assertTrue(lower.contains("reject") || lower.contains("caution"));
+    }
+
+    @Test
+    void workloadAdvice_lowLoadRecommendsApprove() throws LmException {
+        LmRequest req = LmRequest.builder()
+                .featureName(AiFeatureNames.WORKLOAD_ADVICE)
+                .userPrompt("Accepted count: 0\nPending count: 1\nPotential load if approve: 1\nWarning threshold: 3\n")
+                .build();
+        LmResponse r = client.generate(req);
+        assertTrue(r.isSuccess());
+        assertTrue(r.getText().toLowerCase().contains("approve"));
+    }
+
+    @Test
     void forceDisabled_returnsFailure() throws LmException {
         MockLmClient disabled = new MockLmClient(true);
         LmResponse r = disabled.generate(LmRequest.builder().featureName(AiFeatureNames.SKILL_MATCH).userPrompt("x").build());

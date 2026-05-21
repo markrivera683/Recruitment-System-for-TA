@@ -13,21 +13,29 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.bupt.ta.ai.LmConfig;
 import com.bupt.ta.model.Application;
 import com.bupt.ta.model.Job;
+import com.bupt.ta.model.MoWorkloadSnapshot;
 import com.bupt.ta.model.User;
 import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.service.WorkloadService;
 
 public class MoServlet extends BaseServlet {
     private ApplicationService applications;
     private JobService jobs;
+    private AuthService auth;
+    private WorkloadService workloadService;
 
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         applications = new ApplicationService(dataDir);
+        auth = new AuthService(dataDir);
+        workloadService = new WorkloadService();
         String jobsPath = getServletContext().getRealPath("/WEB-INF/data/jobs.json");
         jobs = new JobService(jobsPath);
     }
@@ -50,6 +58,25 @@ public class MoServlet extends BaseServlet {
 
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         ProfileService profiles = new ProfileService(dataDir);
+
+        List<Job> allJobs = jobs.getAllJobs();
+        Map<String, String> applicantNamesByUserId = new HashMap<>();
+        for (Application a : apps) {
+            if (a == null || a.userId == null || applicantNamesByUserId.containsKey(a.userId)) {
+                continue;
+            }
+            String uid = a.userId.trim();
+            String name = auth.findById(uid).map(u -> u.name).orElse(null);
+            if (name == null || name.trim().isEmpty()) {
+                name = profiles.getByUserId(uid).map(p -> p.fullName).orElse(uid);
+            }
+            applicantNamesByUserId.put(uid, name);
+        }
+        Map<String, MoWorkloadSnapshot> workloadSnapshots =
+                workloadService.buildSnapshotsForPendingApplications(apps, allJobs, applicantNamesByUserId);
+        req.setAttribute("workloadSnapshots", workloadSnapshots);
+        req.setAttribute("aiEnabled", LmConfig.load(getServletContext()).isEnabled());
+
         Map<String, String> cvByUserId = new HashMap<>();
         for (Application a : apps) {
             if (a == null || a.userId == null || cvByUserId.containsKey(a.userId)) {

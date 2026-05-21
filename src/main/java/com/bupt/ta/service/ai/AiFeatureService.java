@@ -4,6 +4,7 @@ import com.bupt.ta.ai.LmClient;
 import com.bupt.ta.ai.LmConfig;
 import com.bupt.ta.ai.LmException;
 import com.bupt.ta.ai.LmResponse;
+import com.bupt.ta.model.MoWorkloadSnapshot;
 
 /**
  * Application-facing AI entry point. Servlets should depend on this class, not on {@link LmClient} directly.
@@ -13,12 +14,14 @@ public final class AiFeatureService {
     private final SkillMatchService skillMatch;
     private final MissingSkillService missingSkill;
     private final RecommendationService recommendation;
+    private final WorkloadAdviceService workloadAdvice;
 
     public AiFeatureService(LmConfig config, LmClient client) {
         this.config = config;
         this.skillMatch = new SkillMatchService(client, config);
         this.missingSkill = new MissingSkillService(client, config);
         this.recommendation = new RecommendationService(client, config);
+        this.workloadAdvice = new WorkloadAdviceService(client, config);
     }
 
     public AiFeatureOutput matchApplicantSkills(String applicantSkills, String jobRequirements) {
@@ -32,6 +35,10 @@ public final class AiFeatureService {
 
     public AiFeatureOutput recommendJobs(String candidateProfile, String openPositions) {
         return run(() -> recommendation.recommendJobs(candidateProfile, openPositions), "Job recommendation failed: ");
+    }
+
+    public AiFeatureOutput adviseMoOnWorkload(MoWorkloadSnapshot snapshot) {
+        return run(() -> workloadAdvice.adviseMoOnWorkload(snapshot), "Workload advice failed: ");
     }
 
     private AiFeatureOutput run(LmCall call, String errPrefix) {

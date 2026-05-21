@@ -63,6 +63,8 @@ public final class MockLmClient implements LmClient {
                 return missingSkills(request, model);
             case AiFeatureNames.JOB_RECOMMENDATION:
                 return jobRecommendation(request, model);
+            case AiFeatureNames.WORKLOAD_ADVICE:
+                return workloadAdvice(request, model);
             default:
                 return genericEcho(request, model);
         }
@@ -163,6 +165,74 @@ public final class MockLmClient implements LmClient {
         }
         sb.append("\n(Deterministic mock output — use as discussion starter, not automatic placement.)");
         return new LmResponse(sb.toString().trim(), PROVIDER, model, true, null, null);
+    }
+
+    private static LmResponse workloadAdvice(LmRequest request, String model) {
+        String up = request.getUserPrompt() != null ? request.getUserPrompt() : "";
+        int potential = parseIntAfterMarker(up, "Potential load if approve:");
+        int threshold = parseIntAfterMarker(up, "Warning threshold:");
+        if (threshold <= 0) {
+            threshold = 3;
+        }
+        int accepted = parseIntAfterMarker(up, "Accepted count:");
+        int pending = parseIntAfterMarker(up, "Pending count:");
+
+        String recommendation;
+        if (potential >= threshold + 1) {
+            recommendation = "Reject";
+        } else if (potential >= threshold) {
+            recommendation = "Caution";
+        } else {
+            recommendation = "Approve";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("## Workload Summary\n");
+        sb.append("- Accepted: ").append(accepted).append("\n");
+        sb.append("- Pending: ").append(pending).append("\n");
+        sb.append("- Potential load if approve: **").append(potential).append("**\n");
+        sb.append("- Warning threshold: ").append(threshold).append("\n\n");
+
+        sb.append("## Recommendation (Approve / Reject / Caution)\n");
+        sb.append("**").append(recommendation).append("**\n\n");
+
+        sb.append("## Reasoning\n");
+        if ("Reject".equals(recommendation)) {
+            sb.append("Potential load exceeds the safe threshold. Approving would likely overload this TA.\n");
+        } else if ("Caution".equals(recommendation)) {
+            sb.append("Potential load meets or exceeds the warning threshold. Review schedule overlap before approving.\n");
+        } else {
+            sb.append("Current accepted + pending workload is below the warning threshold. Approval is reasonable from a load perspective.\n");
+        }
+        sb.append("\n## If Approved — Expected Load\n");
+        sb.append("The TA would carry **").append(potential).append("** active assignments (accepted + pending).\n");
+        sb.append("\n(Deterministic mock output — MO retains final decision authority.)");
+        return new LmResponse(sb.toString().trim(), PROVIDER, model, true, null, null);
+    }
+
+    private static int parseIntAfterMarker(String text, String marker) {
+        int i = text.indexOf(marker);
+        if (i < 0) {
+            return 0;
+        }
+        int start = i + marker.length();
+        StringBuilder num = new StringBuilder();
+        for (int j = start; j < text.length(); j++) {
+            char c = text.charAt(j);
+            if (Character.isDigit(c)) {
+                num.append(c);
+            } else if (num.length() > 0) {
+                break;
+            }
+        }
+        if (num.length() == 0) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(num.toString());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private static String buildMockReason(String profile, String jobLine, int index) {
