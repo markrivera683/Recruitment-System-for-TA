@@ -93,6 +93,9 @@
         int rej = jobAppStats != null ? jobAppStats.rejected : 0;
         int wdr = jobAppStats != null ? jobAppStats.withdrawn : 0;
       %>
+      <% if (jobSlotsFull && qErr.isEmpty()) { %>
+      <div class="alert alert-error" style="margin-bottom:1rem;">All TA slots for this job are filled. New applications are not accepted.</div>
+      <% } %>
 
       <div class="job-detail-shell">
         <div class="job-detail-main card job-detail-card">
@@ -230,15 +233,23 @@
             </div>
           </div>
           <div class="detail-actions detail-actions--aside">
-            <form method="post" action="<%= ctx %>/applications">
+            <form method="post" action="<%= ctx %>/applications" id="applyForm">
               <input type="hidden" name="jobId"      value="<%= job.getId() == null ? "" : job.getId() %>" />
               <input type="hidden" name="moduleName" value="<%= job.getModuleName() == null ? "" : job.getModuleName().replace("\"","&quot;") %>" />
               <input type="hidden" name="moduleCode" value="<%= job.getModuleCode() == null ? "" : job.getModuleCode().replace("\"","&quot;") %>" />
               <input type="hidden" name="role"       value="<%= job.getActivityType() == null ? "Teaching Assistant" : job.getActivityType().replace("\"","&quot;") %>" />
-              <button type="submit" class="btn btn-primary" <%= applyDisabled ? "disabled aria-disabled=\"true\"" : "" %>>Apply for Job</button>
+              <% if (applyDisabled) { %>
+              <button type="button" class="btn btn-primary apply-blocked-btn" aria-describedby="applyBlockFeedback"
+                <% if (jobSlotsFull) { %>data-block-reason="slots-full"<% } else if (!taProfileComplete) { %>data-block-reason="profile"<% } else { %>data-block-reason="duplicate"<% } %>>
+                Apply for Job
+              </button>
+              <% } else { %>
+              <button type="submit" class="btn btn-primary">Apply for Job</button>
+              <% } %>
             </form>
+            <div id="applyBlockFeedback" class="alert alert-error" style="display:none;margin-top:.75rem;" role="alert"></div>
             <% if (applyDisabled) { %>
-            <div class="alert alert-info" style="margin-top:.75rem;">
+            <div class="alert <%= jobSlotsFull ? "alert-error" : "alert-info" %>" style="margin-top:.75rem;">
               <% if (!taProfileComplete) { %><div>Complete your <a href="<%= ctx %>/profile">profile</a> before applying.</div><% } %>
               <% if (jobSlotsFull) { %><div>TA slots are full for this listing; applications are closed.</div><% } %>
               <% if (userActiveApplication) { %><div>You already have an active application for this job. Track it under <a href="<%= ctx %>/applications">My applications</a>.</div><% } %>
@@ -346,6 +357,29 @@
   });
   reBtn.addEventListener('click', function () {
     runStreams();
+  });
+})();
+</script>
+<script>
+(function () {
+  var feedback = document.getElementById('applyBlockFeedback');
+  var blockedBtns = document.querySelectorAll('.apply-blocked-btn');
+  if (!feedback || !blockedBtns.length) return;
+
+  var messages = {
+    'slots-full': 'All TA slots for this job are filled. New applications are not accepted.',
+    'profile': 'Please complete your profile before applying for a job.',
+    'duplicate': 'You already have an active application for this job.'
+  };
+
+  blockedBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var reason = btn.getAttribute('data-block-reason') || 'slots-full';
+      var msg = messages[reason] || messages['slots-full'];
+      feedback.textContent = msg;
+      feedback.style.display = 'block';
+      feedback.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    });
   });
 })();
 </script>
