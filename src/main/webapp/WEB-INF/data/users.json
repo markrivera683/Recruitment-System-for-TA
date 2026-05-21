@@ -16,5 +16,41 @@
     "passwordHash": "mo123",
     "role": "MO",
     "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000101",
+    "name": "Alice Chen",
+    "studentId": "2023000101",
+    "email": "alice.chen@bupt.local",
+    "passwordHash": "ta123",
+    "role": "TA",
+    "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000102",
+    "name": "Brian Li",
+    "studentId": "2023000102",
+    "email": "brian.li@bupt.local",
+    "passwordHash": "ta123",
+    "role": "TA",
+    "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000103",
+    "name": "Clara Wang",
+    "studentId": "2022000103",
+    "email": "clara.wang@bupt.local",
+    "passwordHash": "ta123",
+    "role": "TA",
+    "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000104",
+    "name": "Daniel Zhang",
+    "studentId": "2021000104",
+    "email": "daniel.zhang@bupt.local",
+    "passwordHash": "ta123",
+    "role": "TA",
+    "active": "true"
   }
 ]

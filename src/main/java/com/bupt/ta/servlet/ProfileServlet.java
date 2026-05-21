@@ -191,42 +191,53 @@ public class ProfileServlet extends BaseServlet {
                 forwardProfileEdit(req, resp, u, p, eduRows, cvError);
                 return;
             }
-            Files.createDirectories(cvUserDir);
-            Path dest = cvUserDir.resolve(safe);
-            cvPart.write(dest.toAbsolutePath().toString());
             uploadedName = safe;
-            uploadedPath = dest;
             p.cvFileName = safe;
         }
 
         Map<String, String> fieldErrors = validateProfileInput(p, eduRows);
         if (!fieldErrors.isEmpty()) {
-            setPendingCvSessionIfFileExists(req, u.id, p, cvUserDir);
+            if (newCvUpload) {
+                p.cvFileName = dbCvFileNameAtStart;
+                req.getSession().removeAttribute(PENDING_CV_SESSION_ATTR);
+            } else {
+                setPendingCvSessionIfFileExists(req, u.id, p, cvUserDir);
+            }
             forwardProfileEdit(req, resp, u, p, eduRows, fieldErrors);
             return;
         }
 
+        Path rollbackOldPath = null;
         try {
             auth.updateUserBasics(u, p.fullName, p.studentId, p.email);
             req.getSession().setAttribute("user", u);
+            if (newCvUpload && uploadedName != null) {
+                Files.createDirectories(cvUserDir);
+                Path staged = cvUserDir.resolve(".upload-" + System.currentTimeMillis() + "-" + uploadedName);
+                cvPart.write(staged.toAbsolutePath().toString());
+                uploadedPath = staged;
+                rollbackOldPath = backupExistingCv(cvUserDir, dbCvFileNameAtStart);
+                Path dest = cvUserDir.resolve(uploadedName);
+                Files.move(staged, dest, StandardCopyOption.REPLACE_EXISTING);
+                uploadedPath = dest;
+            }
             profiles.upsert(p);
             req.getSession().removeAttribute(PENDING_CV_SESSION_ATTR);
             if (!dbCvFileNameAtStart.isEmpty()) {
-                boolean replacedByDifferent = uploadedName != null && !dbCvFileNameAtStart.equals(uploadedName);
                 boolean deletedWithoutReplace = deleteCv && uploadedName == null;
-                if (replacedByDifferent) {
-                    archiveReplacedCv(cvUserDir, dbCvFileNameAtStart);
-                } else if (deletedWithoutReplace) {
+                if (deletedWithoutReplace) {
                     Files.deleteIfExists(cvUserDir.resolve(dbCvFileNameAtStart));
                 }
             }
         } catch (IllegalArgumentException ex) {
-            if (uploadedPath != null && uploadedName != null
-                    && !uploadedName.equals(dbCvFileNameAtStart)) {
-                Files.deleteIfExists(uploadedPath);
-            }
+            cleanupCancelledUpload(uploadedPath, uploadedName);
+            restoreBackedUpCv(rollbackOldPath, cvUserDir, dbCvFileNameAtStart);
             p.cvFileName = dbCvFileNameAtStart;
-            mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
+            if (newCvUpload) {
+                req.getSession().removeAttribute(PENDING_CV_SESSION_ATTR);
+            } else {
+                mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
+            }
             Map<String, String> authErrors = new LinkedHashMap<>();
             authErrors.put("email", ex.getMessage());
             List<EducationEntry> edus = ProfileService.parseEducationJson(p.educationJson);
@@ -237,16 +248,14 @@ public class ProfileServlet extends BaseServlet {
             forwardProfileEdit(req, resp, u, p, edus, authErrors);
             return;
         } catch (Exception ex) {
-            if (uploadedPath != null && uploadedName != null
-                    && !uploadedName.equals(dbCvFileNameAtStart)) {
-                try {
-                    Files.deleteIfExists(uploadedPath);
-                } catch (IOException ignored) {
-                    // best-effort cleanup
-                }
-            }
+            cleanupCancelledUpload(uploadedPath, uploadedName);
+            restoreBackedUpCv(rollbackOldPath, cvUserDir, dbCvFileNameAtStart);
             p.cvFileName = dbCvFileNameAtStart;
-            mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
+            if (newCvUpload) {
+                req.getSession().removeAttribute(PENDING_CV_SESSION_ATTR);
+            } else {
+                mergePendingCvIntoProfileForPost(req, u.id, p, cvUserDir);
+            }
             Map<String, String> saveErr = new LinkedHashMap<>();
             saveErr.put("cv", "Could not save your profile. Your CV upload was cancelled. Please try again.");
             forwardProfileEdit(req, resp, u, p, eduRows, saveErr);
@@ -392,17 +401,48 @@ public class ProfileServlet extends BaseServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/profile.jsp").forward(req, resp);
     }
 
-    /** Moves the previous CV into {@code _archive/} when the applicant uploads a new file. */
-    private static void archiveReplacedCv(Path cvUserDir, String oldName) throws IOException {
-        Path oldPath = cvUserDir.resolve(oldName);
+    /** Moves the previous CV aside before a replacement so it can be restored if the save fails. */
+    private static Path backupExistingCv(Path cvUserDir, String oldName) throws IOException {
+        if (oldName == null || oldName.trim().isEmpty()) {
+            return null;
+        }
+        Path oldPath = cvUserDir.resolve(oldName).normalize();
         if (!Files.isRegularFile(oldPath)) {
-            return;
+            return null;
         }
         Path archiveDir = cvUserDir.resolve("_archive");
         Files.createDirectories(archiveDir);
         String stamp = String.valueOf(System.currentTimeMillis());
-        Path dest = archiveDir.resolve(stamp + "_" + oldName);
+        Path dest = archiveDir.resolve(stamp + "_" + oldName).normalize();
         Files.move(oldPath, dest, StandardCopyOption.REPLACE_EXISTING);
+        return dest;
+    }
+
+    private static void restoreBackedUpCv(Path backupPath, Path cvUserDir, String oldName) {
+        if (backupPath == null || oldName == null || oldName.trim().isEmpty()) {
+            return;
+        }
+        try {
+            Path restorePath = cvUserDir.resolve(oldName).normalize();
+            Files.createDirectories(restorePath.getParent());
+            if (Files.isRegularFile(backupPath)) {
+                Files.move(backupPath, restorePath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } catch (IOException ignored) {
+            // best-effort rollback
+        }
+    }
+
+    private static void cleanupCancelledUpload(Path uploadedPath, String uploadedName) {
+        if (uploadedPath == null || uploadedName == null) {
+            return;
+        }
+        Path target = uploadedPath.normalize();
+        try {
+            Files.deleteIfExists(target);
+        } catch (IOException ignored) {
+            // best-effort cleanup
+        }
     }
 
     private static String trim(String s) {

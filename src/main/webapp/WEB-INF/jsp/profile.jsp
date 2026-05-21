@@ -33,7 +33,7 @@
   String degVal = p.degree == null ? "" : p.degree;
 %>
 <div class="page--top fade-in">
-  <div class="layout-wide">
+  <div class="layout-xl profile-page">
 
     <!-- Horizontal header row (matches ProfilePage.tsx) -->
     <div class="page-header-row">
@@ -178,12 +178,11 @@
                  style="<%= hasCv ? "" : "display:none;" %>">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle fill="none" stroke="currentColor" stroke-width="2" cx="12" cy="12" r="3"/></svg>
               </a>
-              <button type="button" id="cv-replace-btn" class="cv-icon-btn" title="Replace CV" aria-label="Replace CV" onclick="document.getElementById('cv').click()">
+              <button type="button" id="cv-replace-btn" class="cv-icon-btn" title="Replace CV" aria-label="Replace CV">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
               </button>
               <% if (hasCv) { %>
-              <button type="button" class="cv-icon-btn cv-icon-btn--danger" title="Delete CV" aria-label="Delete CV"
-                      onclick="if (confirm('Delete your CV from this system? This cannot be undone.')) document.getElementById('form-delete-cv').submit();">
+              <button type="button" id="cv-delete-btn" class="cv-icon-btn cv-icon-btn--danger" title="Delete CV" aria-label="Delete CV">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="3 6 5 6 21 6"/><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/><line fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="10" y1="11" x2="10" y2="17"/><line fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" x1="14" y1="11" x2="14" y2="17"/></svg>
               </button>
               <% } %>
@@ -298,6 +297,16 @@
       <form id="form-delete-cv" method="post" action="${pageContext.request.contextPath}/profile" class="profile-hidden-form" aria-hidden="true">
         <input type="hidden" name="action" value="deleteCvOnly" />
       </form>
+      <div id="cv-delete-dialog" class="app-dialog-backdrop" role="presentation" aria-hidden="true">
+        <div class="app-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-delete-title" aria-describedby="cv-delete-copy">
+          <h2 id="cv-delete-title">Delete CV?</h2>
+          <p id="cv-delete-copy">This will remove your saved CV from the system. This action cannot be undone.</p>
+          <div class="app-dialog-actions">
+            <button type="button" class="btn-ghost" id="cv-delete-cancel">Cancel</button>
+            <button type="button" class="btn btn-primary btn-danger" id="cv-delete-confirm">Delete CV</button>
+          </div>
+        </div>
+      </div>
     </div><!-- /card -->
   </div><!-- /layout-wide -->
 </div>
@@ -356,6 +365,7 @@ function removeEduRow(btn) {
   var cv = document.getElementById('cv');
   var label = document.getElementById('cv-display-label');
   var viewBtn = document.getElementById('cv-view-btn');
+  var replaceBtn = document.getElementById('cv-replace-btn');
   var compact = document.querySelector('.cv-compact');
   if (!cv || !label || !compact) return;
   var contextPath = compact.getAttribute('data-context') || '';
@@ -403,8 +413,52 @@ function removeEduRow(btn) {
 
   cv.addEventListener('change', refreshCvUiFromInput);
   cv.addEventListener('cancel', refreshCvUiFromInput);
+  if (replaceBtn) {
+    replaceBtn.addEventListener('click', function () {
+      cv.value = '';
+      refreshCvUiFromInput();
+      cv.click();
+    });
+  }
 
   refreshCvUiFromInput();
+})();
+
+(function () {
+  var trigger = document.getElementById('cv-delete-btn');
+  var dialog = document.getElementById('cv-delete-dialog');
+  var cancel = document.getElementById('cv-delete-cancel');
+  var confirmBtn = document.getElementById('cv-delete-confirm');
+  var form = document.getElementById('form-delete-cv');
+  if (!trigger || !dialog || !cancel || !confirmBtn || !form) return;
+
+  function openDialog() {
+    dialog.classList.add('is-open');
+    dialog.setAttribute('aria-hidden', 'false');
+    cancel.focus();
+  }
+
+  function closeDialog() {
+    dialog.classList.remove('is-open');
+    dialog.setAttribute('aria-hidden', 'true');
+    trigger.focus();
+  }
+
+  trigger.addEventListener('click', openDialog);
+  cancel.addEventListener('click', closeDialog);
+  confirmBtn.addEventListener('click', function () {
+    form.submit();
+  });
+  dialog.addEventListener('click', function (event) {
+    if (event.target === dialog) {
+      closeDialog();
+    }
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && dialog.classList.contains('is-open')) {
+      closeDialog();
+    }
+  });
 })();
 </script>
 </body>
