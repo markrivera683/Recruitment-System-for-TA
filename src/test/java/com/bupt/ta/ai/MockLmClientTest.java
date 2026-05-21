@@ -48,8 +48,28 @@ class MockLmClientTest {
                 .build();
         LmResponse r = client.generate(req);
         assertTrue(r.isSuccess());
-        assertTrue(r.getText().contains("Recommended"));
+        assertTrue(r.getText().contains("Top Recommendations"));
         assertTrue(r.getText().contains("CS101"));
+    }
+
+    @Test
+    void jobRecommendation_prefersMachineLearningMatch() throws LmException {
+        LmRequest req = LmRequest.builder()
+                .featureName(AiFeatureNames.JOB_RECOMMENDATION)
+                .userPrompt("Candidate profile:\n"
+                        + "Skills: python, java, English\n"
+                        + "Courses: data structure, machine learning\n\n"
+                        + "Open positions:\n"
+                        + "- CS50: Intro to CS (Lab) | Skills: Python, C Programming\n"
+                        + "- DATA301: Machine Learning (Tutorial) | Skills: Python, Machine Learning\n"
+                        + "- ENG101: Academic Writing | Skills: Attention to Detail")
+                .build();
+        LmResponse r = client.generate(req);
+        assertTrue(r.isSuccess());
+        int data301Pos = r.getText().toUpperCase().indexOf("DATA301");
+        int engPos = r.getText().toUpperCase().indexOf("ENG101");
+        assertTrue(data301Pos >= 0);
+        assertTrue(engPos < 0 || data301Pos < engPos);
     }
 
     @Test

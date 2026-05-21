@@ -34,7 +34,7 @@
     String moMessage = (String) request.getAttribute("moMessage");
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>MO Dashboard</title>
@@ -555,7 +555,7 @@
 
                 <div class="field">
                     <label>Application Deadline</label>
-                    <input type="date" name="applicationDeadline" />
+                    <input type="text" name="applicationDeadline" placeholder="yyyy-mm-dd" pattern="\d{4}-\d{2}-\d{2}" title="Use format yyyy-mm-dd, e.g. 2026-06-30" />
                 </div>
                 <div class="field">
                     <label>Number of TAs</label>

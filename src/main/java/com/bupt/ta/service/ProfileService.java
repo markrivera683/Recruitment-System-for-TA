@@ -144,6 +144,41 @@ public class ProfileService {
         return s == null || s.trim().isEmpty();
     }
 
+    /** True when the applicant has skills and/or courses for AI matching. */
+    public static boolean hasAiMatchingInput(ApplicantProfile p) {
+        if (p == null) {
+            return false;
+        }
+        return !isBlank(p.skills) || !isBlank(p.courses);
+    }
+
+    /** Combined text sent to AI for skill match and job recommendations. */
+    public static String buildAiCapabilityText(ApplicantProfile p) {
+        if (p == null) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (!isBlank(p.fullName)) {
+            sb.append("Name: ").append(p.fullName.trim()).append("\n");
+        }
+        if (!isBlank(p.major)) {
+            sb.append("Major: ").append(p.major.trim()).append("\n");
+        }
+        if (!isBlank(p.degree)) {
+            sb.append("Degree: ").append(p.degree.trim()).append("\n");
+        }
+        if (!isBlank(p.skills)) {
+            sb.append("Skills: ").append(p.skills.trim()).append("\n");
+        }
+        if (!isBlank(p.courses)) {
+            sb.append("Courses: ").append(p.courses.trim()).append("\n");
+        }
+        if (!isBlank(p.freeTime)) {
+            sb.append("Availability: ").append(p.freeTime.trim()).append("\n");
+        }
+        return sb.toString().trim();
+    }
+
     // ---------- API
 
     public Optional<ApplicantProfile> getByUserId(String userId) throws IOException {

@@ -152,11 +152,11 @@ public class AiStreamServlet extends BaseServlet {
         List<Job> jobs = JobListFilters.apply(jobService.listPublishedJobs(), favoriteIds, q, sortBy);
 
         Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
-        if (!profileOpt.isPresent()) {
-            writeError(out, "Please complete your profile first to get AI recommendations.");
+        if (!profileOpt.isPresent() || !ProfileService.hasAiMatchingInput(profileOpt.get())) {
+            writeError(out, "Please add skills or completed courses in your profile first to get AI recommendations.");
             return;
         }
-        String candidateInfo = buildCandidateInfo(profileOpt.get());
+        String candidateInfo = ProfileService.buildAiCapabilityText(profileOpt.get());
         String positionsInfo = buildPositionsInfo(jobs);
         LmRequest lmReq = recommendationService.buildRecommendRequest(candidateInfo, positionsInfo);
         writeMeta(out, lmReq.getModel());
@@ -173,12 +173,12 @@ public class AiStreamServlet extends BaseServlet {
             return;
         }
         Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
-        if (!profileOpt.isPresent()) {
-            writeError(out, "Please complete your profile first to get AI skill analysis.");
+        if (!profileOpt.isPresent() || !ProfileService.hasAiMatchingInput(profileOpt.get())) {
+            writeError(out, "Please add skills or completed courses in your profile first to get AI skill analysis.");
             return;
         }
         ApplicantProfile profile = profileOpt.get();
-        String userSkills = profile.skills != null ? profile.skills : "";
+        String userSkills = ProfileService.buildAiCapabilityText(profile);
         String jobSkills = job.getRequiredSkills() != null
                 ? String.join(", ", job.getRequiredSkills()) : "";
         LmRequest lmReq = skillMatchService.buildMatchRequest(userSkills, jobSkills);
@@ -196,12 +196,12 @@ public class AiStreamServlet extends BaseServlet {
             return;
         }
         Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
-        if (!profileOpt.isPresent()) {
-            writeError(out, "Please complete your profile first to get AI skill analysis.");
+        if (!profileOpt.isPresent() || !ProfileService.hasAiMatchingInput(profileOpt.get())) {
+            writeError(out, "Please add skills or completed courses in your profile first to get AI skill analysis.");
             return;
         }
         ApplicantProfile profile = profileOpt.get();
-        String userSkills = profile.skills != null ? profile.skills : "";
+        String userSkills = ProfileService.buildAiCapabilityText(profile);
         String jobSkills = job.getRequiredSkills() != null
                 ? String.join(", ", job.getRequiredSkills()) : "";
         LmRequest lmReq = missingSkillService.buildMissingRequest(userSkills, jobSkills);
@@ -321,17 +321,6 @@ public class AiStreamServlet extends BaseServlet {
                 (message != null ? message : "").getBytes(StandardCharsets.UTF_8));
         out.write("data: {\"type\":\"error\",\"b64\":\"" + b64 + "\"}\n\n");
         out.flush();
-    }
-
-    private String buildCandidateInfo(ApplicantProfile p) {
-        StringBuilder sb = new StringBuilder();
-        if (p.fullName != null && !p.fullName.isEmpty()) sb.append("Name: ").append(p.fullName).append("\n");
-        if (p.major != null && !p.major.isEmpty()) sb.append("Major: ").append(p.major).append("\n");
-        if (p.degree != null && !p.degree.isEmpty()) sb.append("Degree: ").append(p.degree).append("\n");
-        if (p.skills != null && !p.skills.isEmpty()) sb.append("Skills: ").append(p.skills).append("\n");
-        if (p.courses != null && !p.courses.isEmpty()) sb.append("Courses: ").append(p.courses).append("\n");
-        if (p.freeTime != null && !p.freeTime.isEmpty()) sb.append("Availability: ").append(p.freeTime).append("\n");
-        return sb.toString();
     }
 
     private String buildPositionsInfo(List<Job> jobs) {

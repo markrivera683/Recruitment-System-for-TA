@@ -125,7 +125,7 @@
             <span>Add your skills for better guidance</span>
           </div>
           <div class="ai-panel-body">
-            <p class="job-ai-status-text">Your profile exists, but the skills section is still empty. Update your <a href="<%= ctx %>/profile">profile</a> so AI can compare you with each job and highlight the missing skills that matter most.</p>
+            <p class="job-ai-status-text">Add at least one of <strong>Skills</strong> or <strong>Courses completed</strong> in your <a href="<%= ctx %>/profile">profile</a>. AI uses both to recommend jobs and explain missing skills for a selected role.</p>
           </div>
         </div>
       <% } else if (!aiProfileComplete) { %>
@@ -151,13 +151,14 @@
       <% } %>
 
       <div class="job-ai-panels">
+        <% if (aiInteractive && hasJobs) { %>
         <div class="ai-panel ai-panel--ok job-ai-selection-panel">
           <div class="ai-panel-header">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            <span>Selected Job for Missing Skills Guidance</span>
+            <span>Selected Job (for Missing-Skills Analysis)</span>
           </div>
           <div class="ai-panel-body">
-            <p id="aiSelectedEmpty" class="job-ai-selection-empty">Choose a job from the list below to tie missing-skills guidance to a specific role.</p>
+            <p id="aiSelectedEmpty" class="job-ai-selection-empty">Click <strong>Use for AI Guidance</strong> on a job below to analyze skill gaps for that specific role.</p>
             <div id="aiSelectedSummary" class="job-ai-selected-summary" style="display:none;">
               <div class="job-ai-selected-top">
                 <div>
@@ -176,6 +177,7 @@
             </div>
           </div>
         </div>
+        <% } %>
 
         <div id="aiRecPanel" class="ai-panel ai-panel--ok" style="display:none;">
           <div class="ai-panel-header">
@@ -287,7 +289,7 @@
                   <div><%= numTaEsc.isEmpty() ? "1" : numTaEsc %> positions</div>
                 </div>
                 <div class="job-card-actions">
-                  <button type="button" class="btn-ghost btn-sm job-ai-select" <%= jobId.isEmpty() ? "disabled" : "" %>>
+                  <button type="button" class="btn-ghost btn-sm job-ai-select" <%= (jobId.isEmpty() || !aiInteractive) ? "disabled" : "" %>>
                     Use for AI Guidance
                   </button>
                   <a href="${pageContext.request.contextPath}/job?id=<%= jobId %>" class="btn btn-primary btn-sm">
@@ -439,7 +441,7 @@
     });
   });
 
-  if (cards.length) {
+  if (cards.length && canUseAi) {
     updateSelectedJob(cards[0]);
   } else {
     updateSelectedJob(null);
