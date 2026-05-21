@@ -12,7 +12,7 @@
 <%
   @SuppressWarnings("unchecked")
   Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
-  if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
+  if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<String, String>();
   String vName = request.getAttribute("vName") != null ? (String) request.getAttribute("vName") : "";
   String vStudentId = request.getAttribute("vStudentId") != null ? (String) request.getAttribute("vStudentId") : "";
   String vEmail = request.getAttribute("vEmail") != null ? (String) request.getAttribute("vEmail") : "";

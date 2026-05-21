@@ -43,12 +43,12 @@
     if (Roles.TA.equals(u.role)) totalTa++;
   }
   int totalApplications = applications.size();
-  Map<String, Integer> statusMap = new LinkedHashMap<>();
+  Map<String, Integer> statusMap = new LinkedHashMap<String, Integer>();
   statusMap.put("Pending", 0);
   statusMap.put("Accepted", 0);
   statusMap.put("Rejected", 0);
-  Map<String, Integer> moduleMap = new LinkedHashMap<>();
-  Map<String, Integer> monthMap = new LinkedHashMap<>();
+  Map<String, Integer> moduleMap = new LinkedHashMap<String, Integer>();
+  Map<String, Integer> monthMap = new LinkedHashMap<String, Integer>();
   for (Application a : applications) {
     String rawSt = a.status == null ? "" : a.status.trim();
     String bucket;
@@ -64,11 +64,19 @@
     }
     monthMap.put(month, monthMap.getOrDefault(month, 0) + 1);
   }
-  List<Map.Entry<String, Integer>> topModules = new ArrayList<>(moduleMap.entrySet());
-  Collections.sort(topModules, (a, b) -> Integer.compare(b.getValue(), a.getValue()));
+  List<Map.Entry<String, Integer>> topModules = new ArrayList<Map.Entry<String, Integer>>(moduleMap.entrySet());
+  Collections.sort(topModules, new java.util.Comparator<Map.Entry<String, Integer>>() {
+    public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
+      return Integer.compare(b.getValue(), a.getValue());
+    }
+  });
   if (topModules.size() > 5) topModules = topModules.subList(0, 5);
-  List<Map.Entry<String, Integer>> monthTrend = new ArrayList<>(monthMap.entrySet());
-  Collections.sort(monthTrend, (a, b) -> a.getKey().compareTo(b.getKey()));
+  List<Map.Entry<String, Integer>> monthTrend = new ArrayList<Map.Entry<String, Integer>>(monthMap.entrySet());
+  Collections.sort(monthTrend, new java.util.Comparator<Map.Entry<String, Integer>>() {
+    public int compare(Map.Entry<String, Integer> a, Map.Entry<String, Integer> b) {
+      return a.getKey().compareTo(b.getKey());
+    }
+  });
   int maxMonthCount = 1;
   for (Map.Entry<String, Integer> e : monthTrend) {
     if (e.getValue() > maxMonthCount) maxMonthCount = e.getValue();

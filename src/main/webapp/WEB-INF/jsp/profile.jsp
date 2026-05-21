@@ -23,13 +23,13 @@
   @SuppressWarnings("unchecked")
   List<EducationEntry> eduList = (List<EducationEntry>) request.getAttribute("educationList");
   if (eduList == null || eduList.isEmpty()) {
-    eduList = new java.util.ArrayList<>();
+    eduList = new java.util.ArrayList<EducationEntry>();
     eduList.add(new EducationEntry());
   }
   String def = "";
   @SuppressWarnings("unchecked")
   Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
-  if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<>();
+  if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<String, String>();
   String degVal = p.degree == null ? "" : p.degree;
 %>
 <div class="page--top fade-in">

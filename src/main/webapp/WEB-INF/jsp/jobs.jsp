@@ -13,7 +13,7 @@
 <body>
 <%
   List<Job> jobs = (List<Job>) request.getAttribute("jobs");
-  if (jobs == null) jobs = new java.util.ArrayList<>();
+  if (jobs == null) jobs = new java.util.ArrayList<Job>();
   String q = (String) request.getAttribute("q");
   if (q == null) q = "";
   String sortBy = (String) request.getAttribute("sortBy");
@@ -218,7 +218,7 @@
           <%
             for (Job job : jobs) {
               List<String> skills = job.getRequiredSkills();
-              if (skills == null) skills = new java.util.ArrayList<>();
+              if (skills == null) skills = new java.util.ArrayList<String>();
               String jobId = job.getId() == null ? "" : job.getId();
               String module = job.getModuleName() == null ? "" : job.getModuleName();
               String moduleCode = job.getModuleCode() == null ? "" : job.getModuleCode();
@@ -237,7 +237,7 @@
               String deadlineEsc = deadline.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
               String numTaEsc = numTa.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
               String jobIdEsc = jobId.replace("&", "&amp;").replace("\"", "&quot;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "&#39;");
-              java.util.List<String> skillTexts = new java.util.ArrayList<>();
+              java.util.List<String> skillTexts = new java.util.ArrayList<String>();
               for (String skill : skills) {
                 if (skill == null || skill.isEmpty()) continue;
                 skillTexts.add(skill);
