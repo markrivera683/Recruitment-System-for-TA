@@ -169,7 +169,7 @@ On save, `**AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/api/ai/stream`   | GET        | SSE endpoint for AI recommendation, skill-match, and missing-skills streaming responses   |
 
 
-Seed accounts in `src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`). New registrations get `role` = `TA`. Remove or change in production.
+Seed accounts in `src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`); demo TA applicants `alice.chen@bupt.local`, `brian.li@bupt.local`, `clara.wang@bupt.local`, and `daniel.zhang@bupt.local` all use password `ta123` and have profiles in `profiles.json`. New registrations get `role` = `TA`. Remove or change in production.
 
 ---
 

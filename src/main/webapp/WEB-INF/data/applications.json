@@ -1,0 +1,122 @@
+[
+  {
+    "id": "00000000-0000-0000-0000-000000000201",
+    "userId": "00000000-0000-0000-0000-000000000101",
+    "moduleName": "CS50: Introduction to Computer Science",
+    "moduleCode": "CS50",
+    "role": "Lab Assistant",
+    "applicationDate": "2026-03-16",
+    "status": "Accepted",
+    "feedback": "Strong programming fundamentals; well suited for introductory lab support."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000202",
+    "userId": "00000000-0000-0000-0000-000000000101",
+    "moduleName": "MATH201: Linear Algebra",
+    "moduleCode": "MATH201",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-22",
+    "status": "Pending",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000203",
+    "userId": "00000000-0000-0000-0000-000000000101",
+    "moduleName": "DATA301: Machine Learning",
+    "moduleCode": "DATA301",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-19",
+    "status": "Rejected",
+    "feedback": "ML depth is limited compared with specialist applicants; consider reapplying after further coursework."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000204",
+    "userId": "00000000-0000-0000-0000-000000000102",
+    "moduleName": "DATA301: Machine Learning",
+    "moduleCode": "DATA301",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-17",
+    "status": "Accepted",
+    "feedback": "Excellent statistics and ML background; approved for tutorial support."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000205",
+    "userId": "00000000-0000-0000-0000-000000000102",
+    "moduleName": "MATH201: Linear Algebra",
+    "moduleCode": "MATH201",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-21",
+    "status": "Pending",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000206",
+    "userId": "00000000-0000-0000-0000-000000000102",
+    "moduleName": "CS50: Introduction to Computer Science",
+    "moduleCode": "CS50",
+    "role": "Lab Assistant",
+    "applicationDate": "2026-03-14",
+    "status": "Withdrawn",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000207",
+    "userId": "00000000-0000-0000-0000-000000000103",
+    "moduleName": "PHYS150: Mechanics and Waves",
+    "moduleCode": "PHYS150",
+    "role": "Lab Assistant",
+    "applicationDate": "2026-03-18",
+    "status": "Accepted",
+    "feedback": "Doctoral lab experience and safety training noted; approved for physics labs."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000208",
+    "userId": "00000000-0000-0000-0000-000000000103",
+    "moduleName": "MATH201: Linear Algebra",
+    "moduleCode": "MATH201",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-20",
+    "status": "Rejected",
+    "feedback": "Tutorial role requires stronger linear algebra teaching evidence for this module."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000209",
+    "userId": "00000000-0000-0000-0000-000000000103",
+    "moduleName": "DATA301: Machine Learning",
+    "moduleCode": "DATA301",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-24",
+    "status": "Pending",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000210",
+    "userId": "00000000-0000-0000-0000-000000000104",
+    "moduleName": "ENG101: Academic Writing",
+    "moduleCode": "ENG101",
+    "role": "Invigilation",
+    "applicationDate": "2026-03-12",
+    "status": "Accepted",
+    "feedback": "Reliable for examination invigilation; strong attention to detail and communication."
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000211",
+    "userId": "00000000-0000-0000-0000-000000000104",
+    "moduleName": "CS50: Introduction to Computer Science",
+    "moduleCode": "CS50",
+    "role": "Lab Assistant",
+    "applicationDate": "2026-03-23",
+    "status": "Pending",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000212",
+    "userId": "00000000-0000-0000-0000-000000000104",
+    "moduleName": "MATH201: Linear Algebra",
+    "moduleCode": "MATH201",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-03-11",
+    "status": "Withdrawn",
+    "feedback": ""
+  }
+]
