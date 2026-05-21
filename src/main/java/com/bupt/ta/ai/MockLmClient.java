@@ -83,7 +83,7 @@ public final class MockLmClient implements LmClient {
         String up = request.getUserPrompt() != null ? request.getUserPrompt() : "";
         String appBlock = extractSection(up, "Applicant skills:", "Job requirements:");
         String jobBlock = extractSection(up, "Job requirements:", null);
-        Set<String> app = splitSkills(appBlock.isEmpty() ? up : appBlock);
+        Set<String> app = splitSkills(normalizeCapabilityText(appBlock.isEmpty() ? up : appBlock));
         Set<String> job = splitSkills(jobBlock);
         if (job.isEmpty()) {
             job = splitSkills(up);
@@ -110,7 +110,7 @@ public final class MockLmClient implements LmClient {
         String up = request.getUserPrompt() != null ? request.getUserPrompt() : "";
         String cand = extractSection(up, "Candidate skills:", "Required job skills:");
         String reqd = extractSection(up, "Required job skills:", null);
-        Set<String> c = splitSkills(cand.isEmpty() ? up : cand);
+        Set<String> c = splitSkills(normalizeCapabilityText(cand.isEmpty() ? up : cand));
         Set<String> r = splitSkills(reqd);
         if (r.isEmpty()) {
             r = splitSkills(up);
@@ -145,26 +145,101 @@ public final class MockLmClient implements LmClient {
         if (lines.isEmpty()) {
             for (String line : up.split("\\r?\\n")) {
                 String t = line.trim();
-                if (!t.isEmpty()) {
+                if (!t.isEmpty() && !t.startsWith("Candidate profile:")) {
                     lines.add(t);
                 }
             }
         }
 
+        List<RankedJobLine> ranked = new ArrayList<>();
+        for (String jobLine : lines) {
+            ranked.add(new RankedJobLine(jobLine, scoreJobMatch(profile, jobLine)));
+        }
+        ranked.sort((a, b) -> Integer.compare(b.score, a.score));
+
         StringBuilder sb = new StringBuilder();
-        sb.append("Recommended positions (ranked, mock rules):\n");
-        if (lines.isEmpty()) {
-            sb.append("1) (no job lines parsed — paste one job per line under \"Open positions:\")\n");
+        sb.append("## Top Recommendations\n");
+        if (ranked.isEmpty()) {
+            sb.append("- (no job lines parsed — check open positions list)\n");
         } else {
             int rank = 1;
-            for (int i = 0; i < Math.min(3, lines.size()); i++) {
-                String jobLine = lines.get(i);
-                String reason = buildMockReason(profile, jobLine, i);
-                sb.append(rank++).append(") ").append(jobLine).append("\n   Reason: ").append(reason).append("\n");
+            for (int i = 0; i < Math.min(3, ranked.size()); i++) {
+                RankedJobLine row = ranked.get(i);
+                sb.append(rank++).append(". **").append(row.line).append("**\n");
+                sb.append("   - Match score: ").append(row.score).append("\n");
+                sb.append("   - Why: ").append(buildMockReason(profile, row.line, row.score)).append("\n");
             }
         }
-        sb.append("\n(Deterministic mock output — use as discussion starter, not automatic placement.)");
+        sb.append("\n## Why These Fit\n");
+        sb.append("Rankings use your skills, courses, and keywords against each posting (mock rules).\n");
+        sb.append("\n## Risks / Notes\n");
+        sb.append("(Deterministic mock output — confirm fit with module organisers before applying.)\n");
         return new LmResponse(sb.toString().trim(), PROVIDER, model, true, null, null);
+    }
+
+    private static final class RankedJobLine {
+        private final String line;
+        private final int score;
+
+        private RankedJobLine(String line, int score) {
+            this.line = line;
+            this.score = score;
+        }
+    }
+
+    private static int scoreJobMatch(String profile, String jobLine) {
+        String p = profile == null ? "" : profile.toLowerCase(Locale.ROOT);
+        String j = jobLine == null ? "" : jobLine.toLowerCase(Locale.ROOT);
+        if (p.isEmpty() || j.isEmpty()) {
+            return 0;
+        }
+        int score = 0;
+        LinkedHashSet<String> tokens = splitSkills(normalizeCapabilityText(profile));
+        for (String token : tokens) {
+            if (token.length() < 3) {
+                continue;
+            }
+            if (j.contains(token)) {
+                score += 2;
+            }
+        }
+        if (containsAny(p, "machine learning", "ml") && containsAny(j, "machine learning", "data301")) {
+            score += 5;
+        }
+        if (containsAny(p, "data structure", "data structures") && containsAny(j, "cs50", "computer science")) {
+            score += 4;
+        }
+        if (p.contains("python") && j.contains("python")) {
+            score += 3;
+        }
+        if (p.contains("java") && j.contains("java")) {
+            score += 3;
+        }
+        if (containsAny(p, "linear algebra", "math") && containsAny(j, "math201", "linear algebra")) {
+            score += 4;
+        }
+        if (p.contains("english") && containsAny(j, "eng101", "writing", "invigilation")) {
+            score += 3;
+        }
+        if (containsAny(p, "physics", "mechanics") && containsAny(j, "phys150", "physics")) {
+            score += 4;
+        }
+        if (containsAny(p, "statistics", "jupyter") && containsAny(j, "data301", "statistics", "jupyter")) {
+            score += 3;
+        }
+        return score;
+    }
+
+    private static boolean containsAny(String text, String... needles) {
+        if (text == null) {
+            return false;
+        }
+        for (String needle : needles) {
+            if (needle != null && text.contains(needle)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static LmResponse workloadAdvice(LmRequest request, String model) {
@@ -235,22 +310,31 @@ public final class MockLmClient implements LmClient {
         }
     }
 
-    private static String buildMockReason(String profile, String jobLine, int index) {
+    private static String buildMockReason(String profile, String jobLine, int score) {
         String p = profile == null ? "" : profile.toLowerCase(Locale.ROOT);
         String j = jobLine.toLowerCase(Locale.ROOT);
+        if (score >= 5) {
+            return "Strong overlap between your skills/courses and this posting.";
+        }
+        if (p.contains("python") && j.contains("python")) {
+            return "Your profile mentions Python, which this role requires.";
+        }
+        if (containsAny(p, "machine learning", "ml") && containsAny(j, "machine learning", "data301")) {
+            return "Machine learning background aligns with this module.";
+        }
         if (p.contains("java") && j.contains("java")) {
             return "Profile mentions Java and the role highlights Java-related work.";
+        }
+        if (containsAny(p, "data structure", "data structures") && containsAny(j, "cs50", "computer science")) {
+            return "Computer science coursework aligns with this introductory programming lab role.";
         }
         if (p.contains("lab") && j.contains("lab")) {
             return "Lab experience in the profile aligns with a lab-focused posting.";
         }
-        if (index == 0) {
-            return "Listed first among parsed openings — mock ranking uses stable ordering.";
+        if (score > 0) {
+            return "Some keyword overlap detected — review required skills before applying.";
         }
-        if (index == 1) {
-            return "Second option for breadth — compare workload and schedule with the candidate.";
-        }
-        return "Additional option — confirm prerequisites with the module organiser.";
+        return "Limited direct overlap — consider building relevant skills or checking prerequisites.";
     }
 
     private static String extractSection(String full, String startMarker, String endMarker) {
@@ -270,6 +354,15 @@ public final class MockLmClient implements LmClient {
             return full.substring(start, j).trim();
         }
         return full.substring(start).trim();
+    }
+
+    private static String normalizeCapabilityText(String raw) {
+        if (raw == null) {
+            return "";
+        }
+        return raw.replaceAll("(?i)(name|major|degree|skills|courses|availability):", " ")
+                .replaceAll("[\\r\\n]+", ",")
+                .trim();
     }
 
     private static LinkedHashSet<String> splitSkills(String raw) {

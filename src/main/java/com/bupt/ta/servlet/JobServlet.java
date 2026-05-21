@@ -192,7 +192,7 @@ public class JobServlet extends BaseServlet {
         Optional<ApplicantProfile> profileOpt = profileService.getByUserId(user.id);
         boolean profileExists = profileOpt.isPresent();
         boolean profileComplete = profileExists && ProfileService.isApplicantProfileComplete(profileOpt.get());
-        boolean profileHasSkills = profileExists && !safe(profileOpt.get().skills).isEmpty();
+        boolean profileHasSkills = profileExists && ProfileService.hasAiMatchingInput(profileOpt.get());
 
         req.setAttribute("aiEnabled", aiEnabled);
         req.setAttribute("aiProfileExists", profileExists);

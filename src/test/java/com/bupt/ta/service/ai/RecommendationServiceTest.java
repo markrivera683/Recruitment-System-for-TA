@@ -20,6 +20,6 @@ class RecommendationServiceTest {
         RecommendationService svc = new RecommendationService(new MockLmClient(), cfg);
         LmResponse r = svc.recommendJobs("Student profile", "Job one line\nJob two line");
         assertTrue(r.isSuccess());
-        assertTrue(r.getText().contains("Recommended"));
+        assertTrue(r.getText().contains("Top Recommendations"));
     }
 }
