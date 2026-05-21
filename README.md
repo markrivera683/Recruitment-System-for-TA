@@ -35,87 +35,39 @@ The system is developed following **Agile software development methods**.
 ## Repository Structure
 
 ```text
-Recruitment-System-for-TA/
-├── docs/                          # Project documents
+Recruitment-System-for-TA/          # Repository root / Maven root
+├── docs/                           # Project documents
 │   ├── ProductBacklog_group51.xlsx
 │   ├── Prototype_group51.pdf
 │   └── Report_group51.pdf
-├── src/                           # Source code root
-│   ├── src/test/java/             # JUnit 5 tests (LM + AppConfig; optional Maven)
-│   ├── src/main/
+├── pom.xml                         # Maven optional (IDE / mvn test)
+├── run.ps1                         # Compile, WAR, start Tomcat (primary)
+├── run-tests.ps1                   # No-Maven smoke checks
+├── src/
+│   ├── main/
 │   │   ├── java/com/bupt/ta/
-│   │   │   ├── ai/                # LM client interfaces, mock + HTTP scaffold, factory
-│   │   │   ├── model/             # Data models
-│   │   │   │   ├── Roles.java            # TA, ADMIN, MO (module organiser)
-│   │   │   │   ├── User.java
-│   │   │   │   ├── EducationEntry.java
-│   │   │   │   ├── ApplicantProfile.java
-│   │   │   │   ├── Application.java      # TA job application record
-│   │   │   │   ├── Job.java              # Job posting (TA browse)
-│   │   │   │   ├── TaResumeDisplay.java
-│   │   │   │   └── TaWorkloadStats.java
-│   │   │   ├── service/           # Business logic & file persistence
-│   │   │   │   ├── ai/            # AiFeatureService + feature builders (mock/LM)
-│   │   │   │   ├── FileStore.java
-│   │   │   │   ├── AuthService.java
-│   │   │   │   ├── ProfileService.java
-│   │   │   │   ├── ApplicationService.java
-│   │   │   │   └── JobService.java       # jobs.json
-│   │   │   ├── util/              # AppConfig, HttpJsonClient, Strings
-│   │   │   └── servlet/           # HTTP handlers (@WebServlet; /mo and /cv also in web.xml)
-│   │   │       ├── BaseServlet.java
-│   │   │       ├── LoginServlet.java
-│   │   │       ├── RegisterServlet.java
-│   │   │       ├── LogoutServlet.java
-│   │   │       ├── ProfileServlet.java
-│   │   │       ├── JobServlet.java       # /job
-│   │   │       ├── MoServlet.java        # /mo (mapped in web.xml)
-│   │   │       ├── ApplicationServlet.java
-│   │   │       ├── CvDownloadServlet.java # /cv (mapped in web.xml)
-│   │   │       ├── AdminServlet.java
-│   │   │       ├── AdminUserServlet.java  # /admin/users
-│   │   │       ├── AdminJobServlet.java   # /admin/jobs
-│   │   │       ├── AdminJobViewServlet.java
-│   │   │       ├── AdminTaProfilesServlet.java
-│   │   │       ├── AdminCvServlet.java
-│   │   │       ├── AdminExportServlet.java
-│   │   │       ├── AiDemoServlet.java     # /admin/ai-demo
-│   │   │       ├── ForgotPasswordServlet.java
-│   │   │       └── ResetPasswordServlet.java
+│   │   │   ├── ai/                 # LM client interfaces, mock + HTTP scaffold
+│   │   │   ├── model/              # Data models (User, Job, Application, …)
+│   │   │   ├── service/            # Business logic & file persistence
+│   │   │   │   └── ai/             # AiFeatureService + feature builders
+│   │   │   ├── util/               # AppConfig, HttpJsonClient, Strings
+│   │   │   └── servlet/            # HTTP handlers (@WebServlet + web.xml)
 │   │   └── webapp/
-│   │       ├── static/css/app.css
-│   │       ├── static/css/admin-dashboard.css # Admin UI
+│   │       ├── static/css/         # app.css, admin-dashboard.css
+│   │       ├── static/js/          # ai-stream.js
 │   │       └── WEB-INF/
-│   │           ├── lm.properties.example # Template for LM_* settings (copy to lm.properties)
-│   │           ├── web.xml        # Servlet 4.0 deployment descriptor
-│   │           ├── data/          # Runtime data files (JSON + uploaded CVs)
-│   │           │   ├── users.json
-│   │           │   ├── profiles.json
-│   │           │   ├── applications.json
-│   │           │   ├── jobs.json          # Job postings (TA / MO)
-│   │           │   └── cv/{userId}/...    # Created at runtime when users upload CVs
-│   │           └── jsp/           # JSP view templates
-│   │               ├── admin/
-│   │               │   ├── ai-demo.jsp
-│   │               │   ├── dashboard.jsp
-│   │               │   ├── job-view.jsp
-│   │               │   └── ta-profiles.jsp
-│   │               ├── mo/
-│   │               │   └── dashboard.jsp
-│   │               ├── jobs.jsp
-│   │               ├── job-detail.jsp
-│   │               ├── login.jsp
-│   │               ├── register.jsp
-│   │               ├── profile.jsp              # Profile + CV upload
-│   │               ├── application-status.jsp   # My Applications page
-│   │               ├── cv-error.jsp
-│   │               ├── forgot-password.jsp
-│   │               └── reset-password.jsp
-│   ├── run.ps1                    # Compile all *.java, WAR, start Tomcat (see script for ports/paths)
-│   ├── run-tests.ps1              # Run JUnit tests (requires Maven: mvn test)
-│   ├── compile.bat                # Windows: full explicit javac list; set TOMCAT_HOME
-│   └── pom.xml                    # Maven reference (optional, IDE use only)
+│   │           ├── web.xml
+│   │           ├── lm.properties.example
+│   │           ├── data/           # JSON seed data + runtime uploads
+│   │           └── jsp/            # JSP view templates
+│   └── test/java/                  # JUnit 5 tests (optional Maven)
 └── README.md
+
+# Local build/runtime (gitignored, regenerated by run.ps1)
+├── out/
+├── tomcat-base/
+├── ta-recruitment.war
+└── target/
 ```
 
 ---
@@ -146,17 +98,17 @@ The recommended way is **one command**: `run.ps1` compiles all sources, packages
 | Apache Tomcat | 9.x         | Provides `servlet-api.jar` and the runtime |
 
 
-Edit `**src\run.ps1**`: set `$DefaultJdkHome` and `$DefaultTomcat` (or set `JAVA_HOME` / `CATALINA_HOME` in the environment). The script uses a custom HTTP port by default (see `$HTTP_PORT` in the file, often `18080`).
+Edit **`run.ps1`** (repository root): set `$DefaultJdkHome` and `$DefaultTomcat` (or set `JAVA_HOME` / `CATALINA_HOME` in the environment). The script uses a custom HTTP port by default (see `$HTTP_PORT` in the file, often `18080`).
 
 ### Run (one command)
 
-Open PowerShell and run:
+Open PowerShell in the repository root and run:
 
 ```powershell
-& 'C:\path\to\Recruitment-System-for-TA\src\run.ps1'
+& 'C:\path\to\Recruitment-System-for-TA\run.ps1'
 ```
 
-Or from inside the `src\` folder:
+Or:
 
 ```powershell
 .\run.ps1
@@ -164,10 +116,10 @@ Or from inside the `src\` folder:
 
 The script will:
 
-1. **Clean** the previous build output
-2. **Compile** all `src/main/java/**/*.java` in one `javac` pass (`compile.bat` lists every file explicitly)
-3. **Package** `webapp/` + compiled classes into `ta-recruitment.war`
-4. **Deploy** the WAR (see script: may use a project-local `tomcat-base` and non-default port)
+1. **Clean** the previous build output (`out/`)
+2. **Compile** all `src/main/java/**/*.java` in one `javac` pass
+3. **Package** `src/main/webapp/` + compiled classes into `ta-recruitment.war`
+4. **Deploy** the WAR to project-local `tomcat-base/` (non-default port)
 5. **Start** Tomcat via `startup.bat`
 6. **Open** the login URL printed by the script (port may differ from `8080`)
 
@@ -179,7 +131,7 @@ Stop-Process -Name java -Force
 
 ### Source files compiled
 
-Single `javac` pass with **all** sources: use `src/compile.bat` (explicit list) or `src/run.ps1` (discovers every `*.java` under `src/main/java`).
+Single `javac` pass with **all** sources: `run.ps1` discovers every `*.java` under `src/main/java`.
 
 > **Note:** The warning `bootstrap classpath not set with -source 11` may appear when compiling with JDK 17+ targeting Java 11. It is usually harmless.
 
@@ -225,7 +177,7 @@ On save, `**AuthService.updateUserBasics`** syncs **name**, **student ID**, and 
 | `/api/ai/stream`   | GET        | SSE endpoint for AI recommendation, skill-match, and missing-skills streaming responses   |
 
 
-Seed accounts in `src/src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`). New registrations get `role` = `TA`. Remove or change in production.
+Seed accounts in `src/main/webapp/WEB-INF/data/users.json` (coursework; plain-text passwords): **admin** `admin@bupt.local` / `admin123` (`ADMIN`); **module organiser** `mo@bupt.local` / `mo123` (`MO`). New registrations get `role` = `TA`. Remove or change in production.
 
 ---
 
@@ -279,7 +231,7 @@ Treat all model output as **assistive**: combine with module rules, interviews, 
 
 1. **Environment variables** (recommended for secrets)
 2. **JVM system properties** (e.g. `-DLM_PROVIDER=mock`)
-3. **Optional file**: copy `src/src/main/webapp/WEB-INF/lm.properties.example` to `WEB-INF/lm.properties` and edit (do **not** commit real keys)
+3. **Optional file**: copy `src/main/webapp/WEB-INF/lm.properties.example` to `WEB-INF/lm.properties` and edit (do **not** commit real keys)
 4. **Built-in defaults**
 
 
@@ -316,7 +268,7 @@ Treat all model output as **assistive**: combine with module rules, interviews, 
 
 ### Unit tests (LM workflow)
 
-Tests live under `src/src/test/java/**` and mirror the LM integration layers:
+Tests live under `src/test/java/**` and mirror the LM integration layers:
 
 | Test class | What it verifies |
 |---|---|
@@ -333,21 +285,19 @@ Tests live under `src/src/test/java/**` and mirror the LM integration layers:
 
 `com.bupt.ta.testsupport.LmTestSupport` provides a mocked `ServletContext` with optional `WEB-INF/lm.properties` content.
 
-**Run JUnit tests (requires Maven on `PATH`):**
+**Run JUnit tests (optional; requires Maven on PATH):**
 
 ```powershell
-cd src
 mvn test
 ```
 
-**Run no-Maven smoke checks:**
+**Run no-Maven smoke checks (recommended):**
 
 ```powershell
-cd src
 .\run-tests.ps1
 ```
 
-`src/run-tests.ps1` does **not** call `mvn test`. It recompiles the application classes, compiles `src/src/test/java/com/bupt/ta/nomvn/NoMvnWorkflowChecks.java`, and runs a lightweight LM workflow smoke test with `java -ea`.
+`run-tests.ps1` does **not** call `mvn test`. It recompiles the application classes, compiles `src/test/java/com/bupt/ta/nomvn/NoMvnWorkflowChecks.java`, and runs a lightweight LM workflow smoke test with `java -ea`.
 
 **Note:** `AppConfig.resolve` checks **environment variables first**. If a machine has `LM_PROVIDER` set globally, it may override a test file — unset it for deterministic tests, or rely on CI without those variables.
 

@@ -1,5 +1,5 @@
 # build-and-run.ps1 - Compile, package, deploy and start Tomcat
-# Usage: cd src; .\build-and-run.ps1
+# Usage: .\run.ps1   (from repository root)
 
 # ============================================================
 #  CONFIGURE THESE TWO PATHS FOR YOUR MACHINE
@@ -38,18 +38,10 @@ foreach ($p in @($JAVAC, $JAR, $SERVLET_JAR, "$TOMCAT\bin\startup.bat")) {
     if (-not (Test-Path $p)) { Write-Host "[ERROR] Not found: $p"; exit 1 }
 }
 
-$SCRIPT_DIR = Split-Path -Parent $MyInvocation.MyCommand.Path
-$POSSIBLE_BASES = @(
-    $SCRIPT_DIR,
-    (Split-Path $SCRIPT_DIR -Parent)
-)
-$BASE = $POSSIBLE_BASES | Where-Object {
-    (Test-Path (Join-Path $_ 'src\main\java')) -and (Test-Path (Join-Path $_ 'src\main\webapp'))
-} | Select-Object -First 1
-
-if (-not $BASE) {
-    Write-Host "[WARN] Could not locate expected repository root. Using script directory as base: $SCRIPT_DIR"
-    $BASE = $SCRIPT_DIR
+$BASE = $PSScriptRoot
+if (-not (Test-Path (Join-Path $BASE 'src\main\java')) -or -not (Test-Path (Join-Path $BASE 'src\main\webapp'))) {
+    Write-Host "[ERROR] Expected src\main\java and src\main\webapp under $BASE"
+    exit 1
 }
 
 function Initialize-TomcatBase {
