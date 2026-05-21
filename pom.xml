@@ -9,10 +9,9 @@
   <packaging>war</packaging>
 
   <!--
-    NOTE: This project is designed for MANUAL compilation (no Maven required).
-    See compile.bat for the manual build instructions.
-    This pom.xml is kept only as a reference / for IDEs that need it.
-    Primary tech stack:
+    Primary build: run.ps1 (manual javac + WAR + Tomcat).
+    Optional: mvn test from repository root (requires Maven on PATH).
+    Tech stack:
       - Java 11
       - Java Servlet 4.0 / JSP 2.3
       - Apache Tomcat 9.x
@@ -42,7 +41,7 @@
       <version>1.2</version>
     </dependency>
 
-    <!-- Unit tests (optional): mvn test from src/ -->
+    <!-- Unit tests (optional): mvn test from repository root -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

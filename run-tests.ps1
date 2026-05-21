@@ -4,8 +4,7 @@
 # 3) run the smoke checks with java -ea
 #
 # Usage:
-#   cd src
-#   .\run-tests.ps1
+#   .\run-tests.ps1   (from repository root)
 
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
