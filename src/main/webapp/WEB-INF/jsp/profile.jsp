@@ -31,31 +31,50 @@
   Map<String, String> fieldErrors = (Map<String, String>) request.getAttribute("fieldErrors");
   if (fieldErrors == null) fieldErrors = new java.util.LinkedHashMap<String, String>();
   String degVal = p.degree == null ? "" : p.degree;
+  String heroName = (p.fullName != null && !p.fullName.trim().isEmpty()) ? p.fullName.trim()
+          : (u != null && u.name != null ? u.name : "Your profile");
+  String heroMajor = p.major == null ? "" : p.major.trim();
+  String heroStudentId = p.studentId == null ? "" : p.studentId.trim();
+  String heroInitials = "?";
+  if (!heroName.isEmpty()) {
+    String[] nameParts = heroName.split("\\s+");
+    if (nameParts.length >= 2) {
+      heroInitials = ("" + nameParts[0].charAt(0) + nameParts[nameParts.length - 1].charAt(0)).toUpperCase();
+    } else if (nameParts[0].length() >= 2) {
+      heroInitials = nameParts[0].substring(0, 2).toUpperCase();
+    } else if (nameParts[0].length() == 1) {
+      heroInitials = nameParts[0].toUpperCase();
+    }
+  }
 %>
 <div class="page--top fade-in">
   <div class="layout-xl profile-page">
 
-    <!-- Horizontal header row (matches ProfilePage.tsx) -->
     <div class="page-header-row">
       <div class="header-left">
         <div class="logo">
-          <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          <svg viewBox="0 0 24 24"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6"/><path d="M9 16h4"/><path d="M9 8h6"/></svg>
         </div>
         <div>
           <h1 class="page-title">Applicant Profile</h1>
-          <p class="page-subtitle">Create or edit your TA profile</p>
+          <p class="page-subtitle">Your details for TA applications and AI matching</p>
         </div>
       </div>
       <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;">
+        <a class="link-pill" href="${pageContext.request.contextPath}/applications">
+          <svg viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+          My applications
+        </a>
+        <a class="link-pill" href="${pageContext.request.contextPath}/job">
+          <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+          Job List
+        </a>
         <% if (!editable) { %>
         <a class="link-pill" href="${pageContext.request.contextPath}/profile?edit=1">
+          <svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
           Edit
         </a>
         <% } %>
-        <a class="link-pill" href="${pageContext.request.contextPath}/job">
-          <svg viewBox="0 0 24 24"><path d="M9 18V5a2 2 0 0 1 2-2h10"/><path d="M9 18a2 2 0 0 0 2 2h10"/><path d="M3 11h6"/><path d="M3 15h6"/><path d="M3 7h6"/></svg>
-          Job List
-        </a>
         <a class="link-pill" href="${pageContext.request.contextPath}/logout">
           <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
           Logout
@@ -63,11 +82,38 @@
       </div>
     </div>
 
-    <!-- Card -->
-    <div class="card" style="padding:1.5rem 2.5rem;">
+    <div class="profile-form-shell">
+
+      <div class="profile-hero">
+        <div class="profile-hero-avatar profile-hero-initials" aria-hidden="true"><%= heroInitials %></div>
+        <div class="profile-hero-meta">
+          <div class="profile-hero-name"><%= heroName %></div>
+          <p class="profile-hero-sub">Keep this profile complete to apply for jobs and get better AI recommendations.</p>
+          <div class="profile-hero-chips">
+            <% if (!degVal.isEmpty()) { %>
+            <span class="profile-chip profile-chip--degree">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/></svg>
+              <%= degVal %>
+            </span>
+            <% } %>
+            <% if (!heroMajor.isEmpty()) { %>
+            <span class="profile-chip profile-chip--major">
+              <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+              <%= heroMajor %>
+            </span>
+            <% } %>
+            <% if (!heroStudentId.isEmpty()) { %>
+            <span class="profile-chip">
+              <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 8h10"/><path d="M7 12h6"/></svg>
+              <%= heroStudentId %>
+            </span>
+            <% } %>
+          </div>
+        </div>
+      </div>
 
       <% if (!editable) { %>
-        <div class="alert" style="margin-bottom:.875rem;">Profile is in view mode. Click <strong>Edit</strong> to update your information.</div>
+        <div class="alert alert-info">Profile is in view mode. Click <strong>Edit</strong> to update your information.</div>
       <% } %>
       <% String infoMessage = (String) request.getAttribute("infoMessage"); if (infoMessage != null) { %>
         <div class="alert alert-info"><%= infoMessage %></div>
@@ -79,10 +125,18 @@
             novalidate
             data-editable="<%= editable ? "1" : "0" %>">
 
-        <div class="grid-2col">
-          <!-- Left Column: Personal Information -->
-          <div style="display:flex;flex-direction:column;gap:1rem;">
-            <h3 class="section-heading">Personal Information</h3>
+        <div class="profile-form-grid">
+          <div class="profile-panel profile-panel--personal">
+            <div class="profile-panel-head">
+              <div class="profile-panel-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              </div>
+              <div>
+                <h2 class="profile-panel-title">Personal Information</h2>
+                <p class="profile-panel-desc">Identity and contact details used across your applications.</p>
+              </div>
+            </div>
+            <div class="profile-panel-body">
 
         <div class="field">
           <label for="fullName">Full Name</label>
@@ -151,7 +205,11 @@
           <% if (fieldErrors.get("idCard") != null) { %><div class="field-error"><%= fieldErrors.get("idCard") %></div><% } %>
         </div>
 
-        <p class="section-title" style="margin-top:1.25rem;">Curriculum Vitae (CV)</p>
+        <div class="profile-subsection">
+          <div class="profile-subsection-head">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Curriculum Vitae (CV)
+          </div>
         <%
           boolean hasCv = p.cvFileName != null && !p.cvFileName.isEmpty();
           String cvEsc = hasCv ? p.cvFileName.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;") : "";
@@ -206,12 +264,26 @@
           <% } %>
           <% if (fieldErrors.get("cv") != null) { %><div class="field-error" style="margin-top:.35rem;"><%= fieldErrors.get("cv") %></div><% } %>
         </div>
+        </div><!-- /profile-subsection CV -->
+            </div><!-- /profile-panel-body -->
+          </div><!-- /profile-panel personal -->
 
+          <div class="profile-panel profile-panel--quals">
+            <div class="profile-panel-head">
+              <div class="profile-panel-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>
+              </div>
+              <div>
+                <h2 class="profile-panel-title">Qualifications &amp; Availability</h2>
+                <p class="profile-panel-desc">Education, courses, schedule, and skills for matching TA roles.</p>
+              </div>
+            </div>
+            <div class="profile-panel-body">
+        <div class="profile-subsection" style="border-top:none;padding-top:0;margin-top:0;">
+          <div class="profile-subsection-head">
+            <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Education background
           </div>
-
-          <!-- Right Column: Education, Skills, Availability -->
-          <div style="display:flex;flex-direction:column;gap:1rem;">
-            <h3 class="section-heading">Qualifications &amp; Availability</h3>
         <table class="edu-table" id="edu-table">
           <thead>
             <tr>
@@ -255,10 +327,17 @@
           </tbody>
         </table>
         <% if (fieldErrors.get("education") != null) { %><div class="field-error"><%= fieldErrors.get("education") %></div><% } %>
-        <button id="add-edu-btn" type="button" onclick="addEduRow()"
-                class="upload-area" style="margin-top:.5rem;">+ Add education row</button>
+        <button id="add-edu-btn" type="button" onclick="addEduRow()" class="profile-add-row">
+          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Add education row
+        </button>
+        </div>
 
-        <p class="section-title" style="margin-top:1.5rem;">Courses &amp; Availability</p>
+        <div class="profile-subsection profile-subsection--courses">
+          <div class="profile-subsection-head">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
+            Courses &amp; Availability
+          </div>
 
         <div class="field">
           <label for="courses">Courses Completed <span style="font-weight:400;color:#94a3b8;">(one per line)</span></label>
@@ -267,32 +346,40 @@
           <% if (fieldErrors.get("courses") != null) { %><div class="field-error"><%= fieldErrors.get("courses") %></div><% } %>
         </div>
 
-        <div class="field">
+        <div class="field field--availability">
           <label for="freeTime">Availability <span style="font-weight:400;color:#94a3b8;">(when you can work)</span></label>
           <textarea id="freeTime" name="freeTime"
                     placeholder="e.g. Mon 14:00-17:00"
                     required><%= p.freeTime != null ? p.freeTime : (p.availability != null ? p.availability : def) %></textarea>
           <% if (fieldErrors.get("freeTime") != null) { %><div class="field-error"><%= fieldErrors.get("freeTime") %></div><% } %>
         </div>
+        </div>
 
-        <!-- Skills -->
-        <p class="section-title">Skills</p>
-
+        <div class="profile-subsection">
+          <div class="profile-subsection-head">
+            <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Skills
+          </div>
         <div class="field">
           <label for="skills">Skills <span style="font-weight:400;color:#94a3b8;">(one per line or comma-separated)</span></label>
           <textarea id="skills" name="skills" placeholder="e.g. Python, public speaking"
                     required><%= p.skills != null ? p.skills : def %></textarea>
           <% if (fieldErrors.get("skills") != null) { %><div class="field-error"><%= fieldErrors.get("skills") %></div><% } %>
         </div>
+        </div>
 
         <% if (editable) { %>
         <div class="save-bar">
-          <button type="submit" class="btn btn-primary">Save Profile</button>
+          <button type="submit" class="btn btn-primary profile-save-btn">
+            <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save Profile
+          </button>
         </div>
         <% } %>
 
-        </div><!-- /right column -->
-        </div><!-- /grid-2col -->
+            </div><!-- /profile-panel-body -->
+          </div><!-- /profile-panel quals -->
+        </div><!-- /profile-form-grid -->
       </form>
       <form id="form-delete-cv" method="post" action="${pageContext.request.contextPath}/profile" class="profile-hidden-form" aria-hidden="true">
         <input type="hidden" name="action" value="deleteCvOnly" />
@@ -307,8 +394,8 @@
           </div>
         </div>
       </div>
-    </div><!-- /card -->
-  </div><!-- /layout-wide -->
+    </div><!-- /profile-form-shell -->
+  </div><!-- /layout-xl -->
 </div>
 
 <script>
