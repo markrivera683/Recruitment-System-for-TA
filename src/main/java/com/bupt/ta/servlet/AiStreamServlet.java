@@ -8,14 +8,20 @@ import com.bupt.ta.ai.LmRequest;
 import com.bupt.ta.ai.LmStreamListener;
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.Job;
+import com.bupt.ta.model.MoWorkloadSnapshot;
+import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
+import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.FavoriteService;
 import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.service.WorkloadService;
 import com.bupt.ta.util.JobListFilters;
 import com.bupt.ta.service.ai.MissingSkillService;
 import com.bupt.ta.service.ai.RecommendationService;
 import com.bupt.ta.service.ai.SkillMatchService;
+import com.bupt.ta.service.ai.WorkloadAdviceService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -42,6 +48,10 @@ public class AiStreamServlet extends BaseServlet {
     private RecommendationService recommendationService;
     private SkillMatchService skillMatchService;
     private MissingSkillService missingSkillService;
+    private WorkloadAdviceService workloadAdviceService;
+    private ApplicationService applicationService;
+    private AuthService authService;
+    private WorkloadService workloadService;
 
     @Override
     public void init() throws ServletException {
@@ -50,12 +60,16 @@ public class AiStreamServlet extends BaseServlet {
         this.jobService = new JobService(p);
         this.favoriteService = new FavoriteService(Paths.get(dataDir));
         this.profileService = new ProfileService(Paths.get(dataDir));
+        this.applicationService = new ApplicationService(Paths.get(dataDir));
+        this.authService = new AuthService(Paths.get(dataDir));
+        this.workloadService = new WorkloadService();
 
         LmConfig lmConfig = LmConfig.load(getServletContext());
         LmClient client = LmClientFactory.create(lmConfig);
         this.recommendationService = new RecommendationService(client, lmConfig);
         this.skillMatchService = new SkillMatchService(client, lmConfig);
         this.missingSkillService = new MissingSkillService(client, lmConfig);
+        this.workloadAdviceService = new WorkloadAdviceService(client, lmConfig);
     }
 
     @Override
@@ -75,6 +89,24 @@ public class AiStreamServlet extends BaseServlet {
 
         LmClient client = LmClientFactory.create(lmConfig);
         String feature = safe(req.getParameter("feature"));
+
+        if ("moWorkloadAdvice".equals(feature)) {
+            if (!ensureMoForStream(req, resp)) {
+                return;
+            }
+            beginSse(resp);
+            PrintWriter out = resp.getWriter();
+            try {
+                streamMoWorkloadAdvice(req, client, out);
+            } catch (LmException e) {
+                writeError(out, e.getMessage());
+            } catch (Exception e) {
+                String msg = e.getMessage();
+                writeError(out, msg != null && !msg.isEmpty() ? msg : "AI stream failed");
+            }
+            return;
+        }
+
         beginSse(resp);
         PrintWriter out = resp.getWriter();
 
@@ -90,7 +122,7 @@ public class AiStreamServlet extends BaseServlet {
                     streamMissingSkills(req, client, out);
                     break;
                 default:
-                    writeError(out, "Unknown feature. Use recommendation, skillMatch, or missingSkills.");
+                    writeError(out, "Unknown feature. Use recommendation, skillMatch, missingSkills, or moWorkloadAdvice.");
             }
         } catch (LmException e) {
             writeError(out, e.getMessage());
@@ -175,6 +207,75 @@ public class AiStreamServlet extends BaseServlet {
         LmRequest lmReq = missingSkillService.buildMissingRequest(userSkills, jobSkills);
         writeMeta(out, lmReq.getModel());
         client.stream(lmReq, sseListener(out));
+    }
+
+    private void streamMoWorkloadAdvice(HttpServletRequest req, LmClient client, PrintWriter out)
+            throws IOException, LmException {
+        String applicationId = safe(req.getParameter("applicationId"));
+        if (applicationId.isEmpty()) {
+            writeError(out, "Missing applicationId.");
+            return;
+        }
+
+        List<com.bupt.ta.model.Application> applications = applicationService.listAll();
+        List<Job> allJobs = jobService.getAllJobs();
+        String applicantName = resolveApplicantName(applicationId, applications);
+        MoWorkloadSnapshot snapshot = workloadService.buildSnapshotForApplication(
+                applicationId, applications, allJobs, applicantName);
+        if (snapshot == null) {
+            writeError(out, "Application not found or not pending.");
+            return;
+        }
+
+        LmRequest lmReq = workloadAdviceService.buildAdviceRequest(snapshot);
+        writeMeta(out, lmReq.getModel());
+        client.stream(lmReq, sseListener(out));
+    }
+
+    private String resolveApplicantName(String applicationId,
+                                        List<com.bupt.ta.model.Application> applications)
+            throws IOException {
+        com.bupt.ta.model.Application target = null;
+        for (com.bupt.ta.model.Application app : applications) {
+            if (app != null && applicationId.equals(app.id)) {
+                target = app;
+                break;
+            }
+        }
+        if (target == null || target.userId == null) {
+            return "";
+        }
+        String userId = target.userId.trim();
+        Optional<User> userOpt = authService.findById(userId);
+        if (userOpt.isPresent()) {
+            User u = userOpt.get();
+            if (u.name != null && !u.name.trim().isEmpty()) {
+                return u.name.trim();
+            }
+            return u.id != null ? u.id : userId;
+        }
+        Optional<ApplicantProfile> profileOpt = profileService.getByUserId(userId);
+        if (profileOpt.isPresent()) {
+            ApplicantProfile p = profileOpt.get();
+            if (p.fullName != null && !p.fullName.trim().isEmpty()) {
+                return p.fullName.trim();
+            }
+        }
+        return userId;
+    }
+
+    /** MO-only check for SSE; returns false if response already committed. */
+    private boolean ensureMoForStream(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        User u = currentUser(req);
+        if (u == null) {
+            resp.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return false;
+        }
+        if (!Roles.MO.equals(u.role)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;
     }
 
     private static LmStreamListener sseListener(PrintWriter out) {

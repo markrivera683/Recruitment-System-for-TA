@@ -6,7 +6,11 @@
 <%@ page import="com.bupt.ta.model.User" %>
 <%@ page import="com.bupt.ta.model.Job" %>
 <%@ page import="com.bupt.ta.model.Application" %>
+<%@ page import="com.bupt.ta.model.MoWorkloadSnapshot" %>
+<%@ page import="com.bupt.ta.model.TaWorkloadStats" %>
 <%
+    String ctx = request.getContextPath();
+    if (ctx == null) ctx = "";
     User currentUser = (User) session.getAttribute("user");
     @SuppressWarnings("unchecked")
     List<Job> jobs = (List<Job>) request.getAttribute("jobs");
@@ -18,6 +22,14 @@
     @SuppressWarnings("unchecked")
     Map<String, String> cvByUserId = (Map<String, String>) request.getAttribute("cvByUserId");
     if (cvByUserId == null) cvByUserId = java.util.Collections.emptyMap();
+
+    @SuppressWarnings("unchecked")
+    Map<String, MoWorkloadSnapshot> workloadSnapshots =
+            (Map<String, MoWorkloadSnapshot>) request.getAttribute("workloadSnapshots");
+    if (workloadSnapshots == null) workloadSnapshots = java.util.Collections.emptyMap();
+
+    Boolean aiEnabledObj = (Boolean) request.getAttribute("aiEnabled");
+    boolean aiEnabled = aiEnabledObj != null && aiEnabledObj.booleanValue();
 
     String moMessage = (String) request.getAttribute("moMessage");
 %>
@@ -35,7 +47,7 @@
             color: #1f2937;
         }
         .container {
-            max-width: 1160px;
+            max-width: 1280px;
             margin: 30px auto;
             padding: 0 20px 40px;
         }
@@ -231,21 +243,241 @@
         }
 
         .decision-form input[type="text"] {
-            width: 180px;
-            margin-bottom: 6px;
+            width: 100%;
+            margin-bottom: 8px;
+        }
+
+        /* ── Pending application cards ── */
+        .pending-apps {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .pending-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .pending-card-header {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 16px 18px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .pending-card-title {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .pending-card-sub {
+            margin: 4px 0 0;
+            font-size: 13px;
+            color: #64748b;
+        }
+        .pending-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .pending-card-body {
+            padding: 16px 18px 18px;
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+            gap: 18px;
+        }
+        .pending-side {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .pending-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .pending-id {
+            font-size: 11px;
+            color: #94a3b8;
+            word-break: break-all;
+        }
+        .workload-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .workload-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+        }
+        .workload-chip strong {
+            font-size: 14px;
+            color: #0f172a;
+        }
+        .workload-chip.is-warn {
+            background: #fffbeb;
+            border-color: #fcd34d;
+            color: #92400e;
+        }
+        .workload-chip.is-warn strong {
+            color: #b45309;
+        }
+        .mo-ai-advice {
+            border: 1px solid #dbeafe;
+            border-radius: 12px;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+        .mo-ai-advice-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 10px 14px;
+            background: #eff6ff;
+            border-bottom: 1px solid #dbeafe;
+        }
+        .mo-ai-advice-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #1e40af;
+            margin: 0;
+        }
+        .rec-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+        }
+        .rec-badge.rec-approve { background: #dcfce7; color: #166534; }
+        .rec-badge.rec-reject { background: #fee2e2; color: #991b1b; }
+        .rec-badge.rec-caution { background: #fef3c7; color: #92400e; }
+        .mo-ai-advice-body {
+            padding: 12px 14px 14px;
+        }
+        .mo-ai-advice-loading {
+            color: #64748b;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .mo-ai-advice-loading::before {
+            content: "";
+            width: 14px;
+            height: 14px;
+            border: 2px solid #cbd5e1;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: mo-spin 0.8s linear infinite;
+        }
+        @keyframes mo-spin { to { transform: rotate(360deg); } }
+        .mo-ai-advice-error {
+            color: #b91c1c;
+            font-size: 13px;
+        }
+        .mo-ai-advice-md {
+            line-height: 1.55;
+            font-size: 13px;
+            color: #334155;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+        .mo-ai-advice-md h2 {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #64748b;
+            margin: 14px 0 6px;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .mo-ai-advice-md h2:first-child { margin-top: 0; }
+        .mo-ai-advice-md p { margin: 0 0 8px; }
+        .mo-ai-advice-md ul, .mo-ai-advice-md ol {
+            margin: 0 0 8px;
+            padding-left: 18px;
+        }
+        .mo-ai-advice-md li { margin-bottom: 4px; }
+        .mo-ai-advice-md strong { color: #0f172a; }
+        .mo-ai-disabled {
+            font-size: 12px;
+            color: #64748b;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px dashed #cbd5e1;
+        }
+        .decision-form {
+            margin-top: auto;
+            padding-top: 12px;
+            border-top: 1px solid #f1f5f9;
+        }
+        .decision-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .section-subtitle {
+            font-size: 15px;
+            font-weight: 600;
+            color: #475569;
+            margin: 0 0 12px;
+        }
+        .app-status-pill {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .app-status-pending { background: #fef3c7; color: #92400e; }
+        .app-status-accepted { background: #dcfce7; color: #166534; }
+        .app-status-rejected { background: #fee2e2; color: #991b1b; }
+        .app-status-withdrawn { background: #f3f4f6; color: #4b5563; }
+        .table-compact td, .table-compact th {
+            font-size: 13px;
+        }
+        .table-compact .col-id {
+            max-width: 120px;
+            word-break: break-all;
+            font-size: 11px;
+            color: #64748b;
         }
 
         @media (max-width: 900px) {
+            .pending-card-body {
+                grid-template-columns: 1fr;
+            }
             .form-grid {
                 grid-template-columns: 1fr;
             }
             .decision-form input[type="text"] {
                 width: 100%;
             }
-            table {
+            .table-scroll {
                 display: block;
                 overflow-x: auto;
-                white-space: nowrap;
             }
         }
     </style>
@@ -425,77 +657,237 @@
         <h2>Incoming Applications</h2>
         <% if (applications.isEmpty()) { %>
             <div class="empty">No applications available.</div>
-        <% } else { %>
-            <table>
+        <% } else {
+            int pendingReviewCount = 0;
+            for (Application a : applications) {
+                if ("Pending".equalsIgnoreCase(a.status)) pendingReviewCount++;
+            }
+        %>
+
+        <% if (pendingReviewCount > 0) { %>
+            <h3 class="section-subtitle">Pending review (<%= pendingReviewCount %>)</h3>
+            <div class="pending-apps">
+            <% for (Application app : applications) {
+                if (!"Pending".equalsIgnoreCase(app.status)) continue;
+                MoWorkloadSnapshot ws = workloadSnapshots.get(app.id);
+                int acceptedCount = ws != null ? ws.acceptedCount : 0;
+                int pendingCount = ws != null ? ws.pendingCount : 0;
+                int potentialLoad = ws != null ? ws.potentialLoadIfApprove : 0;
+                boolean highLoad = potentialLoad >= TaWorkloadStats.ASSIGNED_JOBS_WARNING_THRESHOLD;
+                String applicantQuery = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
+                String cvName = cvByUserId.get(app.userId);
+                String displayName = ws != null && ws.applicantName != null ? ws.applicantName : app.userId;
+            %>
+                <article class="pending-card">
+                    <div class="pending-card-header">
+                        <div>
+                            <h3 class="pending-card-title"><%= app.moduleName %></h3>
+                            <p class="pending-card-sub">
+                                <%= displayName %> &middot; <%= app.moduleCode %> &middot; <%= app.role %>
+                                &middot; Applied <%= app.applicationDate %>
+                            </p>
+                        </div>
+                        <div class="pending-card-meta">
+                            <span class="app-status-pill app-status-pending">Pending</span>
+                        </div>
+                    </div>
+                    <div class="pending-card-body">
+                        <div class="pending-side">
+                            <div class="pending-id">App <%= app.id %></div>
+                            <div class="pending-links">
+                                <% if (cvName != null) { %>
+                                    <a class="btn btn-primary btn-link" href="<%= ctx %>/cv?userId=<%= applicantQuery %>" target="_blank" rel="noopener">Open CV</a>
+                                <% } else { %>
+                                    <span class="muted">No CV uploaded</span>
+                                <% } %>
+                                <a class="btn btn-primary btn-link" href="<%= ctx %>/mo/applicant-profile?userId=<%= applicantQuery %>">View Profile</a>
+                            </div>
+                            <% if (ws != null) { %>
+                            <div class="workload-chips">
+                                <span class="workload-chip">Accepted <strong><%= acceptedCount %></strong></span>
+                                <span class="workload-chip">Pending <strong><%= pendingCount %></strong></span>
+                                <span class="workload-chip<%= highLoad ? " is-warn" : "" %>">Potential load <strong><%= potentialLoad %></strong></span>
+                            </div>
+                            <% } %>
+                            <form class="decision-form" method="post" action="<%= ctx %>/mo">
+                                <input type="hidden" name="appId" value="<%= app.id %>" />
+                                <input type="text" name="feedback" placeholder="Optional feedback for applicant" />
+                                <div class="decision-actions">
+                                    <button class="btn btn-success" type="submit" name="action" value="approveApp">Approve</button>
+                                    <button class="btn btn-danger" type="submit" name="action" value="rejectApp">Reject</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="pending-side">
+                            <% if (aiEnabled) { %>
+                            <div class="mo-ai-advice" id="mo-ai-<%= app.id %>" data-app-id="<%= app.id %>">
+                                <div class="mo-ai-advice-head">
+                                    <p class="mo-ai-advice-title">AI workload advice</p>
+                                    <span class="rec-badge-slot"></span>
+                                </div>
+                                <div class="mo-ai-advice-body">
+                                    <div class="mo-ai-advice-loading">Analyzing workload…</div>
+                                    <div class="mo-ai-advice-md" style="display:none;"></div>
+                                </div>
+                            </div>
+                            <% } else { %>
+                            <div class="mo-ai-disabled">AI advice is disabled (LM_ENABLED=false).</div>
+                            <% } %>
+                        </div>
+                    </div>
+                </article>
+            <% } %>
+            </div>
+        <% } %>
+
+            <h3 class="section-subtitle">Processed applications</h3>
+            <div class="table-scroll">
+            <table class="table-compact">
                 <thead>
                 <tr>
-                    <th>Application ID</th>
-                    <th>User ID</th>
                     <th>Module</th>
+                    <th>Applicant</th>
                     <th>Role</th>
-                    <th>Application Date</th>
+                    <th>Date</th>
                     <th>Status</th>
                     <th>CV</th>
                     <th>Profile</th>
                     <th>Feedback</th>
-                    <th>Decision</th>
                 </tr>
                 </thead>
                 <tbody>
-                <% for (Application app : applications) { %>
+                <% boolean anyProcessed = false;
+                   for (Application app : applications) {
+                    if ("Pending".equalsIgnoreCase(app.status)) continue;
+                    anyProcessed = true;
+                    String st = app.status == null ? "" : app.status.trim();
+                    String stClass = "app-status-pending";
+                    if ("Accepted".equalsIgnoreCase(st)) stClass = "app-status-accepted";
+                    else if ("Rejected".equalsIgnoreCase(st)) stClass = "app-status-rejected";
+                    else if ("Withdrawn".equalsIgnoreCase(st)) stClass = "app-status-withdrawn";
+                    String applicantQuery = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
+                    String cvName = cvByUserId.get(app.userId);
+                %>
                     <tr>
-                        <td><%= app.id %></td>
-                        <td><%= app.userId %></td>
                         <td>
                             <strong><%= app.moduleName %></strong><br>
                             <span class="muted"><%= app.moduleCode %></span>
                         </td>
+                        <td class="col-id"><%= app.userId %></td>
                         <td><%= app.role %></td>
                         <td><%= app.applicationDate %></td>
-                        <td><%= app.status %></td>
+                        <td><span class="app-status-pill <%= stClass %>"><%= app.status %></span></td>
                         <td>
-                            <%
-                                String cvName = cvByUserId.get(app.userId);
-                                if (cvName != null) {
-                                    String q = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
-                            %>
-                                <a href="<%= request.getContextPath() %>/cv?userId=<%= q %>" target="_blank" rel="noopener">Open CV</a>
-                            <%
-                                } else {
-                            %>
-                                <span class="muted">No CV</span>
-                            <%
-                                }
-                            %>
-                        </td>
-                        <td>
-                            <%
-                                String applicantQuery = URLEncoder.encode(app.userId, StandardCharsets.UTF_8);
-                            %>
-                            <a class="btn btn-primary btn-link" href="<%= request.getContextPath() %>/mo/applicant-profile?userId=<%= applicantQuery %>">View Profile</a>
-                        </td>
-                        <td><%= app.feedback == null ? "" : app.feedback %></td>
-                        <td>
-                            <% if ("Pending".equalsIgnoreCase(app.status)) { %>
-                                <form class="decision-form" method="post" action="<%= request.getContextPath() %>/mo">
-                                    <input type="hidden" name="appId" value="<%= app.id %>" />
-                                    <input type="text" name="feedback" placeholder="Optional feedback" />
-                                    <div>
-                                        <button class="btn btn-success" type="submit" name="action" value="approveApp">Approve</button>
-                                        <button class="btn btn-danger" type="submit" name="action" value="rejectApp">Reject</button>
-                                    </div>
-                                </form>
+                            <% if (cvName != null) { %>
+                                <a href="<%= ctx %>/cv?userId=<%= applicantQuery %>" target="_blank" rel="noopener">CV</a>
                             <% } else { %>
-                                <span class="muted">Processed</span>
+                                <span class="muted">—</span>
                             <% } %>
                         </td>
+                        <td>
+                            <a class="btn btn-primary btn-link" href="<%= ctx %>/mo/applicant-profile?userId=<%= applicantQuery %>">Profile</a>
+                        </td>
+                        <td><%= app.feedback == null || app.feedback.isEmpty() ? "—" : app.feedback %></td>
                     </tr>
+                <% }
+                   if (!anyProcessed) { %>
+                    <tr><td colspan="8" class="empty">No processed applications yet.</td></tr>
                 <% } %>
                 </tbody>
             </table>
+            </div>
         <% } %>
     </div>
 
 </div>
+<% if (aiEnabled) { %>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="<%= ctx %>/static/js/ai-stream.js"></script>
+<script>
+(function () {
+  'use strict';
+  var ctx = '<%= ctx %>';
+  var maxConcurrent = 2;
+  var queue = [];
+  var active = 0;
+
+  document.querySelectorAll('.mo-ai-advice[data-app-id]').forEach(function (panel) {
+    queue.push(panel.getAttribute('data-app-id'));
+  });
+
+  function pumpQueue() {
+    while (active < maxConcurrent && queue.length > 0) {
+      var appId = queue.shift();
+      active++;
+      startAdviceStream(appId, function () {
+        active--;
+        pumpQueue();
+      });
+    }
+  }
+
+  function applyRecommendationBadge(panel, text) {
+    if (!panel || !text) return;
+    var slot = panel.querySelector('.rec-badge-slot');
+    if (!slot) return;
+    var m = text.match(/\*\*(Approve|Reject|Caution)\*\*/i);
+    if (!m) {
+      m = text.match(/Recommendation[^\n]*\n+\s*(Approve|Reject|Caution)/i);
+    }
+    if (!m) return;
+    var label = m[1];
+    var badge = document.createElement('span');
+    badge.className = 'rec-badge rec-' + label.toLowerCase();
+    badge.textContent = label;
+    slot.innerHTML = '';
+    slot.appendChild(badge);
+  }
+
+  function startAdviceStream(appId, done) {
+    var panel = document.getElementById('mo-ai-' + appId);
+    if (!panel) {
+      done();
+      return;
+    }
+    var loadingEl = panel.querySelector('.mo-ai-advice-loading');
+    var mdEl = panel.querySelector('.mo-ai-advice-md');
+    var text = '';
+    var url = ctx + '/api/ai/stream?feature=moWorkloadAdvice&applicationId=' + encodeURIComponent(appId);
+
+    TaAiStream.consume(url, {
+      onDelta: function (delta) {
+        text += delta;
+        if (loadingEl) loadingEl.style.display = 'none';
+        if (mdEl) {
+          mdEl.style.display = 'block';
+          TaAiStream.renderMarkdown(mdEl, text, typeof marked !== 'undefined' ? marked : null);
+        }
+      },
+      onDone: function () {
+        if (!text && loadingEl) {
+          loadingEl.textContent = 'No advice returned.';
+          loadingEl.style.display = 'flex';
+        } else {
+          applyRecommendationBadge(panel, text);
+        }
+        done();
+      },
+      onError: function (err) {
+        if (loadingEl) {
+          loadingEl.className = 'mo-ai-advice-error';
+          loadingEl.textContent = err || 'AI advice failed.';
+          loadingEl.style.display = 'block';
+        }
+        done();
+      }
+    });
+  }
+
+  if (queue.length > 0) {
+    pumpQueue();
+  }
+})();
+</script>
+<% } %>
 </body>
 </html>

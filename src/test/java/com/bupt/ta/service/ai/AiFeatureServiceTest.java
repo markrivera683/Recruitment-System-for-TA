@@ -48,6 +48,22 @@ class AiFeatureServiceTest {
     }
 
     @Test
+    void adviseMoOnWorkload_mockPipeline() {
+        LmConfig cfg = LmConfig.load(LmTestSupport.servletContextWithLmProperties(null));
+        AiFeatureService svc = new AiFeatureService(cfg, LmClientFactory.create(cfg));
+        com.bupt.ta.model.MoWorkloadSnapshot snap = new com.bupt.ta.model.MoWorkloadSnapshot();
+        snap.acceptedCount = 2;
+        snap.pendingCount = 2;
+        snap.potentialLoadIfApprove = 4;
+        snap.warningThreshold = 3;
+        snap.applicantName = "Alice";
+        AiFeatureOutput out = svc.adviseMoOnWorkload(snap);
+        assertTrue(out.isSuccess());
+        assertTrue(out.getText().toLowerCase().contains("workload")
+                || out.getText().toLowerCase().contains("recommendation"));
+    }
+
+    @Test
     void whenDisabled_returnsErrorOutput() {
         ServletContext ctx = LmTestSupport.servletContextWithLmProperties("LM_ENABLED=false\n");
         LmConfig cfg = LmConfig.load(ctx);

@@ -7,6 +7,7 @@ import com.bupt.ta.model.User;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.JobService;
+import com.bupt.ta.service.WorkloadService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -16,7 +17,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -26,6 +26,7 @@ public class AdminServlet extends BaseServlet {
     private AuthService auth;
     private ApplicationService applications;
     private JobService jobs;
+    private WorkloadService workloadService;
 
     @Override
     public void init() {
@@ -34,6 +35,7 @@ public class AdminServlet extends BaseServlet {
         applications = new ApplicationService(dataDir);
         String jobsPath = getServletContext().getRealPath("/WEB-INF/data/jobs.json");
         jobs = new JobService(jobsPath);
+        workloadService = new WorkloadService();
     }
 
     @Override
@@ -52,36 +54,7 @@ public class AdminServlet extends BaseServlet {
         req.setAttribute("users", users);
         req.setAttribute("jobs", jobs.getAllJobs());
 
-        Map<String, TaWorkloadStats> taWorkload = new HashMap<>();
-        for (User user : users) {
-            if (user != null && Roles.TA.equals(user.role) && user.id != null && !user.id.trim().isEmpty()) {
-                taWorkload.put(user.id.trim(), new TaWorkloadStats());
-            }
-        }
-        for (Application app : appList) {
-            if (app == null || app.userId == null) {
-                continue;
-            }
-            String applicantId = app.userId.trim();
-            if (applicantId.isEmpty()) {
-                continue;
-            }
-            TaWorkloadStats row = taWorkload.get(applicantId);
-            if (row == null) {
-                continue;
-            }
-            row.total++;
-            String raw = app.status == null ? "" : app.status.trim();
-            if ("Accepted".equalsIgnoreCase(raw)) {
-                row.accepted++;
-                row.acceptedPositions.add(TaWorkloadStats.formatAcceptedLine(app));
-            } else if ("Rejected".equalsIgnoreCase(raw)) {
-                row.rejected++;
-                row.rejectedPositions.add(TaWorkloadStats.formatAcceptedLine(app));
-            } else {
-                row.pending++;
-            }
-        }
+        Map<String, TaWorkloadStats> taWorkload = workloadService.buildTaWorkloadStats(users, appList);
         req.setAttribute("taWorkload", taWorkload);
 
         List<User> taUsersWorkloadOrder = users.stream()
