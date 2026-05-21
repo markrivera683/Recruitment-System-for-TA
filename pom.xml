@@ -8,40 +8,29 @@
   <version>1.0-SNAPSHOT</version>
   <packaging>war</packaging>
 
-  <!--
-    Primary build: run.ps1 (manual javac + WAR + Tomcat).
-    Optional: mvn test from repository root (requires Maven on PATH).
-    Tech stack:
-      - Java 11
-      - Java Servlet 4.0 / JSP 2.3
-      - Apache Tomcat 9.x
-      - Plain JSON file storage (no database, no ORM)
-      - No Spring Boot, no Gson, no external JSON library
-  -->
+  <name>TA Recruitment</name>
+  <description>BUPT TA recruitment platform</description>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <tomcat.port>18080</tomcat.port>
+    <tomcat.path>/ta-recruitment</tomcat.path>
   </properties>
 
   <dependencies>
-    <!-- Servlet 4.0 API — provided by Tomcat 9 at runtime -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>javax.servlet-api</artifactId>
       <version>4.0.1</version>
       <scope>provided</scope>
     </dependency>
-
-    <!-- JSP / JSTL 1.2 -->
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>jstl</artifactId>
       <version>1.2</version>
     </dependency>
-
-    <!-- Unit tests (optional): mvn test from repository root -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
@@ -57,7 +46,17 @@
   </dependencies>
 
   <build>
+    <finalName>ta-recruitment</finalName>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.13.0</version>
+        <configuration>
+          <release>11</release>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
@@ -69,6 +68,16 @@
         <version>3.4.0</version>
         <configuration>
           <failOnMissingWebXml>false</failOnMissingWebXml>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.tomcat.maven</groupId>
+        <artifactId>tomcat7-maven-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <port>${tomcat.port}</port>
+          <path>${tomcat.path}</path>
+          <uriEncoding>UTF-8</uriEncoding>
         </configuration>
       </plugin>
     </plugins>
