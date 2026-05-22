@@ -314,16 +314,23 @@
                   <% } %>
                 </td>
                 <td>
-                  <form method="post" action="<%= ctx %>/admin/users" style="display:inline" onsubmit="return confirm('Deactivate this user? They will not be able to log in.');">
+                  <div class="user-mgmt-actions">
+                  <form method="post" action="<%= ctx %>/admin/users" class="inline-form" onsubmit="return confirm('Deactivate this user? They will not be able to log in.');">
                     <input type="hidden" name="action" value="deactivate" />
                     <input type="hidden" name="userId" value="<%= u.id %>" />
                     <button type="submit" class="button" <%= u.active ? "" : "disabled" %>>Deactivate</button>
                   </form>
-                  <form method="post" action="<%= ctx %>/admin/users" style="display:inline" onsubmit="return confirm('Permanently delete this user and their applications, profile, and CV files?');">
+                  <form method="post" action="<%= ctx %>/admin/users" class="inline-form" onsubmit="return confirm('Activate this user? They will be able to log in again.');">
+                    <input type="hidden" name="action" value="activate" />
+                    <input type="hidden" name="userId" value="<%= u.id %>" />
+                    <button type="submit" class="button button-success" <%= u.active ? "disabled" : "" %>>Activate</button>
+                  </form>
+                  <form method="post" action="<%= ctx %>/admin/users" class="inline-form" onsubmit="return confirm('Permanently delete this user and their applications, profile, and CV files?');">
                     <input type="hidden" name="action" value="delete" />
                     <input type="hidden" name="userId" value="<%= u.id %>" />
                     <button type="submit" class="button button-danger">Delete</button>
                   </form>
+                  </div>
                 </td>
               </tr>
               <% } %>

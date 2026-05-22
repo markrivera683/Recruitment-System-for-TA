@@ -78,5 +78,25 @@
     "yearOfStudy": "",
     "availability": "",
     "selfIntro": "Communication-focused student available for writing support and exam invigilation."
+  },
+  {
+    "userId": "00000000-0000-0000-0000-000000000105",
+    "fullName": "Qixin Li",
+    "gender": "Male",
+    "degree": "Master",
+    "major": "iot",
+    "studentId": "2023213349",
+    "idCard": "110105200112120023",
+    "phone": "+8619131091012",
+    "email": "19131091012@163.com",
+    "educationJson": "[{\"school\":\"bupt\",\"degree\":\"Bachelor\",\"major\":\"iot\",\"period\":\"2021-2025\"}",
+    "courses": "data structure, machine learning, ...",
+    "freeTime": "Mon-Fri 09:00-18:00",
+    "skills": "python, java, English",
+    "cvFileName": "",
+    "degreeProgramme": "",
+    "yearOfStudy": "",
+    "availability": "",
+    "selfIntro": ""
   }
 ]
