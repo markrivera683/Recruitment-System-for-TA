@@ -58,16 +58,16 @@ public final class JobApplicationStats {
         return jc.equals(ac);
     }
 
-    /** Parse TA headcount from job; invalid or empty defaults to 1. */
+    /** Parse TA headcount from job; invalid or empty defaults to 2. */
     public static int parseCapacity(String numberOfTAs) {
         if (numberOfTAs == null || numberOfTAs.trim().isEmpty()) {
-            return 1;
+            return 2;
         }
         try {
             int n = Integer.parseInt(numberOfTAs.trim().replaceAll("[^0-9]", ""));
-            return n < 1 ? 1 : n;
+            return n < 1 ? 2 : n;
         } catch (NumberFormatException e) {
-            return 1;
+            return 2;
         }
     }
 }
