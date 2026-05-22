@@ -10,6 +10,27 @@
     "feedback": "Strong programming fundamentals; well suited for introductory lab support."
   },
   {
+    "id": "00000000-0000-0000-0000-000000000213",
+    "userId": "00000000-0000-0000-0000-000000000101",
+    "moduleName": "PHYS150: Mechanics and Waves",
+    "moduleCode": "PHYS150",
+    "role": "Lab Assistant",
+    "applicationDate": "2026-04-17",
+    "status": "Accepted",
+    "feedback": " "
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000214",
+    "userId": "00000000-0000-0000-0000-000000000101",
+    "moduleName": "ENG101: Academic Writing",
+    "moduleCode": "ENG101",
+    "role": "Invigilation",
+    "applicationDate": "2026-04-11",
+    "status": "Accepted",
+    "feedback": " "
+  },
+
+  {
     "id": "00000000-0000-0000-0000-000000000202",
     "userId": "00000000-0000-0000-0000-000000000101",
     "moduleName": "MATH201: Linear Algebra",
@@ -117,6 +138,16 @@
     "role": "Tutorial Support",
     "applicationDate": "2026-03-11",
     "status": "Withdrawn",
+    "feedback": ""
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000215",
+    "userId": "00000000-0000-0000-0000-000000000105",
+    "moduleName": "DATA301: Machine Learning",
+    "moduleCode": "DATA301",
+    "role": "Tutorial Support",
+    "applicationDate": "2026-05-22",
+    "status": "Accepted",
     "feedback": ""
   }
 ]

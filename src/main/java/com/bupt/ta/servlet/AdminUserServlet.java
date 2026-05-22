@@ -63,7 +63,8 @@ public class AdminUserServlet extends BaseServlet {
         }
         User target = targetOpt.get();
 
-        if (Roles.ADMIN.equals(target.role) && auth.countAdmins() <= 1) {
+        if (Roles.ADMIN.equals(target.role) && auth.countAdmins() <= 1
+                && ("deactivate".equals(action) || "delete".equals(action))) {
             resp.sendRedirect(ctx + "/admin?msg=" + urlEncode("Cannot remove or deactivate the last administrator."));
             return;
         }
@@ -71,6 +72,8 @@ public class AdminUserServlet extends BaseServlet {
         try {
             if ("deactivate".equals(action)) {
                 auth.setUserActive(userId, false);
+            } else if ("activate".equals(action)) {
+                auth.setUserActive(userId, true);
             } else if ("delete".equals(action)) {
                 applications.deleteByUserId(userId);
                 profiles.deleteByUserId(userId);

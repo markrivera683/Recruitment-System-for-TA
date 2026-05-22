@@ -52,5 +52,14 @@
     "passwordHash": "ta123",
     "role": "TA",
     "active": "true"
+  },
+  {
+    "id": "00000000-0000-0000-0000-000000000105",
+    "name": "Qixin Li",
+    "studentId": "2023213349",
+    "email": "19131091012@163.com",
+    "passwordHash": "1234",
+    "role": "TA",
+    "active": "true"
   }
 ]
