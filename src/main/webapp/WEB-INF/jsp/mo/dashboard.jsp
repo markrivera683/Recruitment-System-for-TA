@@ -559,7 +559,7 @@
                 </div>
                 <div class="field">
                     <label>Number of TAs</label>
-                    <input type="number" name="numberOfTAs" min="1" value="1" />
+                    <input type="number" name="numberOfTAs" min="1" value="2" />
                 </div>
 
                 <div class="field">

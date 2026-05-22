@@ -6,7 +6,8 @@
     "activityType": "Lab Assistant",
     "requiredSkills": ["Python", "C Programming", "Problem Solving", "Communication"],
     "description": "Assist students during lab sessions with programming assignments, debugging, and understanding core computer science concepts. Help facilitate hands-on learning and provide technical support.",
-    "postDate": "2026-03-15"
+    "postDate": "2026-03-15",
+    "numberOfTAs": "2"
   },
   {
     "id": "2",
@@ -15,7 +16,8 @@
     "activityType": "Tutorial Support",
     "requiredSkills": ["Linear Algebra", "Mathematical Reasoning", "Teaching Experience"],
     "description": "Lead tutorial sessions to reinforce lecture content, work through problem sets with students, and provide additional explanations of complex mathematical concepts.",
-    "postDate": "2026-03-20"
+    "postDate": "2026-03-20",
+    "numberOfTAs": "2"
   },
   {
     "id": "3",
@@ -24,7 +26,8 @@
     "activityType": "Invigilation",
     "requiredSkills": ["Attention to Detail", "Time Management", "Responsibility"],
     "description": "Supervise students during mid-term and final examinations, ensure academic integrity, distribute and collect exam papers, and manage exam room logistics.",
-    "postDate": "2026-03-10"
+    "postDate": "2026-03-10",
+    "numberOfTAs": "2"
   },
   {
     "id": "4",
@@ -33,7 +36,8 @@
     "activityType": "Lab Assistant",
     "requiredSkills": ["Physics", "Laboratory Safety", "Data Analysis", "Equipment Handling"],
     "description": "Assist with physics laboratory experiments, demonstrate proper use of equipment, help students collect and analyze experimental data, and ensure lab safety protocols are followed.",
-    "postDate": "2026-03-25"
+    "postDate": "2026-03-25",
+    "numberOfTAs": "2"
   },
   {
     "id": "5",
@@ -42,6 +46,7 @@
     "activityType": "Tutorial Support",
     "requiredSkills": ["Python", "Machine Learning", "Statistics", "Jupyter Notebooks"],
     "description": "Support students in understanding machine learning algorithms, assist with coding assignments, explain statistical concepts, and help troubleshoot implementation issues.",
-    "postDate": "2026-03-18"
+    "postDate": "2026-03-18",
+    "numberOfTAs": "2"
   }
 ]
