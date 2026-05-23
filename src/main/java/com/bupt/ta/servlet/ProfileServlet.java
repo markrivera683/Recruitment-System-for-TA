@@ -85,7 +85,9 @@ public class ProfileServlet extends BaseServlet {
         mapLegacyDegreeForForm(p);
         applyPendingCvFromSession(req, u.id, p);
         boolean profileComplete = ProfileService.isApplicantProfileComplete(p);
-        boolean editable = !profileComplete || "1".equals(req.getParameter("edit"));
+        boolean forceEdit = "1".equals(req.getParameter("edit"));
+        boolean editable = !profileComplete || forceEdit;
+        req.setAttribute("profileComplete", profileComplete);
         String msg = req.getParameter("msg");
         req.setAttribute("profile", p);
         req.setAttribute("user", u);
@@ -295,7 +297,8 @@ public class ProfileServlet extends BaseServlet {
             return;
         }
 
-        resp.sendRedirect(req.getContextPath() + "/profile");
+        resp.sendRedirect(req.getContextPath() + "/profile?msg="
+                + urlEncode("Profile saved. You are now in view mode; click Edit to make changes."));
     }
 
     /** Remove CV file(s) from disk and clear {@code cvFileName} without posting the full profile form. */
