@@ -18,6 +18,16 @@ import java.util.Comparator;
 import java.util.Optional;
 import java.util.stream.Stream;
 
+/**
+ * Admin POST endpoint for user lifecycle actions (activate, deactivate, delete).
+ *
+ * <p><b>URL pattern:</b> {@code /admin/users}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>Deleting a user also removes their applications, profile, and CV directory. Admins cannot
+ * modify their own account or remove the last administrator.
+ */
 @WebServlet(urlPatterns = {"/admin/users"})
 public class AdminUserServlet extends BaseServlet {
 
@@ -26,6 +36,9 @@ public class AdminUserServlet extends BaseServlet {
     private ProfileService profiles;
     private Path dataDir;
 
+    /**
+     * Initializes auth, application, and profile services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -34,6 +47,14 @@ public class AdminUserServlet extends BaseServlet {
         profiles = new ProfileService(dataDir);
     }
 
+    /**
+     * Performs activate, deactivate, or delete on a target user.
+     *
+     * @param req  the incoming request; expects {@code action} and {@code userId}
+     * @param resp the response; redirects to {@code /admin} with a flash message
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if persistence or file deletion fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

@@ -12,15 +12,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Persistence and validation helpers for applicant profiles in {@code profiles.json}.
+ * <p>
+ * Maps flat JSON rows to {@link ApplicantProfile}, supports upsert and deletion by user id,
+ * and exposes static utilities for education JSON serialisation, application-readiness checks,
+ * and text bundles sent to AI matching features.
+ */
 public class ProfileService {
     private static final String PROFILES_JSON = "profiles.json";
     private final FileStore store;
 
+    /**
+     * Creates a service backed by JSON files in the given data directory.
+     *
+     * @param dataDir root directory containing {@code profiles.json}
+     */
     public ProfileService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
-
-    // ---------- helpers: Map <-> ApplicantProfile
 
     private static ApplicantProfile mapToProfile(Map<String, String> m) {
         ApplicantProfile p = new ApplicantProfile();
@@ -79,7 +89,14 @@ public class ProfileService {
         return s != null ? s : "";
     }
 
-    /** Parse stored education JSON into a list (empty if invalid / empty). */
+    /**
+     * Parses stored education JSON into a list of {@link EducationEntry} objects.
+     * <p>
+     * Returns an empty list when input is null, blank, not a JSON array, or cannot be parsed.
+     *
+     * @param json serialised education array from {@link ApplicantProfile#educationJson}
+     * @return parsed entries; never {@code null}
+     */
     public static List<EducationEntry> parseEducationJson(String json) {
         List<EducationEntry> out = new ArrayList<>();
         if (json == null || json.trim().isEmpty()) return out;
@@ -101,6 +118,12 @@ public class ProfileService {
         return out;
     }
 
+    /**
+     * Serialises education entries to a JSON array string for profile storage.
+     *
+     * @param entries list of education rows (null fields become empty strings)
+     * @return JSON array text suitable for {@link ApplicantProfile#educationJson}
+     */
     public static String buildEducationJson(List<EducationEntry> entries) {
         List<Map<String, String>> maps = new ArrayList<>();
         for (EducationEntry e : entries) {
@@ -115,8 +138,13 @@ public class ProfileService {
     }
 
     /**
-     * True when the applicant has filled everything required to submit a job application
-     * (same rules as profile validation for those fields).
+     * Determines whether the applicant profile satisfies all fields required to submit a job application.
+     * <p>
+     * Uses the same rules as profile validation: personal details, allowed degree level,
+     * contact fields, courses, availability, skills, and at least one education entry.
+     *
+     * @param p applicant profile to inspect
+     * @return {@code true} when every required field is present and valid
      */
     public static boolean isApplicantProfileComplete(ApplicantProfile p) {
         if (p == null) {
@@ -144,7 +172,14 @@ public class ProfileService {
         return s == null || s.trim().isEmpty();
     }
 
-    /** True when the applicant has skills and/or courses for AI matching. */
+    /**
+     * Returns whether the profile contains enough data for AI skill matching or recommendations.
+     * <p>
+     * Requires at least non-blank {@code skills} or {@code courses}.
+     *
+     * @param p applicant profile to inspect
+     * @return {@code true} if skills or courses text is present
+     */
     public static boolean hasAiMatchingInput(ApplicantProfile p) {
         if (p == null) {
             return false;
@@ -152,7 +187,15 @@ public class ProfileService {
         return !isBlank(p.skills) || !isBlank(p.courses);
     }
 
-    /** Combined text sent to AI for skill match and job recommendations. */
+    /**
+     * Builds a multi-line summary of the applicant's capabilities for AI prompts.
+     * <p>
+     * Includes name, major, degree, skills, courses, and availability when each field is non-blank.
+     * Used by skill match and job recommendation features.
+     *
+     * @param p applicant profile; {@code null} yields an empty string
+     * @return trimmed text block for LM user prompts
+     */
     public static String buildAiCapabilityText(ApplicantProfile p) {
         if (p == null) {
             return "";
@@ -179,8 +222,13 @@ public class ProfileService {
         return sb.toString().trim();
     }
 
-    // ---------- API
-
+    /**
+     * Loads the profile for the given user id.
+     *
+     * @param userId owner user id
+     * @return matching profile, if stored
+     * @throws IOException if {@code profiles.json} cannot be read
+     */
     public Optional<ApplicantProfile> getByUserId(String userId) throws IOException {
         List<Map<String, String>> rows = store.readMaps(PROFILES_JSON);
         return rows.stream()
@@ -189,6 +237,13 @@ public class ProfileService {
                    .findFirst();
     }
 
+    /**
+     * Inserts or replaces the profile row keyed by {@link ApplicantProfile#userId}.
+     *
+     * @param profile profile to persist
+     * @return the same profile after write
+     * @throws IOException if the file cannot be read or written
+     */
     public ApplicantProfile upsert(ApplicantProfile profile) throws IOException {
         List<Map<String, String>> rows = store.readMaps(PROFILES_JSON);
         rows.removeIf(m -> profile.userId != null && profile.userId.equals(m.get("userId")));
@@ -197,7 +252,14 @@ public class ProfileService {
         return profile;
     }
 
-    /** Remove profile row for user (e.g. admin account deletion). */
+    /**
+     * Removes the profile row for the given user.
+     * <p>
+     * Typically invoked when an admin deletes a user account. No-op if {@code userId} is blank.
+     *
+     * @param userId user id whose profile should be deleted
+     * @throws IOException if the file cannot be read or written
+     */
     public void deleteByUserId(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) return;
         List<Map<String, String>> rows = store.readMaps(PROFILES_JSON);

@@ -24,12 +24,25 @@ import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.service.WorkloadService;
 
+/**
+ * Module owner (MO) dashboard and job/application management.
+ *
+ * <p><b>URL pattern:</b> {@code /mo} (mapped in {@code web.xml})
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#MO} only via {@link #ensureMo}.
+ *
+ * <p>GET renders the MO dashboard with jobs, applications, workload snapshots, and CV links.
+ * POST handles job creation, publishing, and application approve/reject actions.
+ */
 public class MoServlet extends BaseServlet {
     private ApplicationService applications;
     private JobService jobs;
     private AuthService auth;
     private WorkloadService workloadService;
 
+    /**
+     * Initializes application, auth, job, and workload services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -40,6 +53,14 @@ public class MoServlet extends BaseServlet {
         jobs = new JobService(jobsPath);
     }
 
+    /**
+     * Loads MO dashboard data including pending workload snapshots and CV availability.
+     *
+     * @param req  the incoming request; optional {@code msg} flash message
+     * @param resp the response; 403 or redirect when not MO
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if data loading fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -93,6 +114,15 @@ public class MoServlet extends BaseServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/mo/dashboard.jsp").forward(req, resp);
     }
 
+    /**
+     * Handles MO actions: create job, publish job, approve or reject application.
+     *
+     * @param req  the incoming request; {@code action} is {@code createJob}, {@code publishJob},
+     *             {@code approveApp}, or {@code rejectApp} with action-specific parameters
+     * @param resp the response; redirects to {@code /mo} with a flash message
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if persistence fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

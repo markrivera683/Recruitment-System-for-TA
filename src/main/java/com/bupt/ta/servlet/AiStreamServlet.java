@@ -36,9 +36,19 @@ import java.util.Optional;
 import java.util.Set;
 
 /**
- * SSE stream of AI completions (Markdown deltas) for job recommendation and skill analysis.
- * Protocol: {@code data: {"type":"meta"|"delta"|"done"|"error", "b64": "..."}} (UTF-8 text in Base64).
- * Mapped in {@code web.xml} as {@code /api/ai/stream}.
+ * Server-Sent Events (SSE) endpoint streaming AI completion deltas for TA and MO features.
+ *
+ * <p><b>URL pattern:</b> {@code /api/ai/stream} (mapped in {@code web.xml})
+ *
+ * <p><b>Role access:</b>
+ * <ul>
+ *   <li>Authenticated TA — {@code recommendation}, {@code skillMatch}, {@code missingSkills}</li>
+ *   <li>Authenticated MO — {@code moWorkloadAdvice} (requires {@code applicationId})</li>
+ * </ul>
+ * Unauthenticated callers receive 401; non-MO callers requesting MO features receive 403.
+ *
+ * <p>Protocol: {@code data: {"type":"meta"|"delta"|"done"|"error", "b64": "..."}} with UTF-8
+ * text encoded in Base64. Only GET is supported.
  */
 public class AiStreamServlet extends BaseServlet {
 
@@ -53,6 +63,11 @@ public class AiStreamServlet extends BaseServlet {
     private AuthService authService;
     private WorkloadService workloadService;
 
+    /**
+     * Initializes job, profile, application, auth, and AI advice services from {@code WEB-INF/data}.
+     *
+     * @throws ServletException if servlet initialization fails
+     */
     @Override
     public void init() throws ServletException {
         String dataDir = getServletContext().getRealPath("/WEB-INF/data");
@@ -72,6 +87,14 @@ public class AiStreamServlet extends BaseServlet {
         this.workloadAdviceService = new WorkloadAdviceService(client, lmConfig);
     }
 
+    /**
+     * Opens an SSE stream for the requested AI feature.
+     *
+     * @param req  the incoming request; {@code feature} selects the stream type; additional
+     *             query params vary by feature (e.g. {@code jobId}, {@code applicationId}, {@code q})
+     * @param resp the response; content type {@code text/event-stream}; 401/403 on auth failure
+     * @throws IOException if streaming or service calls fail
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User user = currentUser(req);

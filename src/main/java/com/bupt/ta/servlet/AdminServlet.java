@@ -21,6 +21,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Renders the administrator dashboard with users, jobs, applications, and TA workload stats.
+ *
+ * <p><b>URL pattern:</b> {@code /admin}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>Only GET is supported; POST actions are handled by other admin servlets.
+ */
 @WebServlet(urlPatterns = {"/admin"})
 public class AdminServlet extends BaseServlet {
     private AuthService auth;
@@ -28,6 +37,9 @@ public class AdminServlet extends BaseServlet {
     private JobService jobs;
     private WorkloadService workloadService;
 
+    /**
+     * Initializes auth, application, job, and workload services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -38,6 +50,14 @@ public class AdminServlet extends BaseServlet {
         workloadService = new WorkloadService();
     }
 
+    /**
+     * Loads dashboard data and forwards to the admin dashboard JSP.
+     *
+     * @param req  the incoming request; optional {@code msg} flash message
+     * @param resp the response; 403 or redirect when not admin
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if data loading or authorization fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

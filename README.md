@@ -279,6 +279,18 @@ mvn test
 
 **Note:** `AppConfig.resolve` checks **environment variables first**. If a machine has `LM_PROVIDER` set globally, it may override a test file — unset it for deterministic tests, or rely on CI without those variables.
 
+### API documentation (Javadoc)
+
+All public types and methods under `src/main/java/com/bupt/ta/**` include English Javadoc (class purpose, parameters, return values, exceptions, and cross-links via `{@link}`).
+
+**Generate HTML API docs:**
+
+```powershell
+mvn javadoc:javadoc
+```
+
+Open `target/reports/apidocs/index.html` in a browser. The `maven-javadoc-plugin` is configured in `pom.xml` (UTF-8, Java 11 source, `protected` visibility).
+
 ### Security and academic integrity
 
 - **Never commit API keys**; use environment variables or local `lm.properties` excluded from Git.

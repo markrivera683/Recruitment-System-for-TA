@@ -17,11 +17,25 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Handles new TA applicant registration and initial profile creation.
+ *
+ * <p><b>URL pattern:</b> {@code /register}
+ *
+ * <p><b>Role access:</b> Public (no login required). On success, creates a TA account, seeds an
+ * {@link ApplicantProfile}, logs the user in, and redirects to {@code /job}.
+ *
+ * <p>GET displays the registration form; POST validates fields, persists the user and profile,
+ * and establishes a session.
+ */
 @WebServlet(urlPatterns = {"/register"})
 public class RegisterServlet extends BaseServlet {
     private AuthService auth;
     private ProfileService profiles;
 
+    /**
+     * Initializes {@link AuthService} and {@link ProfileService} from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -29,12 +43,29 @@ public class RegisterServlet extends BaseServlet {
         profiles = new ProfileService(dataDir);
     }
 
+    /**
+     * Forwards to the registration JSP.
+     *
+     * @param req  the incoming request
+     * @param resp the response
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if an I/O error occurs
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.getRequestDispatcher("/WEB-INF/jsp/register.jsp").forward(req, resp);
     }
 
+    /**
+     * Validates registration input, creates the user and profile, and logs the applicant in.
+     *
+     * @param req  the incoming request; expects name, studentId, email, password, confirm, phone
+     * @param resp the response; redirects to {@code /job} on success or re-forwards to the
+     *             registration JSP with field errors on failure
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if persistence or I/O fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

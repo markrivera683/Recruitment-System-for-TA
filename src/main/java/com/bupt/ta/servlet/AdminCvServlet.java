@@ -16,6 +16,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
+/**
+ * Admin endpoint to download a TA applicant's CV inline.
+ *
+ * <p><b>URL pattern:</b> {@code /admin/cv}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>Requires {@code userId} for a TA user with a stored CV. Only GET is supported.
+ */
 @WebServlet("/admin/cv")
 public class AdminCvServlet extends BaseServlet {
 
@@ -23,6 +32,9 @@ public class AdminCvServlet extends BaseServlet {
     private ProfileService profileService;
     private Path dataDir;
 
+    /**
+     * Initializes auth and profile services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -30,6 +42,15 @@ public class AdminCvServlet extends BaseServlet {
         this.profileService = new ProfileService(dataDir);
     }
 
+    /**
+     * Streams the CV file for the specified TA user.
+     *
+     * @param req  the incoming request; requires {@code userId}
+     * @param resp the response; sets content type inline; 400/404 on invalid or missing CV;
+     *             403 when not admin
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if file read or stream write fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

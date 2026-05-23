@@ -11,20 +11,37 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Per-user recently viewed jobs in {@code recently-viewed.json} (userId, jobId, viewedAt).
- * At most {@link #MAX_RECENT} jobs per user, most recent first.
+ * Tracks per-user recently viewed job postings in {@code recently-viewed.json}.
+ * <p>
+ * Each row stores {@code userId}, {@code jobId}, and {@code viewedAt} (ISO-8601 instant).
+ * History is capped at {@link #MAX_RECENT} distinct jobs per user, ordered most recent first.
+ * Recording a view removes any prior row for the same user–job pair before appending.
  */
 public class RecentlyViewedService {
 
+    /** Maximum number of distinct recently viewed jobs retained per user. */
     public static final int MAX_RECENT = 3;
     private static final String RECENT_JSON = "recently-viewed.json";
     private final FileStore store;
 
+    /**
+     * Creates a service backed by JSON files in the given data directory.
+     *
+     * @param dataDir root directory containing {@code recently-viewed.json}
+     */
     public RecentlyViewedService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
 
-    /** Most recently viewed job ids first (up to {@link #MAX_RECENT}). */
+    /**
+     * Returns job ids the user viewed most recently, up to {@link #MAX_RECENT}.
+     * <p>
+     * Sorted by {@code viewedAt} descending; duplicate job ids appear at most once.
+     *
+     * @param userId owner user id; {@code null} or empty yields an empty list
+     * @return recent job ids, newest first; never {@code null}
+     * @throws IOException if {@code recently-viewed.json} cannot be read
+     */
     public List<String> getRecentJobIds(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return new ArrayList<>();
@@ -41,6 +58,16 @@ public class RecentlyViewedService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Records that the user viewed a job at the current instant.
+     * <p>
+     * Replaces any existing entry for the same user and job, then prunes older entries so
+     * only {@link #MAX_RECENT} distinct jobs remain for that user. No-op if ids are blank.
+     *
+     * @param userId viewer user id
+     * @param jobId  viewed job id
+     * @throws IOException if the file cannot be read or written
+     */
     public void recordView(String userId, String jobId) throws IOException {
         if (userId == null || userId.isEmpty() || jobId == null || jobId.isEmpty()) {
             return;

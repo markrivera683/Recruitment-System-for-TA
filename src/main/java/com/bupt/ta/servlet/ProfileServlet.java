@@ -26,6 +26,17 @@ import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.ApplicantFieldValidation;
 
+/**
+ * Manages TA applicant profile viewing, editing, and CV upload.
+ *
+ * <p><b>URL pattern:</b> {@code /profile}
+ *
+ * <p><b>Role access:</b> Authenticated users only (typically {@link com.bupt.ta.model.Roles#TA}).
+ * Unauthenticated callers are redirected to {@code /login}.
+ *
+ * <p>Supports multipart form posts for CV files (PDF, DOC, DOCX). GET shows the profile form;
+ * POST saves profile fields, education entries, and optional CV changes.
+ */
 @WebServlet(urlPatterns = {"/profile"})
 @MultipartConfig(
         fileSizeThreshold = 0,
@@ -40,6 +51,9 @@ public class ProfileServlet extends BaseServlet {
     private AuthService auth;
     private Path dataDir;
 
+    /**
+     * Initializes profile and auth services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -47,6 +61,15 @@ public class ProfileServlet extends BaseServlet {
         auth = new AuthService(dataDir);
     }
 
+    /**
+     * Loads the current user's profile for display or edit mode.
+     *
+     * @param req  the incoming request; optional {@code edit=1} forces edit mode;
+     *             optional {@code msg} shows an info message
+     * @param resp the response; redirects to {@code /login} when unauthenticated
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if profile loading fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -109,6 +132,16 @@ public class ProfileServlet extends BaseServlet {
         }
     }
 
+    /**
+     * Saves profile changes, handles CV upload/delete, and validates all applicant fields.
+     *
+     * @param req  the incoming request; multipart form with profile fields; optional
+     *             {@code action=deleteCvOnly} removes CV without full save
+     * @param resp the response; redirects to {@code /profile} on success or re-forwards with
+     *             field errors on validation failure
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if file or persistence operations fail
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

@@ -15,20 +15,36 @@ import java.time.LocalDate;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-/*
-功能：
-读取 JSON
-返回 job list
-根据 id 查 job
-*/
+/**
+ * Service for reading and writing TA job postings from a {@code jobs.json} file.
+ * <p>
+ * Responsibilities include loading all jobs, lookup by id, listing published (non-draft) jobs,
+ * creating draft or published postings, publishing drafts, and deleting jobs. Parsing uses a
+ * lightweight regex-based extractor rather than a full JSON library; I/O errors during read
+ * are logged to stderr and yield an empty or partial list without propagating exceptions.
+ */
 public class JobService {
 
     private final String jobsJsonPath;
 
+    /**
+     * Creates a service bound to a specific jobs JSON file path.
+     *
+     * @param jobsJsonPath absolute or relative path to {@code jobs.json}
+     */
     public JobService(String jobsJsonPath) {
         this.jobsJsonPath = jobsJsonPath;
     }
 
+    /**
+     * Loads every job object from {@code jobs.json}.
+     * <p>
+     * Applies defaults for missing fields (e.g. duration, number of TAs, status, schedule).
+     * On read or parse failure, prints the stack trace and returns whatever was parsed so far
+     * (often an empty list).
+     *
+     * @return all jobs found in the file; never {@code null}
+     */
     public List<Job> getAllJobs() {
         List<Job> jobs = new ArrayList<>();
 
@@ -77,7 +93,14 @@ public class JobService {
         return jobs;
     }
 
-    /** Remove one job by id and persist {@code jobs.json}. */
+    /**
+     * Removes the job with the given id and rewrites {@code jobs.json}.
+     * <p>
+     * No-op if {@code id} is {@code null} or empty, or if no matching job exists.
+     *
+     * @param id job id to delete
+     * @throws IOException if the file cannot be written after removal
+     */
     public void deleteJobById(String id) throws IOException {
         if (id == null || id.isEmpty()) {
             return;
@@ -159,6 +182,12 @@ public class JobService {
                 .replace("\r", "\\r");
     }
 
+    /**
+     * Finds a single job by id.
+     *
+     * @param id job id to match
+     * @return the first job with the given id, or {@code null} if not found
+     */
     public Job getJobById(String id) {
         for (Job job : getAllJobs()) {
             if (job.getId() != null && job.getId().equals(id)) {
@@ -258,12 +287,29 @@ public class JobService {
         return slots;
     }
 
+    /**
+     * Returns jobs whose status is not {@code Draft} (case-insensitive).
+     * <p>
+     * Jobs with missing status are treated as {@code Published} when filtering.
+     *
+     * @return published jobs visible to applicants; never {@code null}
+     */
     public List<Job> listPublishedJobs() {
         return getAllJobs().stream()
                 .filter(j -> !"Draft".equalsIgnoreCase(firstNonEmpty(j.getStatus(), "Published")))
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Appends a new job to {@code jobs.json}, assigning defaults for id, status, and dates.
+     * <p>
+     * Generates a UUID when id is blank. Default status is {@code Draft}. When status is
+     * {@code Published}, {@code postDate} and {@code publishedAt} are set to today if absent.
+     *
+     * @param job job to persist (mutated in place with defaults)
+     * @return the same job after defaults and persistence
+     * @throws IOException if the file cannot be written
+     */
     public Job createJob(Job job) throws IOException {
         List<Job> jobs = getAllJobs();
         String today = LocalDate.now().toString();
@@ -290,6 +336,17 @@ public class JobService {
         return job;
     }
 
+    /**
+     * Marks a draft job as {@code Published} and fills publication metadata.
+     * <p>
+     * Sets {@code postDate} and {@code publishedAt} to today when missing, and records
+     * {@code createdByMoId} when it was not set.
+     *
+     * @param jobId id of the job to publish
+     * @param moId  module organiser user id to associate with the posting
+     * @return {@code true} if a job was found and updated; {@code false} if id blank or not found
+     * @throws IOException if the file cannot be written after update
+     */
     public boolean publishJob(String jobId, String moId) throws IOException {
         if (jobId == null || jobId.trim().isEmpty())
             return false;

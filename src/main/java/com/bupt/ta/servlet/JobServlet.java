@@ -1,9 +1,3 @@
-/*
-功能：
-/job → list
-/job?id=xxx → detail
-POST action=toggleFavorite → save/unsave job
-*/
 package com.bupt.ta.servlet;
 
 import com.bupt.ta.ai.LmConfig;
@@ -31,6 +25,20 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+/**
+ * Serves the TA job listing, job detail pages, and favorite toggling.
+ *
+ * <p><b>URL pattern:</b> {@code /job}
+ *
+ * <p><b>Role access:</b> Authenticated users only (typically TA). Unauthenticated callers are
+ * redirected to {@code /login}.
+ *
+ * <ul>
+ *   <li>{@code GET /job} — published job list with search, sort, favorites, and AI state</li>
+ *   <li>{@code GET /job?id=xxx} — single job detail with application context</li>
+ *   <li>{@code POST /job?action=toggleFavorite} — save or unsave a job</li>
+ * </ul>
+ */
 @WebServlet("/job")
 public class JobServlet extends BaseServlet {
 
@@ -40,6 +48,11 @@ public class JobServlet extends BaseServlet {
     private ProfileService profileService;
     private ApplicationService applicationService;
 
+    /**
+     * Initializes job, favorite, profile, and application services from {@code WEB-INF/data}.
+     *
+     * @throws ServletException if servlet initialization fails
+     */
     @Override
     public void init() throws ServletException {
         String dataDir = getServletContext().getRealPath("/WEB-INF/data");
@@ -51,6 +64,14 @@ public class JobServlet extends BaseServlet {
         this.applicationService = new ApplicationService(Paths.get(dataDir));
     }
 
+    /**
+     * Renders the job list or a single job detail depending on the {@code id} parameter.
+     *
+     * @param req  the incoming request; optional {@code id}, {@code q}, {@code sortBy}
+     * @param resp the response; redirects to {@code /login} when unauthenticated
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if service calls fail
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
@@ -105,6 +126,14 @@ public class JobServlet extends BaseServlet {
         }
     }
 
+    /**
+     * Toggles favorite status for a job ({@code action=toggleFavorite}).
+     *
+     * @param req  the incoming request; expects {@code action}, {@code jobId}, optional
+     *             {@code returnTo}, {@code q}, {@code sortBy}
+     * @param resp the response; redirects back to list or detail; returns 405 for unknown actions
+     * @throws IOException if favorite persistence fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User user = currentUser(req);

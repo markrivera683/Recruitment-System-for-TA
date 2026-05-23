@@ -17,7 +17,13 @@ import java.nio.file.Paths;
 import java.util.List;
 
 /**
- * GET /admin/export?type=users|applications — CSV download (admin only).
+ * Admin CSV export of users or applications.
+ *
+ * <p><b>URL pattern:</b> {@code /admin/export}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>GET {@code ?type=users} (default) or {@code ?type=applications} downloads a UTF-8 CSV with BOM.
  */
 @WebServlet(urlPatterns = {"/admin/export"})
 public class AdminExportServlet extends BaseServlet {
@@ -25,6 +31,9 @@ public class AdminExportServlet extends BaseServlet {
     private AuthService auth;
     private ApplicationService applications;
 
+    /**
+     * Initializes auth and application services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -32,6 +41,14 @@ public class AdminExportServlet extends BaseServlet {
         applications = new ApplicationService(dataDir);
     }
 
+    /**
+     * Writes a CSV attachment for users or applications.
+     *
+     * @param req  the incoming request; optional {@code type} ({@code users} or {@code applications})
+     * @param resp the response; sets CSV headers and body; 403 when not admin
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if export writing fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

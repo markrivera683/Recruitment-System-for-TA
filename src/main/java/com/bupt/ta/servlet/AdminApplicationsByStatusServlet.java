@@ -19,7 +19,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * Admin view: applications filtered by status bucket (pending / accepted / rejected).
+ * Admin list view of applications filtered by status bucket.
+ *
+ * <p><b>URL pattern:</b> {@code /admin/applications/by-status}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>GET accepts {@code status=pending|accepted|rejected} and enriches rows with applicant user
+ * records. Only GET is supported.
  */
 @WebServlet(urlPatterns = {"/admin/applications/by-status"})
 public class AdminApplicationsByStatusServlet extends BaseServlet {
@@ -27,6 +34,9 @@ public class AdminApplicationsByStatusServlet extends BaseServlet {
     private ApplicationService applications;
     private AuthService auth;
 
+    /**
+     * Initializes application and auth services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -34,6 +44,14 @@ public class AdminApplicationsByStatusServlet extends BaseServlet {
         auth = new AuthService(dataDir);
     }
 
+    /**
+     * Lists applications matching the requested status bucket.
+     *
+     * @param req  the incoming request; requires {@code status}; optional {@code msg}
+     * @param resp the response; redirects to {@code /admin} on invalid status; 403 when not admin
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if data loading fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

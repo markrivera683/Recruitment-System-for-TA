@@ -13,19 +13,39 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
- * Admin override for application status (same persistence as MO approve/reject).
+ * Admin override for application status transitions (force accept, reject, or pending).
+ *
+ * <p><b>URL pattern:</b> {@code /admin/applications}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>Uses the same persistence layer as MO approve/reject. Only POST is supported; redirects
+ * back to the applications-by-status list.
  */
 @WebServlet(urlPatterns = {"/admin/applications"})
 public class AdminApplicationServlet extends BaseServlet {
 
     private ApplicationService applications;
 
+    /**
+     * Initializes {@link ApplicationService} from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         applications = new ApplicationService(dataDir);
     }
 
+    /**
+     * Forces an application to Accepted, Rejected, or Pending with optional feedback.
+     *
+     * @param req  the incoming request; expects {@code action} ({@code forceAccept},
+     *             {@code forceReject}, {@code forcePend}), {@code appId}, optional {@code feedback}
+     *             and {@code returnStatus}
+     * @param resp the response; redirects to the status list with a flash message
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if status update fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

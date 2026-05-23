@@ -8,21 +8,58 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Deterministic offline LM for coursework demos. No network; outputs are stable for the same inputs.
+ * Offline, deterministic {@link LmClient} for coursework demos, tests, and safe defaults.
+ *
+ * <p>{@link MockLmClient} is selected by {@link LmClientFactory} when {@link LmConfig} specifies
+ * {@link LmProviderType#MOCK}, when AI is disabled ({@link LmConfig#isEnabled()} {@code false}),
+ * when HTTP credentials are missing, or when configuration is {@code null}. It performs no
+ * network I/O and produces stable, rule-based output for the same inputs—ideal for local
+ * development without API keys.
+ *
+ * <p>Routing uses {@link LmRequest#getFeatureName()} against {@link AiFeatureNames}:
+ * skill match, missing skills, job recommendation, and workload advice each have dedicated
+ * handlers; unknown features fall back to a generic echo of the user prompt.
+ *
+ * <p>Responses use provider label {@code "mock"} and model {@code "mock-model"} when no
+ * per-request model is set. Unlike {@link HttpLmClient}, errors for disabled AI are returned
+ * as unsuccessful {@link LmResponse} instances rather than {@link LmException}.
+ *
+ * @see LmClientFactory#create(LmConfig)
+ * @see AiFeatureNames
  */
 public final class MockLmClient implements LmClient {
+    /** Provider label returned in {@link LmResponse#getProvider()} for all mock completions. */
     private static final String PROVIDER = "mock";
     private final boolean forceDisabled;
 
+    /**
+     * Creates a mock client with AI features enabled (normal mock behaviour).
+     */
     public MockLmClient() {
         this(false);
     }
 
-    /** When true, {@link #generate} returns a clear "disabled" message (LM_ENABLED=false). */
+    /**
+     * Creates a mock client that optionally reports AI as globally disabled.
+     *
+     * @param forceDisabled when {@code true}, {@link #generate(LmRequest)} returns
+     *                      {@code success=false} with a message indicating
+     *                      {@code LM_ENABLED=false}; used by {@link LmClientFactory} when
+     *                      {@link LmConfig#isEnabled()} is {@code false}
+     */
     public MockLmClient(boolean forceDisabled) {
         this.forceDisabled = forceDisabled;
     }
 
+    /**
+     * Simulates streaming by chunking the result of {@link #generate(LmRequest)}.
+     *
+     * <p>Emits 28-character deltas, then {@link LmStreamListener#onComplete(String)} or
+     * {@link LmStreamListener#onError(String)}. Does not throw {@link LmException}.
+     *
+     * @param request  completion request; must not be {@code null}
+     * @param listener streaming callbacks; must not be {@code null}
+     */
     @Override
     public void stream(LmRequest request, LmStreamListener listener) {
         LmResponse r = generate(request);
@@ -41,6 +78,17 @@ public final class MockLmClient implements LmClient {
         listener.onComplete(r.getModel());
     }
 
+    /**
+     * Generates a deterministic completion based on {@link LmRequest#getFeatureName()}.
+     *
+     * <p>When {@code forceDisabled} is {@code true}, returns an unsuccessful response explaining
+     * that AI is disabled. Otherwise dispatches to feature-specific mock logic for
+     * {@link AiFeatureNames} constants, or {@link #genericEcho} for unknown features.
+     *
+     * @param request prompts, feature name, and optional model override; must not be {@code null}
+     * @return a successful {@link LmResponse} with mock assistant text, or {@code success=false}
+     *         when AI is force-disabled; never throws {@link LmException}
+     */
     @Override
     public LmResponse generate(LmRequest request) {
         String model = request.getModel() != null && !request.getModel().isEmpty()

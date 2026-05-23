@@ -19,12 +19,24 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Admin browse view of all TA applicant profiles and education summaries.
+ *
+ * <p><b>URL pattern:</b> {@code /admin/ta-profiles}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>Only GET is supported. Rows are sorted by display name.
+ */
 @WebServlet("/admin/ta-profiles")
 public class AdminTaProfilesServlet extends BaseServlet {
 
     private AuthService authService;
     private ProfileService profileService;
 
+    /**
+     * Initializes auth and profile services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         String data = getServletContext().getRealPath("/WEB-INF/data");
@@ -33,6 +45,14 @@ public class AdminTaProfilesServlet extends BaseServlet {
         this.profileService = new ProfileService(dataDir);
     }
 
+    /**
+     * Builds TA resume display rows and forwards to the ta-profiles JSP.
+     *
+     * @param req  the incoming request
+     * @param resp the response; 403 or redirect when not admin
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if data loading fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

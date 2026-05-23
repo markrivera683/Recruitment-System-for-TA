@@ -16,8 +16,18 @@ import java.nio.file.Paths;
 import java.util.regex.Pattern;
 
 /**
- * Serves an applicant's CV: the logged-in TA sees their own file; an MO may pass {@code userId}
- * to view that applicant's stored CV.
+ * Streams an applicant's CV file to the browser.
+ *
+ * <p><b>URL pattern:</b> {@code /cv} (mapped in {@code web.xml})
+ *
+ * <p><b>Role access:</b>
+ * <ul>
+ *   <li>Authenticated TA — downloads own CV (or pending session CV)</li>
+ *   <li>Authenticated MO with {@code userId} parameter — downloads that applicant's CV</li>
+ * </ul>
+ * Unauthenticated callers are redirected to {@code /login}; unauthorized MO access returns 403.
+ *
+ * <p>Only GET is supported. Files are served inline with detected content type.
  */
 public class CvDownloadServlet extends BaseServlet {
     private static final Pattern USER_ID_SAFE = Pattern.compile("^[a-fA-F0-9\\-]{8,64}$");
@@ -25,12 +35,24 @@ public class CvDownloadServlet extends BaseServlet {
     private ProfileService profiles;
     private Path dataDir;
 
+    /**
+     * Initializes {@link ProfileService} from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         profiles = new ProfileService(dataDir);
     }
 
+    /**
+     * Resolves the target CV (self or MO-specified applicant) and streams the file inline.
+     *
+     * @param req  the incoming request; optional {@code userId} for MO viewing another applicant
+     * @param resp the response; sets content type and Content-Disposition, or forwards to
+     *             cv-error.jsp on failure
+     * @throws ServletException if error JSP forward fails
+     * @throws IOException      if file read or stream write fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

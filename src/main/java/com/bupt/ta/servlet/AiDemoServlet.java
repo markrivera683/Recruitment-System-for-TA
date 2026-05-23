@@ -13,7 +13,14 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Minimal admin-only demo for AI scaffolding (mock by default). Keeps LM calls out of JSP.
+ * Admin-only interactive demo for AI feature scaffolding (mock LM by default).
+ *
+ * <p><b>URL pattern:</b> {@code /admin/ai-demo}
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#ADMIN} only via {@link #ensureAdmin}.
+ *
+ * <p>GET shows the demo form; POST invokes skill match, missing-skill, or job-recommendation
+ * features and displays structured results. Keeps LM calls out of JSP.
  */
 @WebServlet(urlPatterns = {"/admin/ai-demo"})
 public class AiDemoServlet extends BaseServlet {
@@ -21,6 +28,9 @@ public class AiDemoServlet extends BaseServlet {
     private LmConfig lmConfig;
     private AiFeatureService aiFeature;
 
+    /**
+     * Loads LM configuration and constructs {@link AiFeatureService}.
+     */
     @Override
     public void init() {
         lmConfig = LmConfig.load(getServletContext());
@@ -28,6 +38,14 @@ public class AiDemoServlet extends BaseServlet {
         aiFeature = new AiFeatureService(lmConfig, client);
     }
 
+    /**
+     * Renders the AI demo page with LM provider metadata.
+     *
+     * @param req  the incoming request
+     * @param resp the response; 403 or redirect when not admin
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if authorization check fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {
@@ -37,6 +55,15 @@ public class AiDemoServlet extends BaseServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/admin/ai-demo.jsp").forward(req, resp);
     }
 
+    /**
+     * Executes a selected AI demo action and re-renders the page with results.
+     *
+     * @param req  the incoming request; {@code action} is {@code match}, {@code missing}, or
+     *             {@code recommend}, plus feature-specific text parameters
+     * @param resp the response; 403 or redirect when not admin
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if authorization check fails
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         if (!ensureAdmin(req, resp)) {

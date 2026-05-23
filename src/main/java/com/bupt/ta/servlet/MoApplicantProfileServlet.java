@@ -18,10 +18,22 @@ import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.ApplicantFieldValidation;
 
+/**
+ * Read-only MO view of a TA applicant's full profile.
+ *
+ * <p><b>URL pattern:</b> {@code /mo/applicant-profile} (mapped in {@code web.xml})
+ *
+ * <p><b>Role access:</b> {@link com.bupt.ta.model.Roles#MO} only via {@link #ensureMo}.
+ *
+ * <p>Only GET is supported; requires {@code userId} for a TA with an existing profile.
+ */
 public class MoApplicantProfileServlet extends BaseServlet {
     private ProfileService profiles;
     private AuthService auth;
 
+    /**
+     * Initializes profile and auth services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -29,6 +41,14 @@ public class MoApplicantProfileServlet extends BaseServlet {
         auth = new AuthService(dataDir);
     }
 
+    /**
+     * Loads an applicant profile for MO review and forwards to the applicant-profile JSP.
+     *
+     * @param req  the incoming request; requires {@code userId}
+     * @param resp the response; redirects to {@code /mo} with message on error; 403 when not MO
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if redirect or data loading fails
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

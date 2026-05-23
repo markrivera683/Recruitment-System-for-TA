@@ -13,17 +13,61 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * Generic HTTPS JSON provider skeleton (OpenAI-compatible Chat Completions shape).
- * Vendor-specific differences should stay inside this class (headers, URL, body, response parsing).
+ * HTTPS JSON implementation of {@link LmClient} for OpenAI-compatible Chat Completions APIs.
+ *
+ * <p>{@link HttpLmClient} is the production-oriented backend of the LM integration layer.
+ * It is constructed by {@link LmClientFactory} when {@link LmConfig#getProviderType()} is
+ * {@link LmProviderType#OPENAI} or {@link LmProviderType#CUSTOM} and
+ * {@link LmConfig#hasHttpCredentials()} is {@code true}. All vendor-specific concerns—URL
+ * assembly, {@code Authorization} header, JSON body shape, response parsing, and SSE
+ * streaming—are encapsulated here so servlets and AI services only see {@link LmRequest}
+ * and {@link LmResponse}.
+ *
+ * <p><strong>Configuration used:</strong> {@link LmConfig#getBaseUrl()},
+ * {@link LmConfig#getHttpChatPath()}, {@link LmConfig#getApiKey()},
+ * {@link LmConfig#getTimeoutMs()}, and {@link LmConfig#getModel()} (with per-request
+ * override via {@link LmRequest#getModel()} and final fallback to
+ * {@link LmModelDefaults#CHAT_FALLBACK}).
+ *
+ * <p><strong>Fallback behaviour:</strong> If credentials are missing, both
+ * {@link #generate(LmRequest)} and {@link #stream(LmRequest, LmStreamListener)} throw
+ * {@link LmException}. Provider error JSON is converted to unsuccessful {@link LmResponse}
+ * or {@link LmStreamListener#onError(String)} rather than throwing when the HTTP call succeeds
+ * but the payload contains an {@code error} object.
+ *
+ * <p>Vendor-specific differences (Azure api-version, Gemini/Claude adapters, custom headers)
+ * should stay inside this class; see inline TODO markers.
+ *
+ * @see LmClientFactory
+ * @see LmConfig
  */
 public final class HttpLmClient implements LmClient {
     private static final Logger LOG = Logger.getLogger(HttpLmClient.class.getName());
     private final LmConfig config;
 
+    /**
+     * Creates an HTTP client bound to the given LM configuration.
+     *
+     * @param config settings loaded via {@link LmConfig#load}; must not be {@code null}
+     */
     public HttpLmClient(LmConfig config) {
         this.config = config;
     }
 
+    /**
+     * Performs a synchronous Chat Completions request and returns a normalised response.
+     *
+     * <p>Builds an OpenAI-compatible JSON body from {@link LmRequest#getMessages()} or,
+     * when empty, from {@link LmRequest#getSystemPrompt()} and {@link LmRequest#getUserPrompt()}.
+     * Posts to {@code baseUrl + httpChatPath} with a Bearer token from {@link LmConfig#getApiKey()}.
+     *
+     * @param request completion parameters and prompts; must not be {@code null}
+     * @return {@link LmResponse} with assistant text on success, or {@code success=false} with
+     *         {@link LmResponse#getErrorMessage()} when the provider returns an error object or
+     *         assistant text cannot be parsed
+     * @throws LmException if {@link LmConfig#hasHttpCredentials()} is {@code false}, JSON body
+     *                     construction fails, or the HTTP transport throws
+     */
     @Override
     public LmResponse generate(LmRequest request) throws LmException {
         if (!config.hasHttpCredentials()) {
@@ -63,6 +107,19 @@ public final class HttpLmClient implements LmClient {
         }
     }
 
+    /**
+     * Streams a Chat Completions response via Server-Sent Events (SSE).
+     *
+     * <p>Sends {@code "stream": true} in the request body, reads {@code data:} lines from the
+     * response, forwards {@code delta.content} fragments to {@link LmStreamListener#onDelta(String)},
+     * and completes on {@code [DONE]} or end-of-stream. Provider errors invoke
+     * {@link LmStreamListener#onError(String)} without throwing.
+     *
+     * @param request  same shape as {@link #generate(LmRequest)}
+     * @param listener streaming callbacks; must not be {@code null}
+     * @throws LmException if credentials are missing, the request body cannot be built, or
+     *                     streaming I/O fails before a terminal listener callback
+     */
     @Override
     public void stream(LmRequest request, LmStreamListener listener) throws LmException {
         if (!config.hasHttpCredentials()) {

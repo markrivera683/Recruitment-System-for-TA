@@ -13,22 +13,52 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+/**
+ * Handles user authentication and session creation.
+ *
+ * <p><b>URL pattern:</b> {@code /login}
+ *
+ * <p><b>Role access:</b> Public (no login required). On success, redirects by role:
+ * ADMIN → {@code /admin}, MO → {@code /mo}, TA → {@code /job}.
+ *
+ * <p>GET displays the login form; POST validates credentials and establishes the session.
+ */
 @WebServlet(urlPatterns = {"/login"})
 public class LoginServlet extends BaseServlet {
     private AuthService auth;
 
+    /**
+     * Initializes {@link AuthService} using the {@code WEB-INF/data} directory.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
         auth = new AuthService(dataDir);
     }
 
+    /**
+     * Forwards to the login JSP.
+     *
+     * @param req  the incoming request
+     * @param resp the response
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if an I/O error occurs
+     */
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.getRequestDispatcher("/WEB-INF/jsp/login.jsp").forward(req, resp);
     }
 
+    /**
+     * Validates email and password, rejects deactivated accounts, and redirects by role on success.
+     *
+     * @param req  the incoming request; expects {@code email} and {@code password} parameters
+     * @param resp the response; redirects to the role-specific home on success, or re-forwards
+     *             to the login JSP with an error attribute on failure
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if an I/O error occurs
+     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {

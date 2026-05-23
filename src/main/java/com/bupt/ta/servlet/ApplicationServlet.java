@@ -21,12 +21,26 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Lists the current user's job applications and handles submit/withdraw actions.
+ *
+ * <p><b>URL pattern:</b> {@code /applications}
+ *
+ * <p><b>Role access:</b> Authenticated users only (typically TA). Unauthenticated callers are
+ * redirected to {@code /login}.
+ *
+ * <p>GET shows filtered application status; POST submits a new application or withdraws an
+ * existing one owned by the caller.
+ */
 @WebServlet(urlPatterns = {"/applications"})
 public class ApplicationServlet extends BaseServlet {
     private ApplicationService appService;
     private ProfileService profiles;
     private JobService jobService;
 
+    /**
+     * Initializes application, profile, and job services from {@code WEB-INF/data}.
+     */
     @Override
     public void init() {
         Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
@@ -35,6 +49,15 @@ public class ApplicationServlet extends BaseServlet {
         jobService = new JobService(dataDir.resolve("jobs.json").toString());
     }
 
+    /**
+     * Displays the applicant's applications, optionally filtered by status.
+     *
+     * @param req  the incoming request; optional {@code filter} (All, Pending, Accepted,
+     *             Rejected, Withdrawn) and {@code msg}
+     * @param resp the response; redirects to {@code /login} when unauthenticated
+     * @throws ServletException if the JSP forward fails
+     * @throws IOException      if application loading fails
+     */
     // ------------------------------------------------------------------ GET
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -80,6 +103,15 @@ public class ApplicationServlet extends BaseServlet {
         req.getRequestDispatcher("/WEB-INF/jsp/application-status.jsp").forward(req, resp);
     }
 
+    /**
+     * Withdraws an owned application or submits a new one for a published job.
+     *
+     * @param req  the incoming request; {@code action=withdraw} with {@code appId}, or a new
+     *             application with jobId, moduleName, moduleCode, role
+     * @param resp the response; redirects with flash messages on success or failure
+     * @throws ServletException if dispatch fails
+     * @throws IOException      if persistence fails
+     */
     // ------------------------------------------------------------------ POST
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
