@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 class JobListFiltersTest {
 
@@ -35,6 +36,57 @@ class JobListFiltersTest {
         List<Job> jobs = Arrays.asList(job("1", "A", "x"), job("2", "B", "x"), job("3", "C", "x"));
         List<Job> out = JobListFilters.promoteRecentlyViewed(jobs, Arrays.asList("3", "1"));
         assertEquals(Arrays.asList("3", "1", "2"), ids(out));
+    }
+
+    @Test
+    void apply_sortByModuleName() {
+        List<Job> jobs = Arrays.asList(job("2", "Beta", "Lab"), job("1", "Alpha", "Lab"));
+        List<Job> out = JobListFilters.apply(jobs, Collections.emptySet(), "", "moduleName");
+        assertEquals("1", out.get(0).getId());
+    }
+
+    @Test
+    void apply_sortByActivityType() {
+        Job lab = job("1", "A", "Lab");
+        Job tut = job("2", "B", "Tutorial");
+        List<Job> out = JobListFilters.apply(Arrays.asList(tut, lab), Collections.emptySet(), "", "activityType");
+        assertEquals("1", out.get(0).getId());
+    }
+
+    @Test
+    void apply_searchMatchesRequiredSkills() {
+        Job j = job("1", "Hidden", "Lab");
+        j.setRequiredSkills(Collections.singletonList("Kubernetes"));
+        List<Job> out = JobListFilters.apply(Collections.singletonList(j), Collections.emptySet(), "kube", "postingDate");
+        assertEquals(1, out.size());
+    }
+
+    @Test
+    void apply_favoritedWithSearch() {
+        Job j1 = job("1", "Alpha", "Lab");
+        Job j2 = job("2", "Beta", "Lab");
+        Set<String> fav = new HashSet<>(Arrays.asList("1", "2"));
+        List<Job> out = JobListFilters.apply(Arrays.asList(j1, j2), fav, "alpha", "favorited");
+        assertEquals(1, out.size());
+        assertEquals("1", out.get(0).getId());
+    }
+
+    @Test
+    void promoteRecentlyViewed_emptyRecentIds_returnsOriginal() {
+        List<Job> jobs = Arrays.asList(job("1", "A", "x"), job("2", "B", "x"));
+        assertSame(jobs, JobListFilters.promoteRecentlyViewed(jobs, Collections.emptyList()));
+    }
+
+    @Test
+    void promoteRecentlyViewed_unknownIds_ignored() {
+        List<Job> jobs = Collections.singletonList(job("1", "A", "x"));
+        List<Job> out = JobListFilters.promoteRecentlyViewed(jobs, Collections.singletonList("missing"));
+        assertEquals(1, out.size());
+    }
+
+    @Test
+    void promoteRecentlyViewed_nullJobs_returnsNull() {
+        assertSame(null, JobListFilters.promoteRecentlyViewed(null, Collections.singletonList("1")));
     }
 
     private static List<String> ids(List<Job> jobs) {

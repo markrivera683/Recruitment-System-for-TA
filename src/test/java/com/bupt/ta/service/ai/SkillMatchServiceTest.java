@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import javax.servlet.ServletContext;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SkillMatchServiceTest {
@@ -21,5 +22,13 @@ class SkillMatchServiceTest {
         LmResponse r = svc.matchApplicantSkills("Python", "Python, Teaching");
         assertTrue(r.isSuccess());
         assertTrue(r.getText().contains("Match score"));
+    }
+
+    @Test
+    void matchApplicantSkills_emptyInputsStillSucceed() throws LmException {
+        SkillMatchService svc = new SkillMatchService(new MockLmClient(), LmConfig.load(
+                LmTestSupport.servletContextWithLmProperties(null)));
+        LmResponse r = svc.matchApplicantSkills("", "");
+        assertTrue(r.isSuccess());
     }
 }

@@ -258,24 +258,18 @@ Treat all model output as **assistive**: combine with module rules, interviews, 
 
 **No new runtime dependencies** for the WAR: networking uses the JDK’s `java.net.http` client. **Optional test-only** dependencies (JUnit 5, Mockito) are declared in `pom.xml` with `scope=test` for automated verification.
 
-### Unit tests (LM workflow)
+### Unit tests
 
-Tests live under `src/test/java/**` and mirror the LM integration layers:
+Tests live under `src/test/java/**` (**237** cases, `mvn test`). Shared fixtures: `TestFixtures`, `ServletTestSupport`, `LmTestSupport`.
 
-| Test class | What it verifies |
-|---|---|
-| `LmProviderTypeTest` | `LmProviderType.fromString` |
-| `AppConfigTest` | `AppConfig.resolve` (system property vs file vs default) |
-| `LmConfigTest` | `LmConfig.load` + `mock.properties` / system overrides |
-| `LmRequestTest` | `LmRequest` builder and immutable message list |
-| `MockLmClientTest` | `MockLmClient` per `AiFeatureNames` |
-| `LmClientFactoryTest` | `LmClientFactory.create` (mock, HTTP, fallback) |
-| `HttpLmClientTest` | `HttpLmClient` fails fast without credentials |
-| `SkillMatchServiceTest` / `MissingSkillServiceTest` / `RecommendationServiceTest` | Each feature service + `LmClient` |
-| `AiFeatureServiceTest` | Full pipeline: config → factory → `AiFeatureService` |
-| `AiFeatureOutputTest` | `AiFeatureOutput.fromResponse` mapping |
-
-`com.bupt.ta.testsupport.LmTestSupport` provides a mocked `ServletContext` with optional `WEB-INF/lm.properties` content.
+| Area | Test classes |
+|------|----------------|
+| **Model** | `JobApplicationStatsTest`, `TaWorkloadStatsTest`, `TaResumeDisplayTest`, `UserTest`, `ApplicationTest`, `MoWorkloadSnapshotTest` |
+| **Services** | `AuthServiceTest`, `ProfileServiceTest`, `ApplicationServiceTest`, `JobServiceTest`, `FavoriteServiceTest`, `RecentlyViewedServiceTest`, `WorkloadServiceTest`, `FileStoreTest` |
+| **Util** | `ApplicantFieldValidationTest`, `JobListFiltersTest`, `StringsTest`, `AppConfigTest`, `HttpJsonClientTest` |
+| **AI / LM** | `LmProviderTypeTest`, `LmConfigTest`, `LmRequestTest`, `LmMessageTest`, `LmResponseTest`, `LmExceptionTest`, `MockLmClientTest`, `LmClientFactoryTest`, `HttpLmClientTest`, `SkillMatchServiceTest`, `MissingSkillServiceTest`, `RecommendationServiceTest`, `WorkloadAdviceServiceTest`, `AiFeatureServiceTest`, `AiFeatureOutputTest` |
+| **Servlets** | `BaseServletTest`, `LoginServletTest`, `RegisterServletTest`, `LogoutServletTest`, `ApplicationServletTest`, `MoServletTest`, `AdminUserServletTest` |
+| **Integration** | `UserLifecycleIntegrationTest`, `ApplicationFlowIntegrationTest` |
 
 **Run JUnit tests:**
 
