@@ -1,8 +1,6 @@
 package com.bupt.ta.servlet;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +12,7 @@ import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.EducationEntry;
 import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.ApplicantFieldValidation;
@@ -36,9 +35,9 @@ public class MoApplicantProfileServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        profiles = new ProfileService(dataDir);
-        auth = new AuthService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        profiles = f.getProfileService();
+        auth = f.getAuthService();
     }
 
     /**

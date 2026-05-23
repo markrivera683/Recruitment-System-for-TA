@@ -2,6 +2,7 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Application;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.AuthService;
 
@@ -10,8 +11,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -39,9 +38,9 @@ public class AdminApplicationsByStatusServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        applications = new ApplicationService(dataDir);
-        auth = new AuthService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        applications = f.getApplicationService();
+        auth = f.getAuthService();
     }
 
     /**

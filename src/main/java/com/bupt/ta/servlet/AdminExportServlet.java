@@ -2,6 +2,7 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Application;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.AuthService;
 
@@ -12,8 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -36,9 +35,9 @@ public class AdminExportServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        auth = new AuthService(dataDir);
-        applications = new ApplicationService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        auth = f.getAuthService();
+        applications = f.getApplicationService();
     }
 
     /**

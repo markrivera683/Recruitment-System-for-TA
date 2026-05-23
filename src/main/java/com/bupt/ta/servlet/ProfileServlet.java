@@ -22,6 +22,7 @@ import javax.servlet.http.Part;
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.EducationEntry;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.ApplicantFieldValidation;
@@ -49,16 +50,17 @@ public class ProfileServlet extends BaseServlet {
 
     private ProfileService profiles;
     private AuthService auth;
-    private Path dataDir;
+    private Path cvDataDir;
 
     /**
      * Initializes profile and auth services from {@code WEB-INF/data}.
      */
     @Override
     public void init() {
-        dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        profiles = new ProfileService(dataDir);
-        auth = new AuthService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        profiles = f.getProfileService();
+        auth = f.getAuthService();
+        cvDataDir = f.getCvDataDir();
     }
 
     /**
@@ -74,8 +76,7 @@ public class ProfileServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         User u = currentUser(req);
-        if (u == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
         Optional<ApplicantProfile> existing = profiles.getByUserId(u.id);
@@ -146,11 +147,10 @@ public class ProfileServlet extends BaseServlet {
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         req.setCharacterEncoding("UTF-8");
-        User u = currentUser(req);
-        if (u == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
+        User u = currentUser(req);
 
         String action = trim(req.getParameter("action"));
         if ("deleteCvOnly".equals(action)) {
@@ -199,7 +199,7 @@ public class ProfileServlet extends BaseServlet {
         p.availability = existing.map(e -> e.availability).orElse("");
         p.selfIntro = existing.map(e -> e.selfIntro).orElse("");
 
-        Path cvUserDir = dataDir.resolve("cv").resolve(u.id);
+        Path cvUserDir = cvDataDir.resolve(u.id);
         Part cvPart = req.getPart("cv");
         final boolean newCvUpload = cvPart != null && cvPart.getSize() > 0;
         if (!newCvUpload) {
@@ -302,7 +302,7 @@ public class ProfileServlet extends BaseServlet {
     private void handleDeleteCvOnly(HttpServletRequest req, HttpServletResponse resp, User u)
             throws IOException {
         String ctx = req.getContextPath();
-        Path cvUserDir = dataDir.resolve("cv").resolve(u.id).normalize();
+        Path cvUserDir = cvDataDir.resolve(u.id).normalize();
         HttpSession session = req.getSession(false);
         String pending = "";
         if (session != null) {
@@ -391,7 +391,7 @@ public class ProfileServlet extends BaseServlet {
         if (pend.isEmpty()) {
             return;
         }
-        Path f = dataDir.resolve("cv").resolve(userId).resolve(pend);
+        Path f = cvDataDir.resolve(userId).resolve(pend);
         try {
             if (Files.isRegularFile(f)) {
                 p.cvFileName = pend;

@@ -28,6 +28,12 @@ public final class AiFeatureNames {
     /** Feature key for module-organiser workload approval advice (approve / caution / reject). */
     public static final String WORKLOAD_ADVICE = "workload-advice";
 
+    /** Feature key for MO retrospective review of processed application decisions. */
+    public static final String DECISION_REVIEW = "decision-review";
+
+    /** Feature key for admin dashboard platform analytics narrative. */
+    public static final String ADMIN_ANALYTICS = "admin-analytics";
+
     /** Prevents instantiation of this constants-only utility class. */
     private AiFeatureNames() {}
 }

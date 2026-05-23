@@ -2,6 +2,7 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
+import com.bupt.ta.security.CsrfFilter;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -94,5 +95,34 @@ public abstract class BaseServlet extends HttpServlet {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Ensures the caller is authenticated and has the {@link Roles#TA} role.
+     *
+     * <p>Unauthenticated users are redirected to {@code /login}. Authenticated non-TA users receive
+     * HTTP 403 Forbidden.
+     */
+    protected boolean ensureTa(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        User u = currentUser(req);
+        if (u == null) {
+            resp.sendRedirect(req.getContextPath() + "/login");
+            return false;
+        }
+        if (!Roles.TA.equals(u.role)) {
+            resp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return false;
+        }
+        return true;
+    }
+
+    /** Returns the CSRF token for the current session (see {@link CsrfFilter}). */
+    protected String csrfToken(HttpServletRequest req) {
+        return CsrfFilter.csrfToken(req);
+    }
+
+    /** Validates the submitted CSRF token against the session value. */
+    protected boolean validateCsrf(HttpServletRequest req) {
+        return CsrfFilter.validateCsrf(req);
     }
 }

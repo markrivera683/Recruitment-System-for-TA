@@ -6,6 +6,7 @@ import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.Job;
 import com.bupt.ta.model.JobApplicationStats;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.FavoriteService;
 import com.bupt.ta.service.JobService;
@@ -18,7 +19,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -55,13 +55,12 @@ public class JobServlet extends BaseServlet {
      */
     @Override
     public void init() throws ServletException {
-        String dataDir = getServletContext().getRealPath("/WEB-INF/data");
-        String p = dataDir + "/jobs.json";
-        this.jobService = new JobService(p);
-        this.favoriteService = new FavoriteService(Paths.get(dataDir));
-        this.recentlyViewedService = new RecentlyViewedService(Paths.get(dataDir));
-        this.profileService = new ProfileService(Paths.get(dataDir));
-        this.applicationService = new ApplicationService(Paths.get(dataDir));
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        this.jobService = f.getJobService();
+        this.favoriteService = f.getFavoriteService();
+        this.recentlyViewedService = f.getRecentlyViewedService();
+        this.profileService = f.getProfileService();
+        this.applicationService = f.getApplicationService();
     }
 
     /**
@@ -76,11 +75,10 @@ public class JobServlet extends BaseServlet {
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        User user = currentUser(req);
-        if (user == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
+        User user = currentUser(req);
 
         String id = req.getParameter("id");
 
@@ -136,12 +134,11 @@ public class JobServlet extends BaseServlet {
      */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
-        User user = currentUser(req);
         String ctx = req.getContextPath();
-        if (user == null) {
-            resp.sendRedirect(ctx + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
+        User user = currentUser(req);
 
         if (!"toggleFavorite".equals(req.getParameter("action"))) {
             resp.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED);

@@ -2,15 +2,15 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.AuthService;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -32,8 +32,8 @@ public class LoginServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        auth = new AuthService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        auth = f.getAuthService();
     }
 
     /**
@@ -77,7 +77,12 @@ public class LoginServlet extends BaseServlet {
             return;
         }
         User loggedIn = candidate;
-        req.getSession(true).setAttribute("user", loggedIn);
+        HttpSession oldSession = req.getSession(false);
+        if (oldSession != null) {
+            oldSession.invalidate();
+        }
+        HttpSession session = req.getSession(true);
+        session.setAttribute("user", loggedIn);
 
         String next;
         if (Roles.ADMIN.equals(loggedIn.role)) {
