@@ -126,7 +126,7 @@ class ApplicationServletTest {
     }
 
     @Test
-    void post_missingCv_redirectsProfile() throws Exception {
+    void post_missingCv_allowsApplication() throws Exception {
         var profile = TestFixtures.completeProfile("ta-1");
         profile.cvFileName = "";
         factory.getProfileService().upsert(profile);
@@ -139,6 +139,6 @@ class ApplicationServletTest {
                         "role", "TA"));
         HttpServletResponse resp = ServletTestSupport.mockResponse();
         servlet.doPost(req, resp);
-        verify(resp).sendRedirect(contains("/profile?msg="));
+        verify(resp).sendRedirect(contains("/applications?msg="));
     }
 }

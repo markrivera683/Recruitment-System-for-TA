@@ -75,7 +75,7 @@ public class ProfileService {
         return FileStore.toJsonArrayOfObjects(maps);
     }
 
-    /** Returns {@code true} when all required applicant fields and CV are present. */
+    /** Returns {@code true} when all required applicant fields are present (CV is optional). */
     public static boolean isApplicantProfileComplete(ApplicantProfile p) {
         if (p == null) {
             return false;
@@ -93,9 +93,6 @@ public class ProfileService {
             return false;
         }
         if (isBlank(p.educationJson)) {
-            return false;
-        }
-        if (isBlank(p.cvFileName)) {
             return false;
         }
         return !parseEducationJson(p.educationJson).isEmpty();
