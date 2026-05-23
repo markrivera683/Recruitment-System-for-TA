@@ -5,8 +5,11 @@ import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.Job;
 import com.bupt.ta.model.JobApplicationStats;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.ApplicationService;
+import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.JobService;
+import com.bupt.ta.service.NotificationService;
 import com.bupt.ta.service.ProfileService;
 
 import javax.servlet.ServletException;
@@ -14,8 +17,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
@@ -37,16 +38,20 @@ public class ApplicationServlet extends BaseServlet {
     private ApplicationService appService;
     private ProfileService profiles;
     private JobService jobService;
+    private AuthService auth;
+    private NotificationService notifications;
 
     /**
      * Initializes application, profile, and job services from {@code WEB-INF/data}.
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        appService = new ApplicationService(dataDir);
-        profiles = new ProfileService(dataDir);
-        jobService = new JobService(dataDir.resolve("jobs.json").toString());
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        appService = f.getApplicationService();
+        profiles = f.getProfileService();
+        jobService = f.getJobService();
+        auth = f.getAuthService();
+        notifications = f.getNotificationService();
     }
 
     /**
@@ -62,11 +67,10 @@ public class ApplicationServlet extends BaseServlet {
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        User u = currentUser(req);
-        if (u == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
+        User u = currentUser(req);
         String filter = req.getParameter("filter"); // All | Pending | Accepted | Rejected | Withdrawn
         if (filter == null || filter.trim().isEmpty()) filter = "All";
 
@@ -116,11 +120,10 @@ public class ApplicationServlet extends BaseServlet {
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        User u = currentUser(req);
-        if (u == null) {
-            resp.sendRedirect(req.getContextPath() + "/login");
+        if (!ensureTa(req, resp)) {
             return;
         }
+        User u = currentUser(req);
 
         String action = req.getParameter("action");
 
@@ -156,7 +159,9 @@ public class ApplicationServlet extends BaseServlet {
         // Require completed profile before applying for a job.
         ApplicantProfile profile = profiles.getByUserId(u.id).orElse(null);
         if (!isProfileComplete(profile)) {
-            String msg = urlEncode("Please complete your profile before applying for a job.");
+            String msg = urlEncode(profile != null && isBlank(profile.cvFileName)
+                    ? "Please upload your CV before applying for a job."
+                    : "Please complete your profile before applying for a job.");
             resp.sendRedirect(ctx + "/profile?msg=" + msg);
             return;
         }
@@ -169,6 +174,12 @@ public class ApplicationServlet extends BaseServlet {
         Job job = jobService.getJobById(jobId.trim());
         if (job == null) {
             resp.sendRedirect(ctx + "/job?err=" + urlEncode("That job listing no longer exists."));
+            return;
+        }
+
+        if (isPastDeadline(job.getApplicationDeadline())) {
+            resp.sendRedirect(ctx + "/job?id=" + urlEncode(jobId.trim()) + "&err=" + urlEncode(
+                    "The application deadline for this job has passed."));
             return;
         }
 
@@ -221,8 +232,31 @@ public class ApplicationServlet extends BaseServlet {
             return;
         }
 
+        String moduleLabel = pn + (pc.isEmpty() ? "" : " (" + pc + ")");
+        String applicantEmail = profile.email != null && !profile.email.trim().isEmpty()
+                ? profile.email.trim()
+                : auth.findById(u.id).map(user -> user.email).orElse("");
+        String applicantName = profile.fullName != null ? profile.fullName : u.name;
+        notifications.sendStatusChangeEmail(applicantEmail, applicantName, moduleLabel, "Pending", "");
+
         resp.sendRedirect(ctx + "/applications?msg=" + urlEncode(
                 "Application submitted for " + pn + (pc.isEmpty() ? "" : " (" + pc + ")") + "."));
+    }
+
+    private static boolean isPastDeadline(String deadline) {
+        if (deadline == null || deadline.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            LocalDate d = LocalDate.parse(deadline.trim());
+            return LocalDate.now().isAfter(d);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private static boolean isBlank(String s) {
+        return s == null || s.trim().isEmpty();
     }
 
     private static boolean isProfileComplete(ApplicantProfile p) {

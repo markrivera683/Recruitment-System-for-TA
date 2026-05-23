@@ -1,17 +1,14 @@
 package com.bupt.ta.integration;
 
 import com.bupt.ta.model.Application;
+import com.bupt.ta.model.Job;
 import com.bupt.ta.model.JobApplicationStats;
 import com.bupt.ta.model.User;
-import com.bupt.ta.service.ApplicationService;
-import com.bupt.ta.service.AuthService;
-import com.bupt.ta.service.JobService;
-import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.persistence.ServiceFactory;
+import com.bupt.ta.testsupport.FileTestSupport;
 import com.bupt.ta.testsupport.TestFixtures;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Path;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -19,27 +16,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ApplicationFlowIntegrationTest {
 
-    @TempDir
-    Path dataDir;
-
     @Test
     void moPublishTaApplyMoApprove() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        TestFixtures.writeJobsJson(dataDir, "[]");
-
-        AuthService auth = new AuthService(dataDir);
-        JobService jobs = new JobService(dataDir.resolve("jobs.json").toString());
-        ApplicationService apps = new ApplicationService(dataDir);
-        ProfileService profiles = new ProfileService(dataDir);
+        ServiceFactory factory = FileTestSupport.newFactory();
+        var auth = factory.getAuthService();
+        var jobs = factory.getJobService();
+        var apps = factory.getApplicationService();
+        var profiles = factory.getProfileService();
 
         User ta = auth.register("Applicant", TestFixtures.validBuptStudentId(), "applicant@bupt.edu.cn", "pass");
         profiles.upsert(TestFixtures.completeProfile(ta.id));
 
-        com.bupt.ta.model.Job job = TestFixtures.sampleJob(null, "CS101", "CS101");
+        Job job = TestFixtures.sampleJob(null, "CS101", "CS101");
         job.setStatus("Published");
         job.setDescription("Lab");
         jobs.createJob(job);
-        String jobId = jobs.getAllJobs().get(0).getId();
 
         Application app = TestFixtures.sampleApplication("app-1", ta.id, "CS101", "CS101");
         apps.save(app);
@@ -58,15 +49,20 @@ class ApplicationFlowIntegrationTest {
 
     @Test
     void fullSlotBlocksNewApplications() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        TestFixtures.writeJobsJson(dataDir, TestFixtures.jobJsonSingle("j1", "CS101", "CS101", "Published", "1"));
+        ServiceFactory factory = FileTestSupport.newFactory();
+        var apps = factory.getApplicationService();
+        var jobs = factory.getJobService();
 
-        ApplicationService apps = new ApplicationService(dataDir);
+        FileTestSupport.seedUser("u1", "u1@test.local");
+        Job job = TestFixtures.sampleJob("j1", "CS101", "CS101");
+        job.setNumberOfTAs("1");
+        job.setStatus("Published");
+        jobs.createJob(job);
+
         Application accepted = TestFixtures.sampleApplication("a1", "u1", "CS101", "CS101");
         accepted.status = "Accepted";
         apps.save(accepted);
 
-        JobService jobs = new JobService(dataDir.resolve("jobs.json").toString());
         int capacity = JobApplicationStats.parseCapacity(jobs.getJobById("j1").getNumberOfTAs());
         JobApplicationStats stats = JobApplicationStats.forJob(apps.listAll(), "CS101", "CS101");
         assertTrue(stats.accepted >= capacity);

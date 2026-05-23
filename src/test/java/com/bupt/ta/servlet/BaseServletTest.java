@@ -25,6 +25,10 @@ class BaseServletTest {
             return ensureMo(req, resp);
         }
 
+        boolean checkTa(HttpServletRequest req, HttpServletResponse resp) throws java.io.IOException {
+            return ensureTa(req, resp);
+        }
+
         User user(HttpServletRequest req) {
             return currentUser(req);
         }
@@ -101,5 +105,40 @@ class BaseServletTest {
         when(req.getSession(false)).thenReturn(session);
         assertEquals(false, servlet.checkMo(req, resp));
         verify(resp).sendError(HttpServletResponse.SC_FORBIDDEN);
+    }
+
+    @Test
+    void ensureTa_noUser_redirectsLogin() throws Exception {
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        HttpServletResponse resp = mock(HttpServletResponse.class);
+        when(req.getSession(false)).thenReturn(null);
+        when(req.getContextPath()).thenReturn("/ta-recruitment");
+        assertEquals(false, servlet.checkTa(req, resp));
+        verify(resp).sendRedirect("/ta-recruitment/login");
+    }
+
+    @Test
+    void ensureTa_moRole_forbidden() throws Exception {
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        HttpServletResponse resp = mock(HttpServletResponse.class);
+        User mo = new User("m1", "MO", "MO001", "mo@bupt.local", "x");
+        mo.role = Roles.MO;
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute("user")).thenReturn(mo);
+        when(req.getSession(false)).thenReturn(session);
+        assertEquals(false, servlet.checkTa(req, resp));
+        verify(resp).sendError(HttpServletResponse.SC_FORBIDDEN);
+    }
+
+    @Test
+    void ensureTa_taRole_ok() throws Exception {
+        HttpServletRequest req = mock(HttpServletRequest.class);
+        HttpServletResponse resp = mock(HttpServletResponse.class);
+        User ta = new User("t1", "TA", "2021000001", "t@bupt.edu.cn", "x");
+        ta.role = Roles.TA;
+        HttpSession session = mock(HttpSession.class);
+        when(session.getAttribute("user")).thenReturn(ta);
+        when(req.getSession(false)).thenReturn(session);
+        assertEquals(true, servlet.checkTa(req, resp));
     }
 }

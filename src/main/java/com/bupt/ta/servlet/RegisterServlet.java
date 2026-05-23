@@ -2,6 +2,7 @@ package com.bupt.ta.servlet;
 
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.ProfileService;
 import com.bupt.ta.util.ApplicantFieldValidation;
@@ -11,8 +12,6 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,9 +37,9 @@ public class RegisterServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        auth = new AuthService(dataDir);
-        profiles = new ProfileService(dataDir);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        auth = f.getAuthService();
+        profiles = f.getProfileService();
     }
 
     /**

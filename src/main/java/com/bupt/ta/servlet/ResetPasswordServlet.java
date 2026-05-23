@@ -1,5 +1,8 @@
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.persistence.ServiceFactory;
+import com.bupt.ta.service.PasswordResetService;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -7,46 +10,82 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
 /**
- * Displays the password-reset form and a demo completion message.
+ * Validates a reset token and sets a new bcrypt-hashed password.
  *
  * <p><b>URL pattern:</b> {@code /reset-password}
  *
  * <p><b>Role access:</b> Public (no login required).
- *
- * <p>Prototype placeholder: token validation and actual password change are not implemented.
  */
 @WebServlet(urlPatterns = {"/reset-password"})
 public class ResetPasswordServlet extends BaseServlet {
 
-    /**
-     * Forwards to the reset-password JSP.
-     *
-     * @param req  the incoming request
-     * @param resp the response
-     * @throws ServletException if the JSP forward fails
-     * @throws IOException      if an I/O error occurs
-     */
+    private PasswordResetService passwordReset;
+
+    @Override
+    public void init() {
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        passwordReset = f.getPasswordResetService();
+    }
+
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+        String token = req.getParameter("token");
+        if (token != null && !token.trim().isEmpty()) {
+            req.setAttribute("token", token.trim());
+            try {
+                if (!passwordReset.isValidToken(token.trim())) {
+                    req.setAttribute("error", "This reset link is invalid or has expired.");
+                    req.setAttribute("token", "");
+                }
+            } catch (IOException e) {
+                req.setAttribute("error", "Could not validate reset link.");
+                req.setAttribute("token", "");
+            }
+        }
         req.getRequestDispatcher("/WEB-INF/jsp/reset-password.jsp").forward(req, resp);
     }
 
-    /**
-     * Accepts reset form submission and displays a demo completion message.
-     *
-     * @param req  the incoming request
-     * @param resp the response; re-forwards to the reset-password JSP with a {@code message}
-     *             attribute
-     * @throws ServletException if the JSP forward fails
-     * @throws IOException      if an I/O error occurs
-     */
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
-        // Prototype placeholder: token validation not implemented.
-        req.setAttribute("message",
-            "Password reset completed (demo). You may now log in.");
+        String token = n(req.getParameter("token"));
+        String password = req.getParameter("password");
+        String confirm = req.getParameter("confirm");
+
+        if (token.isEmpty()) {
+            req.setAttribute("error", "Missing reset token. Use the link from your email.");
+            req.getRequestDispatcher("/WEB-INF/jsp/reset-password.jsp").forward(req, resp);
+            return;
+        }
+
+        if (password == null || password.trim().isEmpty()) {
+            req.setAttribute("token", token);
+            req.setAttribute("error", "Password is required.");
+            req.getRequestDispatcher("/WEB-INF/jsp/reset-password.jsp").forward(req, resp);
+            return;
+        }
+
+        if (!password.equals(confirm)) {
+            req.setAttribute("token", token);
+            req.setAttribute("error", "Passwords do not match.");
+            req.getRequestDispatcher("/WEB-INF/jsp/reset-password.jsp").forward(req, resp);
+            return;
+        }
+
+        try {
+            if (passwordReset.resetPassword(token, password)) {
+                req.setAttribute("message", "Password reset completed. You may now log in.");
+            } else {
+                req.setAttribute("error", "This reset link is invalid or has expired.");
+            }
+        } catch (IOException e) {
+            req.setAttribute("error", "Could not reset password. Please try again.");
+        }
         req.getRequestDispatcher("/WEB-INF/jsp/reset-password.jsp").forward(req, resp);
+    }
+
+    private static String n(String s) {
+        return s == null ? "" : s.trim();
     }
 }

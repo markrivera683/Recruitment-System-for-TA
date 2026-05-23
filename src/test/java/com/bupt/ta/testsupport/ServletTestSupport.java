@@ -23,9 +23,12 @@ public final class ServletTestSupport {
 
     public static ServletContext mockServletContext(Path dataDir) {
         ServletContext ctx = mock(ServletContext.class);
-        String path = dataDir.toAbsolutePath().toString().replace('\\', '/');
+        String path = dataDir != null
+                ? dataDir.toAbsolutePath().toString().replace('\\', '/')
+                : "/tmp/ta-test-data";
         when(ctx.getRealPath("/WEB-INF/data")).thenReturn(path);
         when(ctx.getRealPath("/WEB-INF/data/jobs.json")).thenReturn(path + "/jobs.json");
+        when(ctx.getRealPath("/WEB-INF/data/cv")).thenReturn(path + "/cv");
         when(ctx.getContextPath()).thenReturn("/ta-recruitment");
         RequestDispatcher dispatcher = mock(RequestDispatcher.class);
         when(ctx.getRequestDispatcher(anyString())).thenReturn(dispatcher);

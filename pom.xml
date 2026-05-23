@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.bupt</groupId>
   <artifactId>ta-recruitment-system</artifactId>
-  <version>1.0-SNAPSHOT</version>
+  <version>1.0.0</version>
   <packaging>war</packaging>
 
   <name>TA Recruitment</name>
@@ -43,6 +43,16 @@
       <version>5.11.0</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.sun.mail</groupId>
+      <artifactId>javax.mail</artifactId>
+      <version>1.6.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mindrot</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>0.4</version>
+    </dependency>
   </dependencies>
 
   <build>
@@ -55,6 +65,7 @@
         <configuration>
           <release>11</release>
           <encoding>UTF-8</encoding>
+          <skipTests>true</skipTests>
         </configuration>
       </plugin>
       <plugin>

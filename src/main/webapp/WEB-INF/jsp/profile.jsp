@@ -124,6 +124,7 @@
             enctype="multipart/form-data"
             novalidate
             data-editable="<%= editable ? "1" : "0" %>">
+        <input type="hidden" name="csrfToken" value="<%= com.bupt.ta.security.CsrfFilter.csrfToken(request) %>" />
 
         <div class="profile-form-grid">
           <div class="profile-panel profile-panel--personal">
@@ -382,6 +383,7 @@
         </div><!-- /profile-form-grid -->
       </form>
       <form id="form-delete-cv" method="post" action="${pageContext.request.contextPath}/profile" class="profile-hidden-form" aria-hidden="true">
+        <input type="hidden" name="csrfToken" value="<%= com.bupt.ta.security.CsrfFilter.csrfToken(request) %>" />
         <input type="hidden" name="action" value="deleteCvOnly" />
       </form>
       <div id="cv-delete-dialog" class="app-dialog-backdrop" role="presentation" aria-hidden="true">

@@ -1,21 +1,24 @@
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.ai.LmConfig;
 import com.bupt.ta.model.Application;
+import com.bupt.ta.model.Job;
 import com.bupt.ta.model.Roles;
 import com.bupt.ta.model.TaWorkloadStats;
 import com.bupt.ta.model.User;
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.ApplicationService;
 import com.bupt.ta.service.AuthService;
 import com.bupt.ta.service.JobService;
 import com.bupt.ta.service.WorkloadService;
+import com.bupt.ta.service.admin.AdminDashboardMetrics;
+import com.bupt.ta.service.admin.AdminMetricsBuilder;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -42,12 +45,11 @@ public class AdminServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        Path dataDir = Paths.get(getServletContext().getRealPath("/WEB-INF/data"));
-        auth = new AuthService(dataDir);
-        applications = new ApplicationService(dataDir);
-        String jobsPath = getServletContext().getRealPath("/WEB-INF/data/jobs.json");
-        jobs = new JobService(jobsPath);
-        workloadService = new WorkloadService();
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        auth = f.getAuthService();
+        applications = f.getApplicationService();
+        jobs = f.getJobService();
+        workloadService = f.getWorkloadService();
     }
 
     /**
@@ -70,12 +72,18 @@ public class AdminServlet extends BaseServlet {
         }
         List<User> users = auth.listAllUsers();
         List<Application> appList = applications.listAll();
+        List<Job> allJobs = jobs.getAllJobs();
         req.setAttribute("applications", appList);
         req.setAttribute("users", users);
-        req.setAttribute("jobs", jobs.getAllJobs());
+        req.setAttribute("jobs", allJobs);
 
         Map<String, TaWorkloadStats> taWorkload = workloadService.buildTaWorkloadStats(users, appList);
         req.setAttribute("taWorkload", taWorkload);
+
+        AdminDashboardMetrics metrics = AdminMetricsBuilder.build(users, appList, allJobs, taWorkload);
+        req.setAttribute("chartDataJson", AdminMetricsBuilder.toChartJson(metrics));
+        req.setAttribute("aiEnabled", LmConfig.load(getServletContext()).isEnabled());
+        req.setAttribute("highWorkloadTaCount", metrics.highWorkloadTaCount);
 
         List<User> taUsersWorkloadOrder = users.stream()
                 .filter(user -> user != null && Roles.TA.equals(user.role)

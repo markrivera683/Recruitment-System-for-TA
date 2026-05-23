@@ -1,16 +1,11 @@
 package com.bupt.ta.integration;
 
+import com.bupt.ta.model.Job;
 import com.bupt.ta.model.User;
-import com.bupt.ta.service.ApplicationService;
-import com.bupt.ta.service.AuthService;
-import com.bupt.ta.service.JobService;
-import com.bupt.ta.service.ProfileService;
+import com.bupt.ta.persistence.ServiceFactory;
+import com.bupt.ta.testsupport.FileTestSupport;
 import com.bupt.ta.testsupport.TestFixtures;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.file.Path;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,18 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class UserLifecycleIntegrationTest {
 
-    @TempDir
-    Path dataDir;
-
     @Test
     void registerLoginApplyAndDeleteUser() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        TestFixtures.writeJobsJson(dataDir, TestFixtures.jobJsonSingle("j1", "CS101", "CS101", "Published", "2"));
+        ServiceFactory factory = FileTestSupport.newFactory();
+        var auth = factory.getAuthService();
+        var profiles = factory.getProfileService();
+        var apps = factory.getApplicationService();
+        var jobs = factory.getJobService();
 
-        AuthService auth = new AuthService(dataDir);
-        ProfileService profiles = new ProfileService(dataDir);
-        ApplicationService apps = new ApplicationService(dataDir);
-        JobService jobs = new JobService(dataDir.resolve("jobs.json").toString());
+        Job j = TestFixtures.sampleJob("j1", "CS101", "CS101");
+        jobs.createJob(j);
 
         User u = auth.register("Integration User", TestFixtures.validBuptStudentId(),
                 "integration@bupt.edu.cn", "pass123");

@@ -21,9 +21,11 @@ public final class TestFixtures {
         Files.createDirectories(dataDir);
         for (String file : new String[]{
                 "applications.json", "users.json", "profiles.json",
-                "favorites.json", "recently-viewed.json"}) {
+                "favorites.json", "recently-viewed.json",
+                "audit-logs.json", "password-reset-tokens.json"}) {
             Files.write(dataDir.resolve(file), "[]".getBytes(StandardCharsets.UTF_8));
         }
+        Files.write(dataDir.resolve("jobs.json"), "[]".getBytes(StandardCharsets.UTF_8));
     }
 
     public static void writeJobsJson(Path dataDir, String json) throws IOException {
@@ -90,6 +92,8 @@ public final class TestFixtures {
         j.setNumberOfTAs("2");
         j.setStatus("Published");
         j.setPostDate("2026-01-01");
+        j.setApplicationDeadline("2026-12-31");
+        j.setCreatedByMoId("mo-1");
         j.setWorkloadHours("4h/week");
         return j;
     }
@@ -109,6 +113,7 @@ public final class TestFixtures {
         p.freeTime = "Evenings";
         p.skills = "Java";
         p.educationJson = "[{\"school\":\"BUPT\",\"degree\":\"BSc\",\"major\":\"CS\",\"period\":\"2020-2024\"}]";
+        p.cvFileName = "resume.pdf";
         return p;
     }
 

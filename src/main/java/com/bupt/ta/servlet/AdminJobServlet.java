@@ -1,5 +1,6 @@
 package com.bupt.ta.servlet;
 
+import com.bupt.ta.persistence.ServiceFactory;
 import com.bupt.ta.service.JobService;
 
 import javax.servlet.ServletException;
@@ -27,8 +28,8 @@ public class AdminJobServlet extends BaseServlet {
      */
     @Override
     public void init() {
-        String p = getServletContext().getRealPath("/WEB-INF/data/jobs.json");
-        this.jobService = new JobService(p);
+        ServiceFactory f = (ServiceFactory) getServletContext().getAttribute(ServiceFactory.SERVLET_CONTEXT_KEY);
+        this.jobService = f.getJobService();
     }
 
     /**

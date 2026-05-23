@@ -2,13 +2,10 @@ package com.bupt.ta.service;
 
 import com.bupt.ta.model.ApplicantProfile;
 import com.bupt.ta.model.EducationEntry;
+import com.bupt.ta.persistence.ServiceFactory;
+import com.bupt.ta.testsupport.FileTestSupport;
 import com.bupt.ta.testsupport.TestFixtures;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -23,6 +20,13 @@ class ProfileServiceTest {
     void isApplicantProfileComplete_falseWhenSkillsMissing() {
         ApplicantProfile p = TestFixtures.completeProfile("u1");
         p.skills = "";
+        assertFalse(ProfileService.isApplicantProfileComplete(p));
+    }
+
+    @Test
+    void isApplicantProfileComplete_falseWhenCvMissing() {
+        ApplicantProfile p = TestFixtures.completeProfile("u1");
+        p.cvFileName = "";
         assertFalse(ProfileService.isApplicantProfileComplete(p));
     }
 
@@ -78,25 +82,23 @@ class ProfileServiceTest {
     }
 
     @Test
-    void getByUserId_loadsStoredProfile(@TempDir Path dataDir) throws Exception {
+    void getByUserId_loadsStoredProfile() throws Exception {
+        ServiceFactory factory = FileTestSupport.newFactory();
+        FileTestSupport.seedUser("u9", "u9@bupt.edu.cn");
+        ProfileService svc = factory.getProfileService();
         ApplicantProfile p = TestFixtures.completeProfile("u9");
         p.fullName = "Ann";
-        Files.write(dataDir.resolve("profiles.json"),
-                ("[{\"userId\":\"u9\",\"fullName\":\"Ann\",\"gender\":\"F\",\"degree\":\"Master\","
-                        + "\"major\":\"CS\",\"studentId\":\"S9\",\"idCard\":\"ID9\",\"phone\":\"+8613800138000\","
-                        + "\"email\":\"a@bupt.edu.cn\",\"educationJson\":\"[{\\\"school\\\":\\\"BUPT\\\""
-                        + ",\\\"degree\\\":\\\"BSc\\\",\\\"major\\\":\\\"CS\\\",\\\"period\\\":\\\"2020-2024\\\"}]\","
-                        + "\"courses\":\"CS101\",\"freeTime\":\"Mon\",\"skills\":\"Java\"}]")
-                        .getBytes(StandardCharsets.UTF_8));
-        Optional<ApplicantProfile> loaded = new ProfileService(dataDir).getByUserId("u9");
+        svc.upsert(p);
+        Optional<ApplicantProfile> loaded = svc.getByUserId("u9");
         assertTrue(loaded.isPresent());
         assertEquals("Ann", loaded.get().fullName);
     }
 
     @Test
-    void upsert_overwritesExistingProfile(@TempDir Path dataDir) throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ProfileService svc = new ProfileService(dataDir);
+    void upsert_overwritesExistingProfile() throws Exception {
+        ServiceFactory factory = FileTestSupport.newFactory();
+        FileTestSupport.seedUser("u1", "u1@bupt.edu.cn");
+        ProfileService svc = factory.getProfileService();
         ApplicantProfile p1 = TestFixtures.completeProfile("u1");
         p1.fullName = "First";
         svc.upsert(p1);
@@ -107,9 +109,10 @@ class ProfileServiceTest {
     }
 
     @Test
-    void deleteByUserId_removesProfile(@TempDir Path dataDir) throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ProfileService svc = new ProfileService(dataDir);
+    void deleteByUserId_removesProfile() throws Exception {
+        ServiceFactory factory = FileTestSupport.newFactory();
+        FileTestSupport.seedUser("u1", "u1@bupt.edu.cn");
+        ProfileService svc = factory.getProfileService();
         svc.upsert(TestFixtures.completeProfile("u1"));
         svc.deleteByUserId("u1");
         assertFalse(svc.getByUserId("u1").isPresent());
@@ -136,8 +139,8 @@ class ProfileServiceTest {
     }
 
     @Test
-    void getByUserId_missing_returnsEmpty(@TempDir Path dataDir) throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        assertFalse(new ProfileService(dataDir).getByUserId("missing").isPresent());
+    void getByUserId_missing_returnsEmpty() throws Exception {
+        ServiceFactory factory = FileTestSupport.newFactory();
+        assertFalse(factory.getProfileService().getByUserId("missing").isPresent());
     }
 }

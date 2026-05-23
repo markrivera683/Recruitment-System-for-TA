@@ -1,11 +1,12 @@
 package com.bupt.ta.service;
 
 import com.bupt.ta.model.Application;
+import com.bupt.ta.persistence.ServiceFactory;
+import com.bupt.ta.testsupport.FileTestSupport;
 import com.bupt.ta.testsupport.TestFixtures;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
-import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -15,13 +16,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ApplicationServiceTest {
 
-    @TempDir
-    Path dataDir;
+    private ApplicationService svc;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        ServiceFactory factory = FileTestSupport.newFactory();
+        svc = factory.getApplicationService();
+    }
+
+    private void seedUser(String userId) throws Exception {
+        FileTestSupport.seedUser(userId, userId + "@test.local");
+    }
 
     @Test
     void saveAndGetByUserId_returnsSubmittedApplication() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("user-1");
         Application app = TestFixtures.sampleApplication("app-1", "user-1", "CS101", "CS101");
         svc.save(app);
         List<Application> mine = svc.getByUserId("user-1");
@@ -32,8 +41,7 @@ class ApplicationServiceTest {
 
     @Test
     void updateStatus_changesStoredStatusAndFeedback() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("user-2");
         svc.save(TestFixtures.sampleApplication("app-2", "user-2", "MATH201", "MATH201"));
         svc.updateStatus("app-2", "Accepted", "Welcome aboard");
         Optional<Application> found = svc.findById("app-2");
@@ -44,8 +52,8 @@ class ApplicationServiceTest {
 
     @Test
     void getByUserId_doesNotReturnOtherUsersApplications() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("user-a");
+        seedUser("user-b");
         svc.save(TestFixtures.sampleApplication("a1", "user-a", "ENG101", "ENG101"));
         svc.save(TestFixtures.sampleApplication("a2", "user-b", "PHY150", "PHY150"));
         assertEquals(1, svc.getByUserId("user-a").size());
@@ -53,8 +61,8 @@ class ApplicationServiceTest {
 
     @Test
     void listAll_returnsAllApplications() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("u1");
+        seedUser("u2");
         svc.save(TestFixtures.sampleApplication("a1", "u1", "A", "A"));
         svc.save(TestFixtures.sampleApplication("a2", "u2", "B", "B"));
         assertEquals(2, svc.listAll().size());
@@ -62,16 +70,13 @@ class ApplicationServiceTest {
 
     @Test
     void findById_nullOrEmpty_returnsEmpty() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
         assertFalse(svc.findById(null).isPresent());
         assertFalse(svc.findById("").isPresent());
     }
 
     @Test
     void save_upsertsSameId() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("u1");
         Application a = TestFixtures.sampleApplication("same", "u1", "CS101", "CS101");
         svc.save(a);
         a.status = "Accepted";
@@ -81,16 +86,13 @@ class ApplicationServiceTest {
 
     @Test
     void updateStatus_unknownId_noOp() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
         svc.updateStatus("missing", "Accepted", "x");
         assertEquals(0, svc.listAll().size());
     }
 
     @Test
     void deleteByUserId_removesAllForUser() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        ApplicationService svc = new ApplicationService(dataDir);
+        seedUser("u1");
         svc.save(TestFixtures.sampleApplication("a1", "u1", "A", "A"));
         svc.save(TestFixtures.sampleApplication("a2", "u1", "B", "B"));
         svc.deleteByUserId("u1");
@@ -99,7 +101,6 @@ class ApplicationServiceTest {
 
     @Test
     void getByUserId_nullUserId_returnsEmpty() throws Exception {
-        TestFixtures.seedEmptyDataDir(dataDir);
-        assertTrue(new ApplicationService(dataDir).getByUserId(null).isEmpty());
+        assertTrue(svc.getByUserId(null).isEmpty());
     }
 }
