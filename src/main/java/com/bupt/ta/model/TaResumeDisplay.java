@@ -65,6 +65,8 @@ public class TaResumeDisplay {
     }
 
     /**
+     * Returns whether education rows are present for display.
+     *
      * @return {@code true} if {@link #visibleEducation} contains at least one row
      */
     public boolean hasEducationRows() {

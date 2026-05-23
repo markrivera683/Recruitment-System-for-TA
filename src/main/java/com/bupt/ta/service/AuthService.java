@@ -16,12 +16,23 @@ import java.util.stream.Collectors;
 
 /**
  * Authentication and user-account persistence backed by {@code users.json}.
+ *
+ * <p>Handles registration, login verification, admin user lifecycle (activate/deactivate/delete),
+ * and password hash updates. New registrations receive {@link com.bupt.ta.model.Roles#TA} by default;
+ * passwords are stored via {@link com.bupt.ta.security.PasswordHasher} (BCrypt with legacy plaintext fallback).
+ *
+ * <p>Not thread-safe: intended for single-threaded servlet request handling against one data directory.
+ *
+ * @see com.bupt.ta.servlet.LoginServlet
+ * @see com.bupt.ta.servlet.RegisterServlet
+ * @see com.bupt.ta.servlet.AdminUserServlet
  */
 public class AuthService {
 
     private static final String USERS_JSON = "users.json";
     private final FileStore store;
 
+    /** @param dataDir directory containing {@code users.json} */
     public AuthService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
@@ -71,6 +82,7 @@ public class AuthService {
         store.writeMaps(USERS_JSON, rows);
     }
 
+    /** Finds a user by email address (case-insensitive). */
     public Optional<User> findByEmail(String email) throws IOException {
         if (email == null || email.trim().isEmpty()) {
             return Optional.empty();
@@ -80,6 +92,7 @@ public class AuthService {
                 .findFirst();
     }
 
+    /** Finds a user by primary key. */
     public Optional<User> findById(String id) throws IOException {
         if (id == null || id.isEmpty()) {
             return Optional.empty();
@@ -89,6 +102,11 @@ public class AuthService {
                 .findFirst();
     }
 
+    /**
+     * Registers a new TA account with a BCrypt password hash.
+     *
+     * @throws IllegalArgumentException when the email is already registered
+     */
     public User register(String name, String studentId, String email, String password) throws IOException {
         if (findByEmail(email).isPresent()) {
             throw new IllegalArgumentException("Email already registered");
@@ -109,6 +127,7 @@ public class AuthService {
         return u;
     }
 
+    /** Validates email/password without checking the {@code active} flag. */
     public Optional<User> verifyCredentials(String email, String password) throws IOException {
         Optional<User> u = findByEmail(email);
         if (!u.isPresent()) {
@@ -121,6 +140,7 @@ public class AuthService {
         return Optional.of(user);
     }
 
+    /** Authenticates an active user; inactive accounts are rejected. */
     public Optional<User> login(String email, String password) throws IOException {
         Optional<User> u = verifyCredentials(email, password);
         if (!u.isPresent()) {
@@ -132,6 +152,11 @@ public class AuthService {
         return u;
     }
 
+    /**
+     * Activates or deactivates a user account.
+     *
+     * @throws IllegalStateException when {@code userId} is unknown
+     */
     public void setUserActive(String userId, boolean active) throws IOException {
         List<User> users = loadAll();
         boolean found = false;
@@ -148,6 +173,11 @@ public class AuthService {
         saveAll(users);
     }
 
+    /**
+     * Permanently deletes a user row from {@code users.json}.
+     *
+     * @throws IllegalStateException when {@code userId} is unknown
+     */
     public void removeUserRecord(String userId) throws IOException {
         List<User> users = loadAll();
         boolean removed = users.removeIf(u -> userId.equals(u.id));
@@ -157,10 +187,17 @@ public class AuthService {
         saveAll(users);
     }
 
+    /** Counts accounts with role {@link Roles#ADMIN}. */
     public long countAdmins() throws IOException {
         return loadAll().stream().filter(u -> Roles.ADMIN.equals(u.role)).count();
     }
 
+    /**
+     * Updates display name, student id, and email for an existing user.
+     *
+     * @throws IllegalArgumentException for invalid input or duplicate email
+     * @throws IllegalStateException when the user row cannot be found
+     */
     public void updateUserBasics(User user, String newName, String newStudentId, String newEmail)
             throws IOException {
         if (user == null || user.id == null || user.id.isEmpty()) {
@@ -193,10 +230,16 @@ public class AuthService {
         throw new IllegalStateException("User not found: " + user.id);
     }
 
+    /** Returns every user account (admin user-management screens). */
     public List<User> listAllUsers() throws IOException {
         return loadAll();
     }
 
+    /**
+     * Inserts a pre-built user row (assigns UUID when id is blank).
+     *
+     * @throws IllegalArgumentException when email is already registered
+     */
     public User insertUser(User u) throws IOException {
         if (u.id == null || u.id.isEmpty()) {
             u.id = UUID.randomUUID().toString();
@@ -210,6 +253,11 @@ public class AuthService {
         return u;
     }
 
+    /**
+     * Replaces the stored password hash for one user.
+     *
+     * @throws IllegalStateException when {@code userId} is unknown
+     */
     public void updatePasswordHash(String userId, String passwordHash) throws IOException {
         if (userId == null || userId.isEmpty()) {
             throw new IllegalArgumentException("Invalid user");
@@ -229,6 +277,11 @@ public class AuthService {
         saveAll(users);
     }
 
+    /**
+     * Creates a TA or MO account from the admin console.
+     *
+     * @throws IllegalArgumentException for missing fields, invalid role, or duplicate email
+     */
     public User createUserByAdmin(String name, String email, String password, String role) throws IOException {
         if (email == null || email.trim().isEmpty()) {
             throw new IllegalArgumentException("Email is required");

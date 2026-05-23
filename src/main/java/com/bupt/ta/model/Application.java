@@ -15,7 +15,7 @@ public class Application {
     public String id;
     /** {@link User#id} of the applicant who submitted this application. */
     public String userId;
-    /** Human-readable module name; must match the target {@link Job#moduleName} for stats. */
+    /** Human-readable module name; must match the target {@link Job#getModuleName()} for stats. */
     public String moduleName;
     /** Module code; paired with {@link #moduleName} to identify the job posting. */
     public String moduleCode;

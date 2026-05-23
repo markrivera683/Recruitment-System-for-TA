@@ -13,6 +13,13 @@ import java.util.Properties;
 
 /**
  * Sends email via SMTP when configured through environment variables; otherwise no-op.
+ *
+ * <p>Resolution order matches {@link com.bupt.ta.util.AppConfig}: environment variable,
+ * JVM property, then defaults. Used for password-reset links and optional application-status
+ * notifications. When {@code SMTP_HOST} or {@code SMTP_FROM} is unset, {@link #sendPlainText} returns
+ * silently without throwing.
+ *
+ * @see com.bupt.ta.util.AppConfig
  */
 public class NotificationService {
 
@@ -20,6 +27,7 @@ public class NotificationService {
     private final Session session;
     private final String fromAddress;
 
+    /** Reads SMTP settings from {@link AppConfig}; becomes no-op when host/from are unset. */
     public NotificationService() {
         String host = AppConfig.resolve("SMTP_HOST", new String[]{"smtp.host"}, null, "smtp.host", "");
         String port = AppConfig.resolve("SMTP_PORT", new String[]{"smtp.port"}, null, "smtp.port", "587");
@@ -49,10 +57,12 @@ public class NotificationService {
         }
     }
 
+    /** Returns {@code true} when SMTP host and from-address are configured. */
     public boolean isConfigured() {
         return configured;
     }
 
+    /** Sends UTF-8 plain text when configured; silently no-op otherwise or on delivery failure. */
     public void sendPlainText(String to, String subject, String body) {
         if (!configured || to == null || to.trim().isEmpty()) {
             return;

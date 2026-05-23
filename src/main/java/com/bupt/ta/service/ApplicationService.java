@@ -14,12 +14,24 @@ import java.util.stream.Collectors;
 
 /**
  * Service for managing TA job applications persisted in {@code applications.json}.
+ *
+ * <p>Supports listing, submission, withdrawal, and status updates (including MO/admin decisions).
+ * Each record links a {@link com.bupt.ta.model.User} to a module/role with {@code Pending},
+ * {@code Accepted}, or {@code Rejected} status and optional MO feedback.
+ *
+ * <p>Not thread-safe: file I/O via {@link FileStore} on a shared JSON file per deployment.
+ *
+ * @see com.bupt.ta.servlet.ApplicationServlet
+ * @see com.bupt.ta.servlet.MoServlet
  */
 public class ApplicationService {
 
     private static final String APPLICATIONS_JSON = "applications.json";
     private final FileStore store;
 
+    /**
+     * @param dataDir directory containing {@code applications.json}
+     */
     public ApplicationService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
@@ -67,6 +79,7 @@ public class ApplicationService {
         store.writeMaps(APPLICATIONS_JSON, rows);
     }
 
+    /** Returns all applications submitted by the given user (empty list when {@code userId} is null). */
     public List<Application> getByUserId(String userId) throws IOException {
         if (userId == null) {
             return new ArrayList<>();
@@ -76,10 +89,12 @@ public class ApplicationService {
                 .collect(Collectors.toList());
     }
 
+    /** Returns every application row in {@code applications.json}. */
     public List<Application> listAll() throws IOException {
         return loadAll();
     }
 
+    /** Looks up a single application by primary key. */
     public Optional<Application> findById(String appId) throws IOException {
         if (appId == null || appId.isEmpty()) {
             return Optional.empty();
@@ -89,6 +104,11 @@ public class ApplicationService {
                 .findFirst();
     }
 
+    /**
+     * Inserts or replaces an application (assigns UUID when {@code app.id} is blank).
+     *
+     * @return the persisted application with id set
+     */
     public Application save(Application app) throws IOException {
         if (app.id == null || app.id.isEmpty()) {
             app.id = UUID.randomUUID().toString();
@@ -100,6 +120,7 @@ public class ApplicationService {
         return app;
     }
 
+    /** Updates pipeline status and MO feedback for one application; no-op when id is unknown. */
     public void updateStatus(String appId, String status, String feedback) throws IOException {
         List<Application> apps = loadAll();
         for (Application a : apps) {
@@ -112,6 +133,7 @@ public class ApplicationService {
         }
     }
 
+    /** Removes all applications owned by {@code userId} (account deletion cascade). */
     public void deleteByUserId(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return;

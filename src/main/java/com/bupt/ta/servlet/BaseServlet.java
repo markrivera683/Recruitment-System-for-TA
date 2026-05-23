@@ -102,6 +102,12 @@ public abstract class BaseServlet extends HttpServlet {
      *
      * <p>Unauthenticated users are redirected to {@code /login}. Authenticated non-TA users receive
      * HTTP 403 Forbidden.
+     *
+     * @param req  the incoming request
+     * @param resp the response used for redirect or error
+     * @return {@code true} if the caller is a TA and may continue; {@code false} if the response
+     *         has already been committed (redirect or 403)
+     * @throws IOException if sending the redirect or error fails
      */
     protected boolean ensureTa(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         User u = currentUser(req);
@@ -116,12 +122,22 @@ public abstract class BaseServlet extends HttpServlet {
         return true;
     }
 
-    /** Returns the CSRF token for the current session (see {@link CsrfFilter}). */
+    /**
+     * Returns the CSRF token for the current session (see {@link CsrfFilter}).
+     *
+     * @param req the incoming request
+     * @return session CSRF token, or {@code null} when no session exists
+     */
     protected String csrfToken(HttpServletRequest req) {
         return CsrfFilter.csrfToken(req);
     }
 
-    /** Validates the submitted CSRF token against the session value. */
+    /**
+     * Validates the submitted CSRF token against the session value.
+     *
+     * @param req the incoming request (form field or header)
+     * @return {@code true} when the token matches the session value
+     */
     protected boolean validateCsrf(HttpServletRequest req) {
         return CsrfFilter.validateCsrf(req);
     }

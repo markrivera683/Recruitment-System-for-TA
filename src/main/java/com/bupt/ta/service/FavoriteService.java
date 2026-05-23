@@ -12,16 +12,23 @@ import java.util.stream.Collectors;
 
 /**
  * Manages per-user job favorites in {@code favorites.json}.
+ *
+ * <p>Each row maps a {@code userId} to a {@code jobId}. Used by the TA job browser to highlight
+ * starred postings and sort favorites first. Idempotent add/remove operations.
+ *
+ * @see com.bupt.ta.servlet.JobServlet
  */
 public class FavoriteService {
 
     private static final String FAVORITES_JSON = "favorites.json";
     private final FileStore store;
 
+    /** @param dataDir directory containing {@code favorites.json} */
     public FavoriteService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
 
+    /** Returns job ids starred by the user (stable insertion order). */
     public Set<String> getFavoriteJobIds(String userId) throws IOException {
         Set<String> ids = new LinkedHashSet<>();
         if (userId == null || userId.isEmpty()) {
@@ -38,6 +45,7 @@ public class FavoriteService {
         return ids;
     }
 
+    /** Returns whether the user has favorited the job. */
     public boolean isFavorite(String userId, String jobId) throws IOException {
         if (userId == null || userId.isEmpty() || jobId == null || jobId.isEmpty()) {
             return false;
@@ -46,6 +54,11 @@ public class FavoriteService {
                 .anyMatch(m -> userId.equals(m.get("userId")) && jobId.equals(m.get("jobId")));
     }
 
+    /**
+     * Adds or removes a favorite row.
+     *
+     * @return {@code true} when the job is now favorited; {@code false} when removed or inputs invalid
+     */
     public boolean toggleFavorite(String userId, String jobId) throws IOException {
         if (userId == null || userId.isEmpty() || jobId == null || jobId.isEmpty()) {
             return false;

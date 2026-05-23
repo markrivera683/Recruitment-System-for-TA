@@ -43,6 +43,8 @@ public final class ApplicantFieldValidation {
     }
 
     /**
+     * Checks whether the degree is an allowed applicant study level.
+     *
      * @param degree degree string to validate; null is rejected
      * @return {@code true} if {@code degree} is a whitelisted study level after trimming
      */
