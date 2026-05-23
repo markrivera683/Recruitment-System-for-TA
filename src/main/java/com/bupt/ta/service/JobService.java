@@ -125,13 +125,13 @@ public class JobService {
         sb.append("    \"applicationDeadline\": \"").append(esc(job.getApplicationDeadline())).append("\",\n");
         sb.append("    \"duration\": \"").append(esc(job.getDuration())).append("\",\n");
         sb.append("    \"numberOfTAs\": \"").append(esc(job.getNumberOfTAs())).append("\",\n");
-        sb.append("    \"schedule\": ").append(skillsToJson(job.getSchedule())).append("\n");
-        sb.append("  }");
+        sb.append("    \"schedule\": ").append(skillsToJson(job.getSchedule())).append(",\n");
         sb.append("    \"status\": \"").append(esc(firstNonEmpty(job.getStatus(), "Published"))).append("\",\n");
         sb.append("    \"createdByMoId\": \"").append(esc(job.getCreatedByMoId())).append("\",\n");
         sb.append("    \"createdAt\": \"").append(esc(job.getCreatedAt())).append("\",\n");
         sb.append("    \"publishedAt\": \"").append(esc(job.getPublishedAt())).append("\",\n");
-        sb.append("    \"workloadHours\": \"").append(esc(job.getWorkloadHours())).append("\",\n");
+        sb.append("    \"workloadHours\": \"").append(esc(job.getWorkloadHours())).append("\"\n");
+        sb.append("  }");
         return sb.toString();
     }
 
