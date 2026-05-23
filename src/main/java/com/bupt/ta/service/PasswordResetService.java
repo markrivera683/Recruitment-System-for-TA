@@ -16,6 +16,12 @@ import java.util.logging.Logger;
 
 /**
  * Creates, validates, and consumes password reset tokens stored in {@code password-reset-tokens.json}.
+ *
+ * <p>Tokens are single-use, time-limited (24 hours), and emailed via {@link NotificationService}
+ * when SMTP is configured. {@link com.bupt.ta.servlet.ForgotPasswordServlet} and
+ * {@link com.bupt.ta.servlet.ResetPasswordServlet} orchestrate the user-facing flow.
+ *
+ * <p>Successful reset updates the user's password hash through {@link AuthService}.
  */
 public class PasswordResetService {
 
@@ -27,12 +33,22 @@ public class PasswordResetService {
     private final AuthService users;
     private final NotificationService notifications;
 
+    /**
+     * @param dataDir       directory for {@code password-reset-tokens.json}
+     * @param users         user lookup and password updates
+     * @param notifications email delivery (optional)
+     */
     public PasswordResetService(Path dataDir, AuthService users, NotificationService notifications) {
         this.store = new FileStore(dataDir);
         this.users = users;
         this.notifications = notifications;
     }
 
+    /**
+     * Creates a single-use token for the account matching {@code email}.
+     *
+     * @return token when the email exists; empty when unknown
+     */
     public Optional<String> createTokenForEmail(String email) throws IOException {
         return users.findByEmail(email).map(user -> {
             try {
@@ -58,10 +74,12 @@ public class PasswordResetService {
         });
     }
 
+    /** Returns {@code true} when the token exists and has not expired. */
     public boolean isValidToken(String token) throws IOException {
         return findValidRow(token).isPresent();
     }
 
+    /** Updates the user password and deletes the token when valid. */
     public boolean resetPassword(String token, String newPassword) throws IOException {
         Optional<TokenRow> row = findValidRow(token);
         if (!row.isPresent()) {
@@ -76,6 +94,7 @@ public class PasswordResetService {
         return true;
     }
 
+    /** Deletes a token without changing the password (invalid link handling). */
     public void consumeToken(String token) throws IOException {
         deleteByToken(token);
     }

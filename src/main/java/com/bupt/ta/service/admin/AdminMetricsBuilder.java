@@ -17,11 +17,26 @@ import java.util.TreeMap;
 
 /**
  * Builds dashboard metrics and chart-ready JSON from users, applications, and jobs.
+ *
+ * <p>Pure static helpers — no I/O. Consumed by {@link com.bupt.ta.servlet.AdminServlet} for JSP
+ * chart data and by {@link com.bupt.ta.service.ai.AdminAnalyticsService} for LM user prompts.
+ * {@link #toChartJson} emits compact JSON embedded in the admin dashboard page for Chart.js.
+ *
+ * <p>This class is not instantiable.
  */
 public final class AdminMetricsBuilder {
 
     private AdminMetricsBuilder() {}
 
+    /**
+     * Aggregates role counts, pipeline status, monthly trends, top modules, and workload alerts.
+     *
+     * @param users         all accounts (nullable → empty)
+     * @param applications  all application rows (nullable → empty)
+     * @param jobs          all job postings (nullable → empty)
+     * @param taWorkload    per-TA stats from {@link com.bupt.ta.service.WorkloadService}
+     * @return mutable metrics snapshot for charts and AI
+     */
     public static AdminDashboardMetrics build(
             List<User> users,
             List<Application> applications,
@@ -118,7 +133,12 @@ public final class AdminMetricsBuilder {
         return m;
     }
 
-    /** Compact JSON for Chart.js in admin dashboard JSP. */
+    /**
+     * Serializes metrics to JSON for the {@code #admin-chart-data} script block.
+     *
+     * @param m metrics from {@link #build}; {@code null} yields {@code {}}
+     * @return UTF-8 JSON string (not HTML-escaped)
+     */
     public static String toChartJson(AdminDashboardMetrics m) {
         if (m == null) {
             return "{}";
@@ -145,6 +165,12 @@ public final class AdminMetricsBuilder {
         return sb.toString();
     }
 
+    /**
+     * Plain-text prompt section listing all metrics for {@link com.bupt.ta.service.ai.AdminAnalyticsService}.
+     *
+     * @param m metrics snapshot; {@code null} yields empty string
+     * @return factual bullet-style text (no Markdown) for LM user prompt
+     */
     public static String buildAnalyticsPrompt(AdminDashboardMetrics m) {
         if (m == null) {
             return "";

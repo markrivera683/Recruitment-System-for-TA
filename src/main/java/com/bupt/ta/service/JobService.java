@@ -18,19 +18,31 @@ import java.util.stream.Collectors;
 
 /**
  * Service for reading and writing TA job postings from {@code jobs.json}.
+ *
+ * <p>Jobs are stored as a JSON array with nested fields (skills, schedule, capacity). MO users
+ * create and publish vacancies; TAs browse published jobs via {@link com.bupt.ta.servlet.JobServlet}.
+ * Admin can inspect or delete entries from the same file.
+ *
+ * <p>Uses hand-rolled JSON read/write (no external library). Not thread-safe for concurrent writes.
+ *
+ * @see com.bupt.ta.model.Job
+ * @see com.bupt.ta.servlet.MoServlet
  */
 public class JobService {
 
     private final String jobsJsonPath;
 
+    /** @param jobsJsonPath absolute or relative path to {@code jobs.json} */
     public JobService(String jobsJsonPath) {
         this.jobsJsonPath = jobsJsonPath;
     }
 
+    /** Convenience constructor resolving {@code dataDir/jobs.json}. */
     public JobService(Path dataDir) {
         this(dataDir.resolve("jobs.json").toString());
     }
 
+    /** Loads every job from disk (returns empty list when the file is missing). */
     public List<Job> getAllJobs() {
         List<Job> jobs = new ArrayList<>();
         try {
@@ -50,6 +62,7 @@ public class JobService {
         return jobs;
     }
 
+    /** Removes one job by id when present. */
     public void deleteJobById(String id) throws IOException {
         if (id == null || id.isEmpty()) {
             return;
@@ -69,6 +82,7 @@ public class JobService {
         }
     }
 
+    /** Returns a job by id, or {@code null} when not found. */
     public Job getJobById(String id) {
         if (id == null) {
             return null;
@@ -81,6 +95,7 @@ public class JobService {
         return null;
     }
 
+    /** Lists jobs visible to applicants (excludes Draft and Closed). */
     public List<Job> listPublishedJobs() {
         return getAllJobs().stream()
                 .filter(j -> {
@@ -90,6 +105,7 @@ public class JobService {
                 .collect(Collectors.toList());
     }
 
+    /** Returns all jobs created by the given module owner. */
     public List<Job> getJobsByMoId(String moId) {
         if (moId == null || moId.trim().isEmpty()) {
             return new ArrayList<>();
@@ -100,6 +116,7 @@ public class JobService {
                 .collect(Collectors.toList());
     }
 
+    /** Returns {@code true} when {@code jobId} belongs to {@code moId}. */
     public boolean isOwnedByMo(String jobId, String moId) throws IOException {
         if (jobId == null || jobId.trim().isEmpty() || moId == null || moId.trim().isEmpty()) {
             return false;
@@ -108,6 +125,11 @@ public class JobService {
         return j != null && moId.trim().equals(n(j.getCreatedByMoId()));
     }
 
+    /**
+     * Updates editable fields on an MO-owned job that is not closed.
+     *
+     * @return {@code false} when ownership fails, job is missing, or status is Closed
+     */
     public boolean updateJobFields(String jobId, String moId, String moduleName, String moduleCode,
                                    String description, String deadline, List<String> skills) throws IOException {
         if (!isOwnedByMo(jobId, moId)) {
@@ -142,6 +164,7 @@ public class JobService {
         return true;
     }
 
+    /** Sets status to Closed when the MO owns the job. */
     public boolean closeJob(String jobId, String moId) throws IOException {
         if (!isOwnedByMo(jobId, moId)) {
             return false;
@@ -157,6 +180,11 @@ public class JobService {
         return true;
     }
 
+    /**
+     * Appends a new job with default timestamps and status.
+     *
+     * @return the persisted job (id assigned when blank)
+     */
     public Job createJob(Job job) throws IOException {
         String today = LocalDate.now().toString();
         if (job.getId() == null || job.getId().trim().isEmpty()) {
@@ -183,6 +211,7 @@ public class JobService {
         return job;
     }
 
+    /** Transitions a job to Published and fills post/publish dates when absent. */
     public boolean publishJob(String jobId, String moId) throws IOException {
         if (jobId == null || jobId.trim().isEmpty()) {
             return false;

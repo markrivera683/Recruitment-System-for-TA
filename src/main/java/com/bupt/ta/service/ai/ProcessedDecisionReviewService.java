@@ -13,22 +13,51 @@ import com.bupt.ta.model.MoProcessedReviewContext;
 import com.bupt.ta.service.ProfileService;
 
 /**
- * Generates MO-facing retrospective AI insight for processed applications
- * (Accepted / Rejected / Withdrawn).
+ * Generates MO-facing retrospective AI insight for processed applications.
+ *
+ * <p>Implements the {@link AiFeatureNames#DECISION_REVIEW} feature for outcomes
+ * Accepted, Rejected, or Withdrawn (not Pending — use {@link WorkloadAdviceService} instead).
+ * Builds a {@link MoProcessedReviewContext} from application, job, and profile data, then
+ * requests Markdown sections: fit summary, decision assessment, profile highlights, and notes.
+ *
+ * <p>Streaming entry point: {@link com.bupt.ta.servlet.AiStreamServlet} with
+ * {@code feature=moDecisionReview} and {@code applicationId} (MO role only).
+ *
+ * @see MoProcessedReviewContext
+ * @see com.bupt.ta.servlet.MoServlet
  */
 public final class ProcessedDecisionReviewService {
     private final LmClient client;
     private final LmConfig config;
 
+    /**
+     * Creates the service with LM client and configuration.
+     *
+     * @param client LM client (mock or HTTP)
+     * @param config provider settings and model name
+     */
     public ProcessedDecisionReviewService(LmClient client, LmConfig config) {
         this.client = client;
         this.config = config;
     }
 
+    /**
+     * Synchronous decision review (tests and non-stream callers).
+     *
+     * @param context assembled review context
+     * @return LM response with Markdown analysis
+     * @throws LmException if the client rejects or fails the request
+     */
     public LmResponse reviewProcessedDecision(MoProcessedReviewContext context) throws LmException {
         return client.generate(buildReviewRequest(context));
     }
 
+    /**
+     * Builds the {@link LmRequest} without invoking the client.
+     *
+     * @param context review context from {@link #buildContext}
+     * @return configured request with system/user prompts
+     */
     public LmRequest buildReviewRequest(MoProcessedReviewContext context) {
         return LmRequest.builder()
                 .featureName(AiFeatureNames.DECISION_REVIEW)
@@ -48,6 +77,15 @@ public final class ProcessedDecisionReviewService {
                 .build();
     }
 
+    /**
+     * Maps domain entities into a flat context for prompt building.
+     *
+     * @param app           processed application (required for meaningful output)
+     * @param job           matched job posting, or {@code null}
+     * @param profile       applicant profile, or {@code null}
+     * @param applicantName display name for MO UI
+     * @return populated context (empty if {@code app} is {@code null})
+     */
     public static MoProcessedReviewContext buildContext(
             Application app,
             Job job,
@@ -85,6 +123,12 @@ public final class ProcessedDecisionReviewService {
         return ctx;
     }
 
+    /**
+     * Formats review context as plain text for the LM user prompt.
+     *
+     * @param c review context
+     * @return multi-line factual summary
+     */
     static String buildUserPrompt(MoProcessedReviewContext c) {
         if (c == null) {
             return "";

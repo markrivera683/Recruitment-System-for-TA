@@ -12,6 +12,11 @@ import java.util.stream.Collectors;
 
 /**
  * Tracks per-user recently viewed job postings in {@code recently-viewed.json}.
+ *
+ * <p>Maintains a bounded list (see {@link #MAX_RECENT}) of job IDs per TA, ordered by most recent
+ * view time. Used on the job list page for quick access without persisting full job snapshots.
+ *
+ * @see com.bupt.ta.servlet.JobServlet
  */
 public class RecentlyViewedService {
 
@@ -23,10 +28,12 @@ public class RecentlyViewedService {
 
     private final FileStore store;
 
+    /** @param dataDir directory containing {@code recently-viewed.json} */
     public RecentlyViewedService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
 
+    /** Returns up to {@link #MAX_RECENT} job ids for the user, most recent first. */
     public List<String> getRecentJobIds(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return new ArrayList<>();
@@ -40,6 +47,7 @@ public class RecentlyViewedService {
                 .collect(Collectors.toList());
     }
 
+    /** Records a job view and trims older entries beyond {@link #MAX_RECENT}. */
     public void recordView(String userId, String jobId) throws IOException {
         if (userId == null || userId.isEmpty() || jobId == null || jobId.isEmpty()) {
             return;

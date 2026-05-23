@@ -15,16 +15,27 @@ import java.util.stream.Collectors;
 
 /**
  * Persistence and validation helpers for applicant profiles in {@code profiles.json}.
+ *
+ * <p>Stores personal fields, education JSON, skills/courses, availability, and CV filename.
+ * On save, basic identity fields can be synced back to {@code users.json} via {@link AuthService}.
+ * Profile completeness gates job application and AI matching features.
+ *
+ * <p>Also provides {@link #buildAiCapabilityText} and {@link #hasAiMatchingInput} for LM prompts.
+ *
+ * @see com.bupt.ta.servlet.ProfileServlet
+ * @see com.bupt.ta.model.ApplicantProfile
  */
 public class ProfileService {
 
     private static final String PROFILES_JSON = "profiles.json";
     private final FileStore store;
 
+    /** @param dataDir directory containing {@code profiles.json} */
     public ProfileService(Path dataDir) {
         this.store = new FileStore(dataDir);
     }
 
+    /** Parses the {@code educationJson} column into structured rows. */
     public static List<EducationEntry> parseEducationJson(String json) {
         List<EducationEntry> out = new ArrayList<>();
         if (json == null || json.trim().isEmpty()) {
@@ -50,6 +61,7 @@ public class ProfileService {
         return out;
     }
 
+    /** Serializes education rows to JSON stored in {@link ApplicantProfile#educationJson}. */
     public static String buildEducationJson(List<EducationEntry> entries) {
         List<Map<String, String>> maps = new ArrayList<>();
         for (EducationEntry e : entries) {
@@ -63,6 +75,7 @@ public class ProfileService {
         return FileStore.toJsonArrayOfObjects(maps);
     }
 
+    /** Returns {@code true} when all required applicant fields and CV are present. */
     public static boolean isApplicantProfileComplete(ApplicantProfile p) {
         if (p == null) {
             return false;
@@ -92,6 +105,7 @@ public class ProfileService {
         return s == null || s.trim().isEmpty();
     }
 
+    /** Returns {@code true} when skills or courses are populated for AI matching. */
     public static boolean hasAiMatchingInput(ApplicantProfile p) {
         if (p == null) {
             return false;
@@ -99,6 +113,7 @@ public class ProfileService {
         return !isBlank(p.skills) || !isBlank(p.courses);
     }
 
+    /** Builds a plain-text capability summary for LM prompts. */
     public static String buildAiCapabilityText(ApplicantProfile p) {
         if (p == null) {
             return "";
@@ -174,6 +189,7 @@ public class ProfileService {
         return m;
     }
 
+    /** Loads the profile row for one user, if any. */
     public Optional<ApplicantProfile> getByUserId(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return Optional.empty();
@@ -184,6 +200,7 @@ public class ProfileService {
                 .findFirst();
     }
 
+    /** Inserts or replaces the profile row keyed by {@code profile.userId}. */
     public ApplicantProfile upsert(ApplicantProfile profile) throws IOException {
         List<Map<String, String>> rows = store.readMaps(PROFILES_JSON);
         rows.removeIf(m -> profile.userId != null && profile.userId.equals(m.get("userId")));
@@ -192,6 +209,7 @@ public class ProfileService {
         return profile;
     }
 
+    /** Removes the profile row when a user account is deleted. */
     public void deleteByUserId(String userId) throws IOException {
         if (userId == null || userId.isEmpty()) {
             return;

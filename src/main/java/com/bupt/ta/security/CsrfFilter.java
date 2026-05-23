@@ -15,6 +15,14 @@ import java.util.Base64;
 
 /**
  * Generates a per-session CSRF token and validates it on every POST request.
+ *
+ * <p>On each request, a token is stored in the HTTP session ({@link #SESSION_ATTR}) and exposed
+ * to JSPs via {@link #csrfToken(HttpServletRequest)} / {@link #REQUEST_ATTR}. State-changing
+ * forms must include {@link #PARAM_NAME}; mismatches yield HTTP 403.
+ *
+ * <p>Registered in {@code web.xml} for all URL patterns. Safe methods (GET) are not validated.
+ *
+ * @see com.bupt.ta.servlet.BaseServlet
  */
 public class CsrfFilter implements Filter {
 

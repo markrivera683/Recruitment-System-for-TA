@@ -10,6 +10,8 @@ public final class Strings {
     private Strings() {}
 
     /**
+     * Null-safe string coalescing to empty string.
+     *
      * @param s input string, possibly {@code null}
      * @return {@code s} unchanged, or empty string when {@code s} is {@code null}
      */
