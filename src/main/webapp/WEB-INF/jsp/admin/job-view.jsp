@@ -115,7 +115,7 @@
           <div class="grid-2col" style="gap:.625rem;">
             <div class="info-box info-box--blue">
               <div class="info-label">Positions Available</div>
-              <div class="info-value"><%= (job.getNumberOfTAs() == null || job.getNumberOfTAs().isEmpty()) ? "1" : job.getNumberOfTAs() %> TAs needed</div>
+              <div class="info-value"><%= (job.getNumberOfTAs() == null || job.getNumberOfTAs().isEmpty()) ? "2" : job.getNumberOfTAs() %> TAs needed</div>
             </div>
             <div class="info-box info-box--amber">
               <div class="info-label">Application Deadline</div>

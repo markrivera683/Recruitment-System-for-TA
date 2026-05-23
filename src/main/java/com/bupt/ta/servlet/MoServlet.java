@@ -128,7 +128,7 @@ public class MoServlet extends BaseServlet {
             j.setActivityType(activityType.isEmpty() ? "Teaching Assistant" : activityType);
             j.setDescription(description);
             j.setApplicationDeadline(deadline);
-            j.setNumberOfTAs(numberOfTAs.isEmpty() ? "1" : numberOfTAs);
+            j.setNumberOfTAs(numberOfTAs.isEmpty() ? "2" : numberOfTAs);
             j.setDuration(duration.isEmpty() ? "One semester" : duration);
             j.setWorkloadHours(workload);
             j.setRequiredSkills(splitSkills(req.getParameter("requiredSkills")));

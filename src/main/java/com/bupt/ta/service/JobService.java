@@ -55,7 +55,7 @@ public class JobService {
                         "One semester"));
                 job.setNumberOfTAs(firstNonEmpty(
                         extractString(obj, "numberOfTAs"),
-                        "1"));
+                        "2"));
                 job.setStatus(firstNonEmpty(extractString(obj, "status"), "Published"));
                 job.setCreatedByMoId(extractString(obj, "createdByMoId"));
                 job.setCreatedAt(extractString(obj, "createdAt"));

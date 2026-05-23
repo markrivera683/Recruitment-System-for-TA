@@ -30,7 +30,10 @@
   if (recentViewedJobIds == null) recentViewedJobIds = java.util.Collections.emptySet();
 %>
 <div class="page--top fade-in">
-  <div class="layout-xl">
+  <div class="layout-xl" id="job-portal-root"
+       data-ctx="<%= ctx %>"
+       data-can-use-ai="<%= aiInteractive %>"
+       data-has-jobs="<%= hasJobs %>">
 
     <div class="page-header-row">
       <div class="header-left">
@@ -286,7 +289,7 @@
                     <div>Code: <%= moduleCodeEsc %></div>
                   <% } %>
                   <div>Deadline: <%= deadlineEsc.isEmpty() ? "TBC" : deadlineEsc %></div>
-                  <div><%= numTaEsc.isEmpty() ? "1" : numTaEsc %> positions</div>
+                  <div><%= numTaEsc.isEmpty() ? "2" : numTaEsc %> positions</div>
                 </div>
                 <div class="job-card-actions">
                   <button type="button" class="btn-ghost btn-sm job-ai-select" <%= (jobId.isEmpty() || !aiInteractive) ? "disabled" : "" %>>
@@ -310,9 +313,10 @@
 <script src="<%= ctx %>/static/js/ai-stream.js"></script>
 <script>
 (function () {
-  var ctx = '<%= ctx %>';
-  var canUseAi = <%= aiInteractive ? "true" : "false" %>;
-  var hasJobs = <%= hasJobs ? "true" : "false" %>;
+  var root = document.getElementById('job-portal-root');
+  var ctx = root ? root.getAttribute('data-ctx') || '' : '';
+  var canUseAi = root && root.getAttribute('data-can-use-ai') === 'true';
+  var hasJobs = root && root.getAttribute('data-has-jobs') === 'true';
   var recBtn = document.getElementById('aiRecBtn');
   var gapBtn = document.getElementById('aiGapBtn');
   var cards = Array.prototype.slice.call(document.querySelectorAll('[data-job-card="true"]'));

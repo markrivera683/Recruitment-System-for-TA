@@ -406,6 +406,15 @@ a.button.button-danger.status-app-btn:focus-visible {
 .inline-form {
   display: inline;
 }
+.user-mgmt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+.user-mgmt-actions .inline-form {
+  display: inline-flex;
+}
 .admin-app-actions-cell {
   vertical-align: top;
   min-width: 12rem;
