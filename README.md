@@ -1,6 +1,7 @@
-# TA Recruitment System
+# Recruitment System for TA
 
-**EBU6304 Software Engineering · Group 51**  
+**EBU6304 Software Engineering · Group 51**
+
 Web platform for Teaching Assistant recruitment at BUPT International School.
 
 | | |
@@ -8,47 +9,137 @@ Web platform for Teaching Assistant recruitment at BUPT International School.
 | **Version** | 1.0.0 |
 | **License** | [MIT](LICENSE) |
 | **Context path** | `/ta-recruitment` |
-| **Storage** | JSON files — no database |
+| **Storage** | JSON files under `WEB-INF/data/` — no database |
+
+**Try it locally:** `mvn tomcat7:run-war` → [http://localhost:18080/ta-recruitment/login](http://localhost:18080/ta-recruitment/login)  
+**User guide:** [docs/USER_MANUAL.md](docs/USER_MANUAL.md)
 
 ---
 
-## At a glance
+## Project Overview
 
-| Role | What they do | Landing page |
-|------|----------------|----------------|
-| **TA applicant** | Register, profile + CV, browse jobs, apply, track status | `/job` |
-| **Module organiser (MO)** | Publish vacancies, review applicants, approve/reject | `/mo` |
-| **Administrator** | Users, jobs, workload, CSV export, analytics | `/admin` |
+The current TA recruitment process mainly relies on email and Excel files, which leads to fragmented information, repeated manual work, and difficulty tracking applications. This project provides a lightweight recruitment system where:
 
-**Try it in 30 seconds** (local Maven):
+- **TA Applicants** register, maintain profiles, optionally upload CVs, browse jobs, apply, and track status
+- **Module Organisers (MO)** publish vacancies and review applications for their own jobs
+- **Administrators** monitor users, jobs, applications, TA workload, analytics, and exports
 
-```powershell
-mvn clean package
-mvn tomcat7:run-war
+The team follows **Agile** development (feature branches, pull requests, product backlog).
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Language | Java 11 |
+| Web | Java Servlet 4.0, JSP 2.3, JSTL 1.2 |
+| Server | Apache Tomcat 9.x |
+| Persistence | Plain JSON files + CV files on disk (`FileStore` in `com.bupt.ta.service`) |
+| Security | BCrypt (`jbcrypt`), CSRF filter on POST, role-based access |
+| Email | JavaMail — optional SMTP (MailHog in Docker Compose) |
+| AI | Pluggable LM layer — **mock** default, OpenAI-compatible HTTP scaffold |
+| Build / test | Maven 3.9+, JUnit 5, Mockito |
+| CI | GitHub Actions — `mvn clean verify` |
+
+---
+
+## Repository Structure
+
+```text
+Recruitment-System-for-TA/
+├── docs/
+│   ├── USER_MANUAL.md              # Step-by-step user guide (English)
+│   ├── manual-screenshots/         # Screenshots for USER_MANUAL.md
+│   ├── javadoc/                    # Generated API docs (mvn verify)
+│   └── ProductBacklog_group51.xlsx
+├── tools/
+│   └── capture_manual_screenshots.py
+├── src/main/java/com/bupt/ta/
+│   ├── ai/                         # LmClient, MockLmClient, HttpLmClient, LmConfig
+│   ├── model/                      # User, Job, Application, ApplicantProfile, …
+│   ├── persistence/                # AppInitListener, ServiceFactory
+│   ├── security/                   # PasswordHasher, CsrfFilter
+│   ├── service/                    # Business logic + FileStore JSON I/O
+│   │   ├── ai/                     # AiFeatureService + feature services
+│   │   └── admin/                  # Admin dashboard metrics
+│   ├── servlet/                    # HTTP controllers (@WebServlet + web.xml)
+│   └── util/                       # AppConfig, HttpJsonClient, validation helpers
+├── src/main/webapp/
+│   ├── static/css/                 # app.css, admin-dashboard.css
+│   ├── static/js/                  # ai-stream.js, admin-dashboard-charts.js
+│   └── WEB-INF/
+│       ├── web.xml                 # CsrfFilter; explicit /mo, /cv, /api/ai/stream
+│       ├── lm.properties.example
+│       ├── data/                   # Seed JSON + runtime uploads
+│       └── jsp/                    # View templates
+├── src/test/java/                  # Unit + integration tests
+├── docker-compose.yml              # App + MailHog (optional)
+├── Dockerfile
+├── pom.xml
+└── README.md
 ```
 
-Open **http://localhost:18080/ta-recruitment/login** · Demo: `admin@bupt.local` / `admin123`
-
-Run tests: `mvn test`
-
 ---
 
-## Quick start
+## Prerequisites
 
-### Prerequisites
-
-| Tool | Version |
-|------|---------|
-| JDK | 11+ |
-| Maven | 3.9+ |
-| Tomcat | 9.x *(or use Maven plugin / Docker below)* |
+| Tool | Version | Notes |
+|------|---------|-------|
+| JDK | 11+ | Set `JAVA_HOME` |
+| Maven | 3.9+ | `mvn` on `PATH` |
 
 ```powershell
-winget install Apache.Maven   # Windows
+winget install Apache.Maven
 mvn -version
 ```
 
-### Option A — Docker *(recommended for demo + email)*
+---
+
+## Build & Run
+
+All commands run from the **repository root**.
+
+### Build WAR
+
+```powershell
+mvn clean package
+```
+
+Output: `target/ta-recruitment.war`
+
+### Run tests
+
+```powershell
+mvn test
+```
+
+Full verify (tests + Javadoc copied to `docs/javadoc/`):
+
+```powershell
+mvn clean verify
+```
+
+### Run locally (embedded Tomcat, port 18080)
+
+```powershell
+mvn tomcat7:run-war
+```
+
+Open [http://localhost:18080/ta-recruitment/login](http://localhost:18080/ta-recruitment/login). Stop with `Ctrl+C`.
+
+### Deploy to external Tomcat 9
+
+1. `mvn clean package`
+2. Copy `target/ta-recruitment.war` to `{TOMCAT}/webapps/`
+3. Start Tomcat
+4. Open `http://localhost:8080/ta-recruitment/login` (port depends on your Tomcat)
+
+Runtime data is written under the exploded WAR at `WEB-INF/data/`.
+
+### Optional — Docker (app + MailHog)
+
+Useful for password-reset email demos:
 
 ```powershell
 mvn clean package
@@ -60,44 +151,13 @@ docker compose up --build
 | Application | http://localhost:8080/ta-recruitment/login |
 | MailHog (SMTP UI) | http://localhost:8025 |
 
-No database. Seed JSON ships inside the WAR; CV uploads go to `WEB-INF/data/cv/`.
-
-→ Full env vars, backup, HTTPS: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
-
-### Option B — Local Maven + embedded Tomcat
-
-```powershell
-mvn clean package
-mvn tomcat7:run-war
-```
-
-→ http://localhost:18080/ta-recruitment/login · Stop with `Ctrl+C`
-
-**Password-reset email (optional):** MailHog is **not** started by Maven. Either use Docker (Option A) or run MailHog separately:
-
-```powershell
-docker compose up mailhog -d
-$env:SMTP_HOST = "localhost"
-$env:SMTP_PORT = "1025"
-mvn tomcat7:run-war
-```
-
-SMTP UI: http://localhost:8025
-
-### Option C — External Tomcat 9
-
-```powershell
-mvn clean package
-# Copy target/ta-recruitment.war → {TOMCAT}/webapps/
-```
-
-Runtime data is written under the exploded WAR at `WEB-INF/data/`.
+Without SMTP, forgot-password tokens are still created; reset links are logged server-side for development.
 
 ---
 
-## Demo accounts
+## Demo Accounts
 
-Seed passwords are plaintext for coursework (`admin123`, `mo123`, `ta123`). New registrations use BCrypt. **Change before any public deployment.**
+Seed accounts in `src/main/webapp/WEB-INF/data/users.json` use **plain-text passwords** for coursework. **New registrations** are stored with **BCrypt** hashes.
 
 | Role | Email | Password |
 |------|-------|----------|
@@ -108,160 +168,181 @@ Seed passwords are plaintext for coursework (`admin123`, `mo123`, `ta123`). New 
 | TA Applicant | `clara.wang@bupt.local` | `ta123` |
 | TA Applicant | `daniel.zhang@bupt.local` | `ta123` |
 
-The login page has a collapsible demo-account panel.
+The login page lists demo accounts in a collapsible panel.
 
 | Walkthrough | Link |
 |-------------|------|
-| Step-by-step user guide | [docs/USER_MANUAL.md](docs/USER_MANUAL.md) |
+| Step-by-step user guide (with screenshots) | [docs/USER_MANUAL.md](docs/USER_MANUAL.md) |
 
 ---
 
-## Features
+## Features by Role
 
-### TA applicant flow
+### TA applicant
 
-1. Register or log in → 2. Complete profile & upload CV → 3. Browse/filter jobs on `/job` → 4. Apply from job detail → 5. Track status on `/applications`
+1. Register or log in → 2. Complete profile (CV optional) → 3. Browse/filter/favorite jobs on `/job` → 4. Apply from job detail → 5. Track or withdraw applications on `/applications`
 
-AI hints (mock by default) on job pages: recommendations, skill match, missing skills.
+AI hints (mock by default): job recommendations, skill match, missing skills.
 
-### Module organiser flow
+### Module organiser
 
-1. Log in → 2. Open `/mo` dashboard → 3. Create/publish vacancy → 4. Review profile & CV → 5. Accept or reject with feedback
+1. Log in → 2. Open `/mo` dashboard → 3. Create/publish/edit/close vacancies → 4. Review applicant profile & CV → 5. Approve or reject with feedback
 
-MO users only see applications for **their own** job postings.
+MO users only see applications whose `moduleName` + `moduleCode` match **their own** job postings. AI aids: workload advice, processed-decision review.
 
-### Administrator flow
+### Administrator
 
-1. Log in → 2. Open `/admin` dashboard (KPIs, charts, AI briefing) → 3. Manage users & jobs → 4. Monitor TA workload → 5. Export CSV or override application status
+1. Log in → 2. Open `/admin` (KPIs, charts, AI analytics briefing) → 3. Manage users/jobs/export from dashboard tabs → 4. Browse TA profiles → 5. Override application status or export CSV
 
----
-
-## Tech stack
-
-| Layer | Choice |
-|-------|--------|
-| Language | Java 11 |
-| Web | Servlet 4.0, JSP 2.3, JSTL |
-| Server | Apache Tomcat 9.x |
-| Persistence | JSON files under `WEB-INF/data/` + CV on disk |
-| Security | BCrypt, CSRF on POST, role-based access |
-| Email | JavaMail → optional SMTP (MailHog in Docker) |
-| AI | Pluggable LM layer — **mock** default, HTTP OpenAI-compatible scaffold |
-| Build / test | Maven 3.9+, JUnit 5, Mockito |
-| CI | GitHub Actions — `mvn clean verify` |
-
-```mermaid
-flowchart LR
-  Browser --> Servlets
-  Servlets --> Services
-  Services --> JSON["WEB-INF/data/*.json"]
-  Services --> CV["WEB-INF/data/cv/"]
-  Servlets --> AI["LM client (mock / HTTP)"]
-```
+User management UI is on `/admin` → **User Management** tab. `/admin/users` is **POST-only** (direct GET returns HTTP 405).
 
 ---
 
-## Main routes
+## Applicant Profile & CV
+
+The `/profile` page (`profile.jsp`) lets applicants:
+
+- Enter personal information: full name, gender, degree, major, student ID, national ID, phone, email
+- Add multiple education entries (stored as JSON in `profiles.json` → `educationJson`)
+- List courses completed, availability, and skills
+- **Upload a CV (optional):** PDF, DOC, or DOCX, max ~10 MB → `WEB-INF/data/cv/{userId}/`
+
+**View vs edit:** incomplete profiles open in edit mode; complete profiles show read-only view with an **Edit** button. Saving returns to view mode.
+
+On save, `AuthService.updateUserBasics` syncs name, student ID, and email to `users.json`. `CvDownloadServlet` at `/cv` serves the logged-in TA’s CV; MO may pass `?userId=` to download an applicant’s file.
+
+Profile completeness is enforced by `ProfileService.isApplicantProfileComplete()` — **CV is not required** to apply.
+
+---
+
+## URL Routes
 
 Base URL: `{host}/ta-recruitment`
 
-| Path | Access | Purpose |
-|------|--------|---------|
-| `/login`, `/register`, `/logout` | Public | Authentication |
-| `/forgot-password`, `/reset-password` | Public | Password reset *(email if SMTP set)* |
-| `/profile`, `/cv` | TA | Profile & CV |
-| `/job` | TA | Job list, detail, favorites, AI hints |
-| `/applications` | TA | Apply, withdraw, filter by status |
-| `/mo` | MO | Dashboard, jobs, approve/reject |
-| `/mo/applicant-profile` | MO | Read-only applicant view |
-| `/admin` | Admin | Dashboard, analytics, user/job management |
-| `/admin/export` | Admin | CSV export |
-| `/admin/ai-demo` | Admin | AI feature playground |
-| `/api/ai/stream` | TA / MO / Admin | SSE streaming AI responses |
+All state-changing **POST** requests require a valid CSRF token (`CsrfFilter`).
 
-All state-changing **POST** requests require a CSRF token.
+| URL | Method | Access | Description |
+|-----|--------|--------|-------------|
+| `/login` | GET / POST | Public | Login |
+| `/register` | GET / POST | Public | TA registration |
+| `/logout` | GET | Authenticated | End session |
+| `/forgot-password` | GET / POST | Public | Request password reset (email if SMTP configured) |
+| `/reset-password` | GET / POST | Public | Reset password with token |
+| `/profile` | GET / POST | TA | View/save profile; multipart CV upload |
+| `/cv` | GET | TA / MO | Download CV (MO: `?userId=`) |
+| `/job` | GET / POST | TA | Job list & detail (`?id=`); POST `toggleFavorite` |
+| `/applications` | GET / POST | TA | List/filter applications; POST apply or withdraw |
+| `/mo` | GET / POST | MO | Dashboard, jobs, approve/reject |
+| `/mo/applicant-profile` | GET | MO | Read-only applicant profile (`?userId=`) |
+| `/admin` | GET | ADMIN | Dashboard, analytics, management tabs |
+| `/admin/users` | POST | ADMIN | Create / activate / deactivate / delete users |
+| `/admin/jobs` | POST | ADMIN | Delete job (from dashboard tab) |
+| `/admin/job-view` | GET | ADMIN | Job detail (`?id=`) |
+| `/admin/ta-profiles` | GET | ADMIN | TA profile listing |
+| `/admin/cv` | GET | ADMIN | Download applicant CV (`?userId=`) |
+| `/admin/applications/by-status` | GET | ADMIN | Applications filtered by status |
+| `/admin/applications` | POST | ADMIN | Override application status |
+| `/admin/export` | GET | ADMIN | CSV export (`?type=users` or `applications`) |
+| `/admin/ai-demo` | GET / POST | ADMIN | AI feature playground |
+| `/api/ai/stream` | GET | TA / MO / ADMIN | SSE streaming AI responses (`?feature=…`) |
 
 ---
 
-## AI features
+## Data Storage
 
-Default provider is **mock** (offline, deterministic). Set `LM_PROVIDER=openai` with `LM_BASE_URL` and `LM_API_KEY` for a real model. AI output is **advisory** — humans make hiring decisions.
+All persistent state lives under `WEB-INF/data/`:
+
+| File / folder | Contents |
+|---------------|----------|
+| `users.json` | Accounts (`id`, `name`, `studentId`, `email`, `passwordHash`, `role`, `active`) |
+| `profiles.json` | Applicant profiles per `userId` |
+| `applications.json` | Applications (`status`: Pending / Accepted / Rejected / Withdrawn) |
+| `jobs.json` | Job postings |
+| `favorites.json` | TA job favorites |
+| `recently-viewed.json` | Recently viewed jobs per user |
+| `audit-logs.json` | Admin audit trail |
+| `password-reset-tokens.json` | Password reset tokens |
+| `cv/{userId}/…` | Uploaded CV files (runtime; not in Git) |
+
+There is **no database**. `FileStore` reads/writes JSON with a hand-rolled parser (no Jackson/Gson).
+
+> **Security (coursework prototype):** Seed passwords in `users.json` are plaintext. New accounts use BCrypt. Change seed credentials before any public deployment.
+
+---
+
+## AI Integration
+
+A small, pluggable LM layer supports coursework demos. Default provider is **mock** (offline, deterministic). Set `LM_PROVIDER=openai` with `LM_BASE_URL` and `LM_API_KEY` for a real model. AI output is **advisory** — hiring decisions remain human-reviewed.
 
 | Feature | Audience | Where |
 |---------|----------|-------|
 | Job recommendation | TA | `/job` → `?feature=recommendation` |
-| Skill match | TA | `?feature=skillMatch` |
-| Missing skills | TA | `?feature=missingSkills` |
-| Workload advice | MO | `?feature=moWorkloadAdvice` |
-| Processed decision review | MO | `?feature=moDecisionReview` |
-| Platform analytics briefing | Admin | `/admin` → `?feature=adminAnalytics` |
-| Feature demo | Admin | `/admin/ai-demo` |
+| Skill match | TA | Job detail → `?feature=skillMatch&jobId=` |
+| Missing skills | TA | `/job` / job detail → `?feature=missingSkills&jobId=` |
+| Workload advice | MO | `/mo` → `?feature=moWorkloadAdvice` |
+| Decision review | MO | `/mo` → `?feature=moDecisionReview` |
+| Platform analytics | ADMIN | `/admin` → `?feature=adminAnalytics` |
+| Feature demo | ADMIN | `/admin/ai-demo` |
 
-Config: copy `WEB-INF/lm.properties.example` → `lm.properties`, or use `LM_*` env vars. See [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+### Configuration (priority: env → JVM property → `WEB-INF/lm.properties` → defaults)
+
+| Key | Meaning | Default |
+|-----|---------|---------|
+| `LM_ENABLED` | Master switch | `true` |
+| `LM_PROVIDER` | `mock` \| `openai` \| `custom` | `mock` |
+| `LM_API_KEY` | Bearer token for HTTP providers | *(empty)* |
+| `LM_BASE_URL` | API base URL | *(empty)* |
+| `LM_MODEL` | Model name | *(mock: `mock-model`; HTTP fallback: `gpt-4o-mini`)* |
+| `LM_TIMEOUT_MS` | HTTP timeout | `30000` |
+| `LM_HTTP_CHAT_PATH` | Chat completions path | `/chat/completions` |
+
+Copy `src/main/webapp/WEB-INF/lm.properties.example` → `WEB-INF/lm.properties` for local overrides. **Never commit API keys.**
+
+If `LM_PROVIDER` is `openai` or `custom` but credentials are missing, the factory **falls back to `MockLmClient`**.
+
+### Key packages
+
+| Package | Role |
+|---------|------|
+| `com.bupt.ta.ai` | `LmClient`, DTOs, `MockLmClient`, `HttpLmClient`, `LmClientFactory` |
+| `com.bupt.ta.service.ai` | `AiFeatureService` + feature-specific prompt builders |
+| `com.bupt.ta.util` | `AppConfig`, `HttpJsonClient` (JDK 11 `HttpClient`) |
+
+LM-related tests live under `src/test/java/com/bupt/ta/ai/` and `…/service/ai/`. Unset global `LM_*` environment variables for deterministic local test runs.
 
 ---
 
-## Repository layout
+## Testing & CI
 
-```text
-Recruitment-System-for-TA/
-├── docs/                         # SE docs, backlog xlsx, user manual
-├── src/main/java/com/bupt/ta/
-│   ├── ai/                       # LM client, MockLmClient, HttpLmClient
-│   ├── model/                    # User, Job, Application, …
-│   ├── persistence/              # AppInitListener, ServiceFactory
-│   ├── security/                 # PasswordHasher, CsrfFilter
-│   ├── service/                  # Business logic + JSON I/O
-│   └── servlet/                  # HTTP controllers
-├── src/main/webapp/WEB-INF/data/ # users.json, jobs.json, applications.json, …
-├── src/test/java/                # Unit & integration tests
-├── docker-compose.yml
-├── Dockerfile
-└── pom.xml
+```powershell
+mvn test                 # Unit + integration tests
+mvn clean verify         # Tests + Javadoc → docs/javadoc/
 ```
 
-| File / folder | Contents |
-|---------------|----------|
-| `users.json` | Accounts (`role`: TA / MO / ADMIN) |
-| `profiles.json` | Applicant profiles + education JSON |
-| `applications.json` | Submissions, status, MO feedback |
-| `jobs.json` | Published vacancies |
-| `cv/{userId}/` | Uploaded CV files *(runtime)* |
+GitHub Actions (`.github/workflows/maven.yml`) runs `mvn clean verify` on push/PR to `main`.
+
+Test utilities: `FileTestSupport`, `ServletTestSupport`, `TestFixtures`, `LmTestSupport`.
 
 ---
 
 ## Documentation
 
-### For users
-
 | Document | Description |
 |----------|-------------|
-| [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | TA, MO, Admin workflows |
+| [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | TA, MO, and Admin workflows with screenshots |
+| [docs/ProductBacklog_group51.xlsx](docs/ProductBacklog_group51.xlsx) | Product backlog |
+| `docs/javadoc/` | Generated Java API reference (`mvn verify`) |
 
+Regenerate manual screenshots: start the app, then run `python tools/capture_manual_screenshots.py` (requires Playwright + Chrome/Edge).
 
-### For demos
-
-**Backlog:** [docs/ProductBacklog_group51.xlsx](docs/ProductBacklog_group51.xlsx)  
-**Coursework PDFs** (`Prototype_group51.pdf`, `Report_group51.pdf`) are submitted separately, not in this repo.
-
----
-
-## Developer notes
-
-```powershell
-mvn test                              # Run all tests
-mvn javadoc:javadoc                   # API docs → target/reports/apidocs/
-```
-
-Test utilities: `FileTestSupport`, `ServletTestSupport`, `TestFixtures`.  
-Unset global `LM_*` env vars for deterministic local test runs.
+**Coursework PDFs:** [docs/Prototype_group51.pdf](docs/Prototype_group51.pdf), [docs/Report_group51.pdf](docs/Report_group51.pdf)
 
 ---
 
-## Team
+## Team Members
 
-| GitHub | Branch | QMUL ID | Name |
-|--------|--------|---------|------|
+| GitHub Alias | Branch | QMUL ID | Name |
+|--------------|--------|---------|------|
 | Markrivera683 | Ruiyang_Sun | 231226783 | Sun Ruiyang (孙瑞阳) |
 | christine288 | Qixin_Li | 231225373 | Li Qixin (李其馨) |
 | Hzwnt | Tianjing_Zhuang | 231225351 | Zhuang Tianjing (庄天婧) |
@@ -269,6 +350,13 @@ Unset global `LM_*` env vars for deterministic local test runs.
 | g726unknown | Yifeng_Zhang | 231226174 | Zhang Yifeng (张毅峰) |
 | negan525 | WeiJia_Xiao | 231226233 | Xiao Weijia (肖炜佳) |
 
-Commits under the name "Chen Qinchun" correspond to GitHub **@S01ZZ**.
+Commits under the name "Chen Qinchun" correspond to GitHub **@S01ZZ** (local Git configuration).
 
-**Agile:** feature branches → PRs → `main` · 4 iterations · CI on push.
+---
+
+## Agile Development
+
+- **Product Backlog:** [docs/ProductBacklog_group51.xlsx](docs/ProductBacklog_group51.xlsx)
+- Feature branches per team member → Pull Requests → `main`
+- Iterations tracked via GitHub Issues and the backlog spreadsheet
+- CI: GitHub Actions runs `mvn clean verify` on push/PR to `main`
