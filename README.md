@@ -113,7 +113,6 @@ The login page has a collapsible demo-account panel.
 | Walkthrough | Link |
 |-------------|------|
 | Step-by-step user guide | [docs/USER_MANUAL.md](docs/USER_MANUAL.md) |
-| 10-minute presentation script | [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) |
 
 ---
 
@@ -233,27 +232,14 @@ Recruitment-System-for-TA/
 
 ## Documentation
 
-### For users & demos
+### For users
 
 | Document | Description |
 |----------|-------------|
 | [docs/USER_MANUAL.md](docs/USER_MANUAL.md) | TA, MO, Admin workflows |
-| [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) | 10-minute walkthrough |
 
-### For developers & assessors
 
-| Document | Description |
-|----------|-------------|
-| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Docker, env vars, Tomcat, backup |
-| [docs/SYSTEM_DESIGN.md](docs/SYSTEM_DESIGN.md) | Architecture, data model, AI flow |
-| [docs/REQUIREMENTS.md](docs/REQUIREMENTS.md) | SRS — US-01 to US-35 |
-| [docs/TEST_PLAN.md](docs/TEST_PLAN.md) | Test strategy |
-| [docs/TEST_REPORT_v1.0.0.md](docs/TEST_REPORT_v1.0.0.md) | Latest test summary |
-| [docs/SECURITY.md](docs/SECURITY.md) | BCrypt, CSRF, roles |
-| [docs/PRIVACY.md](docs/PRIVACY.md) | PII & CV handling |
-| [docs/TRACEABILITY.md](docs/TRACEABILITY.md) | Backlog → code → tests |
-| [docs/GAP_ANALYSIS.md](docs/GAP_ANALYSIS.md) | Gaps vs production |
-| [CHANGELOG.md](CHANGELOG.md) | Version history |
+### For demos
 
 **Backlog:** [docs/ProductBacklog_group51.xlsx](docs/ProductBacklog_group51.xlsx)  
 **Coursework PDFs** (`Prototype_group51.pdf`, `Report_group51.pdf`) are submitted separately, not in this repo.
@@ -285,4 +271,4 @@ Unset global `LM_*` env vars for deterministic local test runs.
 
 Commits under the name "Chen Qinchun" correspond to GitHub **@S01ZZ**.
 
-**Agile:** feature branches → PRs → `main` · 4 iterations · traceability in [docs/TRACEABILITY.md](docs/TRACEABILITY.md) · CI on push.
+**Agile:** feature branches → PRs → `main` · 4 iterations · CI on push.

@@ -24,10 +24,10 @@ class ProfileServiceTest {
     }
 
     @Test
-    void isApplicantProfileComplete_falseWhenCvMissing() {
+    void isApplicantProfileComplete_trueWhenCvMissing() {
         ApplicantProfile p = TestFixtures.completeProfile("u1");
         p.cvFileName = "";
-        assertFalse(ProfileService.isApplicantProfileComplete(p));
+        assertTrue(ProfileService.isApplicantProfileComplete(p));
     }
 
     @Test

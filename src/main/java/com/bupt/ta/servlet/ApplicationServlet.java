@@ -159,10 +159,8 @@ public class ApplicationServlet extends BaseServlet {
         // Require completed profile before applying for a job.
         ApplicantProfile profile = profiles.getByUserId(u.id).orElse(null);
         if (!isProfileComplete(profile)) {
-            String msg = urlEncode(profile != null && isBlank(profile.cvFileName)
-                    ? "Please upload your CV before applying for a job."
-                    : "Please complete your profile before applying for a job.");
-            resp.sendRedirect(ctx + "/profile?msg=" + msg);
+            resp.sendRedirect(ctx + "/profile?msg="
+                    + urlEncode("Please complete your profile before applying for a job."));
             return;
         }
 
